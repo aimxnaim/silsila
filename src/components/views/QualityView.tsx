@@ -78,7 +78,7 @@ export function QualityView({
               {issues.map((issue) => (
                 <div
                   key={issue.id}
-                  style={{ padding: 'var(--s5)', borderBottom: '1px solid var(--line)' }}
+                  style={{ padding: 'var(--s5)', borderBottom: '1px solid var(--hairline)' }}
                 >
                   <div className="row gap-3 wrap" style={{ alignItems: 'baseline' }}>
                     <Badge tone={issue.resolution ? 'ink' : 'warn'}>

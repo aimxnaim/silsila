@@ -1,86 +1,71 @@
 /**
- * Design tokens.
+ * SILSILAH — design tokens
  *
- * The direction is restrained editorial software: a warm near-white ground,
- * hairline-outlined rectangles, and typography doing the work that colour
- * usually does. It is deliberately the opposite of a dashboard.
+ * Swiss editorial. Paper, ink, vermillion, saffron, stone. Large type, hard
+ * colour blocks, flat fills, no gradients and no shadows.
  *
- * One rule governs colour, and it is not decorative:
+ * The rule that makes it work: COLOUR ALWAYS DOES A JOB. It is never
+ * decorative, and the same hue never means two things.
  *
- *   Colour never fills a container. It appears in text, in a 1px rule, or in
- *   a 2px marker — nowhere else. Every panel in this application is white on
- *   warm grey with a hairline border. What separates one thing from another
- *   is weight, size and space.
+ *   vermillion  a role, and the present moment
+ *   ink         a person
+ *   saffron     a structural event — a split, a merge, something to look at
+ *   stone       a reporting line, and every neutral surface
+ *   hatch       we do not know
  *
- * The second rule concerns uncertainty:
- *
- *   Unknown is drawn as a diagonal hatch, never as a colour. That keeps the
- *   accent free to mean one thing only, and it reads as "no data here" more
- *   immediately than any hue. It is the convention statistical charts use,
- *   and it survives greyscale printing and colour-blindness alike.
+ * That last one is the move that lets the rest be bold. Uncertainty is drawn
+ * as a diagonal hatch with a dashed border and no hue at all, which frees red
+ * and yellow entirely for category use. It also reads as "no data" more
+ * immediately than any colour can, and it survives greyscale printing and
+ * colour-blindness alike — both of which matter, because this output gets
+ * printed and handed to committees.
  */
 
 :root {
-  /* --- Ground ---------------------------------------------------------- */
-  --canvas:        #F7F6F3;  /* the page */
-  --surface:       #FFFFFF;  /* every card, panel and table */
-  --surface-sunk:  #FAF9F7;  /* table headers, inset areas */
-  --surface-hover: #F4F2EE;
+  /* --- Paper and ink --------------------------------------------------- */
+  --paper:     #FAF9F5;  /* warm white. Not clinical white */
+  --paper-2:   #F2F0E9;  /* inset surfaces, hover */
+  --ink:       #111110;
+  --ink-2:     #5C5A54;
+  --ink-3:     #8A877E;
 
-  /* --- Ink ------------------------------------------------------------- */
-  --ink:           #1A1917;  /* headings, primary text */
-  --ink-2:         #6B6862;  /* secondary text, labels */
-  --ink-3:         #9C9891;  /* metadata, axis ticks */
+  /* --- Structure ------------------------------------------------------- */
+  --stone:     #EAE8E1;
+  --hairline:  #DCD9D0;
 
-  /* --- Lines ----------------------------------------------------------- */
-  --line:          #E6E3DD;  /* the default hairline */
-  --line-strong:   #D2CEC6;  /* emphasis borders, active outlines */
-  --line-ink:      #1A1917;  /* the one heavy outline, used sparingly */
-
-  /* --- Accent. TEXT AND RULES ONLY. Never a fill. ---------------------- */
-  --accent:        #B4471F;  /* terracotta */
-  --accent-quiet:  #C97B5A;
-
-  /* --- Semantic. Also text-only. --------------------------------------- */
-  --warn:          #8A6A16;  /* needs a human */
-  --unknown:       #B9B4AB;  /* the hatch stroke */
+  /* --- The two accents. A third would make it a rainbow. --------------- */
+  --vermillion:      #E03A17;
+  --vermillion-tint: #FBE2DB;
+  --vermillion-deep: #8F2308;
+  --saffron:         #FFC300;
+  --saffron-deep:    #3D2E00;
+  --saffron-mid:     #5C4700;
 
   /* --- Type ------------------------------------------------------------ */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-               'Helvetica Neue', Arial, sans-serif;
-  --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+  --sans:   'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --arabic: 'IBM Plex Sans Arabic', var(--sans);
+  --mono:   'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  --text-hero:   clamp(38px, 6.2vw, 62px);
-  --text-title:  clamp(22px, 2.6vw, 28px);
-  --text-head:   18px;
-  --text-body:   14.5px;
-  --text-small:  13px;
-  --text-micro:  11.5px;
+  /* --- Space. An 8px grid, with 2px reserved for touching blocks. ------ */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px; --s9: 96px;
 
-  /* --- Space. An 8px grid, with 4px available for tight optical work. --- */
-  --s1: 4px;  --s2: 8px;   --s3: 12px;  --s4: 16px;
-  --s5: 24px; --s6: 32px;  --s7: 48px;  --s8: 64px;  --s9: 96px;
-
-  /* --- Shape. Small radii; these are documents, not app chrome. -------- */
-  --r-sm: 6px;
-  --r:    10px;
-  --r-lg: 14px;
-
-  --maxw: 1240px;
+  --radius: 6px;
+  --maxw: 1180px;
 
   /* The hatch. Referenced anywhere a value is unknown. */
   --hatch: repeating-linear-gradient(
     45deg,
-    var(--unknown) 0, var(--unknown) 1px,
-    transparent 1px, transparent 6px
+    var(--stone), var(--stone) 5px,
+    var(--paper) 5px, var(--paper) 10px
   );
 }
 
 /**
  * The interface commits to light. HR records are read in offices and printed
- * for committees; a dark theme would be a consumer signal working against
- * everything else on the page. This block exists so that a viewer whose system
- * is set to dark does not get an unstyled or inverted page.
+ * for committees; a dark theme is a consumer signal that would work against
+ * the whole direction. This declares the intent rather than half-supporting
+ * a mode the design was not built for.
  */
 @media (prefers-color-scheme: dark) {
   :root { color-scheme: light; }

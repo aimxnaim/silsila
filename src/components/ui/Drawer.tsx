@@ -24,7 +24,7 @@ export function Drawer({
       <aside className="drawer" role="dialog" aria-modal="true" aria-label={String(title)}>
         <header className="drawer-head">
           <div className="grow">
-            <h2 style={{ fontSize: 'var(--text-head)' }}>{title}</h2>
+            <h2 style={{ fontSize: 22 }}>{title}</h2>
             {subtitle ? <div className="small muted" style={{ marginTop: 4 }}>{subtitle}</div> : null}
           </div>
           <button className="btn btn-quiet btn-sm no-print" onClick={onClose} aria-label="Close panel">

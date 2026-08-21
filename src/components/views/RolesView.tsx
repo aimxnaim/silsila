@@ -44,9 +44,9 @@ export function RolesView({
         </p>
       </div>
 
-      <div className="row gap-2 wrap no-print">
+      <div className="chiprow no-print">
         <button
-          className={`tab ${filter === 'all' ? '' : ''}`}
+          className="tab"
           aria-selected={filter === 'all'}
           onClick={() => setFilter('all')}
         >
@@ -100,7 +100,7 @@ export function RolesView({
                       </td>
                       <td className="small tnum">
                         {Math.round(v.confidence * 100)}%
-                        {v.needsReview ? <div className="micro" style={{ color: 'var(--warn)' }}>needs review</div> : null}
+                        {v.needsReview ? <div className="micro" style={{ color: 'var(--saffron-deep)' }}>needs review</div> : null}
                       </td>
                     </tr>
                   );

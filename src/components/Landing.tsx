@@ -1,15 +1,18 @@
 /**
  * The landing page.
  *
- * Two decisions worth naming:
+ * Three decisions worth naming:
  *
  * 1. The three numbers are COMPUTED from the demo dataset at load, not typed.
  *    Drop in a different file and the headline changes. A claim on a landing
  *    page that cannot be traced to data is exactly what this product objects
- *    to elsewhere, so it would be incoherent to hardcode them here.
+ *    to elsewhere, so hardcoding them here would be incoherent.
  *
- * 2. There is one primary action. A landing page for a tool like this should
- *    get out of the way, not collect anything.
+ * 2. The colour blocks touch — 2px apart, no radius, no shadow. Blocks that
+ *    almost touch look like a mistake; blocks that touch look like a decision.
+ *
+ * 3. There is one primary action, and no form. A landing page for a tool like
+ *    this should get out of the way rather than collect anything.
  */
 
 import { useEffect, useState } from 'react';
@@ -18,29 +21,33 @@ import { ingest } from '../domain/ingest.ts';
 import { classifyLineage } from '../domain/lineage.ts';
 import { metrics } from '../domain/metrics.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '../data/demoDataset.ts';
-import { Button, Eyebrow } from './ui/primitives.tsx';
+import { Eyebrow } from './ui/primitives.tsx';
 
 interface Preview {
-  renamed: number;
+  relabelled: number;
   genuinelyNew: number;
   unconfirmed: number;
   people: number;
   positions: number;
+  from: number;
+  to: number;
 }
 
 function computePreview(): Preview | null {
-  // Wrapped: if anything here fails, the page must still render. A broken
+  // Wrapped: if anything here throws, the page must still render. A broken
   // statistic should never take down the front door.
   try {
     const model = ingest(parseCSV(DEMO_DATASET_CSV), DEMO_DATASET_LABEL);
     model.lineage = classifyLineage(model);
     const m = metrics(model);
     return {
-      renamed: m.renameCount + m.splitCount + m.mergeCount,
+      relabelled: m.renameCount + m.splitCount + m.mergeCount,
       genuinelyNew: m.genuinelyNewCount,
       unconfirmed: m.issueCount + m.succeededCount,
       people: m.peopleCount,
       positions: m.positionCount,
+      from: m.headcountStart,
+      to: m.headcountEnd,
     };
   } catch {
     return null;
@@ -52,72 +59,71 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
   useEffect(() => { setPreview(computePreview()); }, []);
 
   return (
-    <main className="shell landing">
-      <div className="wordmark">
-        <span className="latin">Silsilah</span>
-        <span className="arabic" lang="ar" dir="rtl">سلسلة</span>
+    <main className="landing">
+      <div className="shell landing-top">
+        <Eyebrow>Organisational memory</Eyebrow>
+        <Eyebrow>Prototype · synthetic data</Eyebrow>
       </div>
 
-      <h1 className="hero-claim">
-        Every change,<br />
-        <span className="accent">in order.</span>
-      </h1>
+      <div className="shell landing-body">
+        <div className="hero-mark">
+          <span className="latin">SILSILAH</span>
+          <span className="rule" />
+          <span className="arabic" lang="ar" dir="rtl">سلسلة</span>
+        </div>
 
-      <p className="hero-sub">
-        Every HR system stores what is true <em>now</em>. Rename a role and the old
-        title is overwritten; history is destroyed by design. Silsilah reconstructs
-        it — how a role evolved, how a person moved, and where those two histories
-        meet.
-      </p>
+        <h1 className="hero-claim">
+          Every change,<br />
+          <em>in order.</em>
+        </h1>
 
-      <div className="row gap-3 wrap" style={{ marginTop: 'var(--s6)' }}>
-        <Button variant="primary" onClick={onEnter}>Open the demonstration</Button>
-        <a className="btn" href="#how">How it decides</a>
+        <p className="hero-sub">
+          Roles get renamed. Teams split. People move. Your HR system overwrites all
+          of it. Silsilah puts the history back — and shows where a person's story
+          meets the structure's.
+        </p>
+
+        <div className="hero-cta">
+          <button className="btn btn-primary" onClick={onEnter}>Use demo dataset</button>
+          <a className="btn" href="#how">How it decides</a>
+        </div>
+
+        {preview ? (
+          <>
+            <div className="stat-strip">
+              <div className="stat-cell stat-cell--v">
+                <span className="stat-value">{preview.relabelled}</span>
+                <span className="stat-label">roles renamed, split or merged —<br />not created</span>
+              </div>
+              <div className="stat-cell stat-cell--s">
+                <span className="stat-value">{preview.genuinelyNew}</span>
+                <span className="stat-label">genuinely new seats<br />in five years</span>
+              </div>
+              <div className="stat-cell stat-cell--k">
+                <span className="stat-value">{preview.unconfirmed}</span>
+                <span className="stat-label">findings we<br />can&rsquo;t confirm</span>
+              </div>
+            </div>
+
+            <p className="micro faint" style={{ marginTop: 'var(--s3)' }}>
+              Computed at page load from {preview.people} people and {preview.positions}{' '}
+              positions. Headcount moved {preview.from} → {preview.to} over the period.
+              Nothing on this page is typed by hand.
+            </p>
+          </>
+        ) : null}
       </div>
 
-      {preview ? (
-        <>
-          <div className="stat-strip">
-            <div className="stat-cell">
-              <div className="stat-value">{preview.renamed}</div>
-              <div className="stat-label">
-                positions that were <strong>renamed, split or merged</strong> — the work
-                continued, the label did not
-              </div>
-            </div>
-            <div className="stat-cell">
-              <div className="stat-value">{preview.genuinelyNew}</div>
-              <div className="stat-label">
-                <strong>genuinely new</strong> seats created during the period. This is
-                the growth
-              </div>
-            </div>
-            <div className="stat-cell">
-              <div className="stat-value">{preview.unconfirmed}</div>
-              <div className="stat-label">
-                findings we <strong>cannot confirm</strong> from the records, and refuse
-                to guess at
-              </div>
-            </div>
-          </div>
-
-          <p className="micro faint" style={{ marginTop: 'var(--s3)' }}>
-            Computed at page load from {preview.people} people and {preview.positions}{' '}
-            positions in the demonstration dataset. Nothing on this page is typed by hand.
-          </p>
-        </>
-      ) : null}
-
-      <section id="how" style={{ marginTop: 'var(--s9)' }}>
+      <section id="how" className="shell" style={{ paddingBottom: 'var(--s8)' }}>
         <Eyebrow>The idea</Eyebrow>
-        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '20ch' }}>
-          A rename is not a new role.
+        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '18ch' }}>
+          A rename is not a <em>new role</em>.
         </h2>
-        <p className="measure muted" style={{ marginTop: 'var(--s4)' }}>
-          Every tool on the market records <em>that</em> a title changed. None of them
-          decides whether it was still the same job. Organisations make budget,
-          redundancy and pay-equity decisions on the assumption that they know which
-          one happened.
+        <p className="measure muted" style={{ marginTop: 'var(--s4)', fontSize: 16 }}>
+          Every tool on the market records <em style={{ color: 'inherit' }}>that</em> a
+          title changed. None of them decides whether it was still the same job.
+          Organisations make budget, redundancy and pay-equity decisions on the
+          assumption that they know which one happened.
         </p>
 
         <div className="grid-3" style={{ marginTop: 'var(--s6)' }}>
@@ -128,7 +134,7 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
             ['Level change', 'Whether the grade attached to the seat was altered.'],
           ].map(([title, body]) => (
             <div className="card card-tight" key={title}>
-              <h3 style={{ fontSize: 'var(--text-body)' }}>{title}</h3>
+              <h3 style={{ fontSize: 14 }}>{title}</h3>
               <p className="small muted" style={{ marginTop: 'var(--s2)' }}>{body}</p>
             </div>
           ))}
@@ -137,20 +143,20 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
         <p className="measure muted small" style={{ marginTop: 'var(--s5)' }}>
           There is no model here and no training data. Four signals are measured from
           the records and blended into a confidence score — and every signal is shown
-          on screen beside the verdict, so a reader who disagrees can see exactly which
-          input to argue with.
+          on screen beside the verdict, so a reader who disagrees can see exactly
+          which input to argue with.
         </p>
       </section>
 
-      <footer style={{ marginTop: 'var(--s9)', paddingTop: 'var(--s5)', borderTop: '1px solid var(--line)' }}>
+      <div className="shell landing-foot">
         <p className="micro faint measure">
-          <strong>Prototype.</strong> All data in this build is synthetic. It is shaped
-          like a large Malaysian bank so the demonstration is legible to a local
-          audience; every person, position and document reference in it was written for
-          this project. There is no backend and no account system — files are parsed in
-          your browser and never leave your machine.
+          <strong>Prototype.</strong> All data is synthetic — shaped like a large
+          Malaysian bank so the demonstration reads as familiar, but every person,
+          position and document reference was written for this project. Files are
+          parsed in your browser and never leave your machine.
         </p>
-      </footer>
+        <p className="micro faint">DevLeague 2026 · Lab 2</p>
+      </div>
     </main>
   );
 }

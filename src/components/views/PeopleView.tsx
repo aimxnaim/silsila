@@ -57,7 +57,7 @@ export function PeopleView({
           title="People"
           meta={`${rows.length} of ${model.people.size}`}
         />
-        <div style={{ padding: 'var(--s4) var(--s5)', borderBottom: '1px solid var(--line)' }} className="no-print">
+        <div style={{ padding: 'var(--s4) var(--s5)', borderBottom: '1px solid var(--hairline)' }} className="no-print">
           <input
             className="select"
             style={{ width: '100%', maxWidth: 320, cursor: 'text' }}

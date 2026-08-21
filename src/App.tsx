@@ -80,7 +80,8 @@ export function App() {
             style={{ background: 'none', border: 0, cursor: 'pointer', padding: 0 }}
             aria-label="Back to the front page"
           >
-            <span className="latin">Silsilah</span>
+            <span className="latin">SILSILAH</span>
+            <span className="rule" />
             <span className="arabic" lang="ar" dir="rtl">سلسلة</span>
           </button>
 

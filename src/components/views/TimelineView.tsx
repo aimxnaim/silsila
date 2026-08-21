@@ -81,12 +81,12 @@ export function TimelineView({
       {/* ---- The headline. The question an HR lead actually arrived with. -- */}
       <Card>
         <Eyebrow>What the records say</Eyebrow>
-        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '32ch' }}>
+        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '30ch' }}>
           Headcount went from {metrics.headcountStart} to {metrics.headcountEnd}.{' '}
-          <span className="accent">
+          <em>
             {metrics.renameCount + metrics.splitCount + metrics.mergeCount} of those
             positions were relabelled, not created.
-          </span>
+          </em>
         </h2>
         <div className="row gap-4 wrap small muted" style={{ marginTop: 'var(--s4)' }}>
           <span><strong className="tnum">{metrics.renameCount}</strong> renamed or redesignated</span>
@@ -102,7 +102,7 @@ export function TimelineView({
         <div className="row gap-4 wrap spread" style={{ marginBottom: 'var(--s4)' }}>
           <div>
             <Eyebrow>Viewing</Eyebrow>
-            <div style={{ fontSize: 'var(--text-title)', marginTop: 4 }} className="tnum">
+            <div style={{ fontSize: 28, marginTop: 4 }} className="tnum">
               {quarterLabel(quarter)}
             </div>
           </div>
@@ -130,6 +130,7 @@ export function TimelineView({
             aria-label="Move through time"
           />
           <span className="micro faint tnum">{quarterLabelShort(N - 1)}</span>
+          <span className="scrub-out">{quarterLabel(quarter)}</span>
         </div>
         <p className="micro faint no-print" style={{ marginTop: 'var(--s2)' }}>
           Drag the handle, or focus it and use the arrow keys, to move the whole
@@ -255,15 +256,15 @@ export function TimelineView({
           </div>
         </div>
 
-        <div className="legend" style={{ padding: 'var(--s4) var(--s5)', borderTop: '1px solid var(--line)' }}>
+        <div className="legend" style={{ padding: 'var(--s4) var(--s5)', borderTop: '1px solid var(--hairline)' }}>
           <span className="legend-key">
-            <span className="legend-swatch" style={{ borderLeftColor: 'var(--ink)' }} /> Position
+            <span className="legend-swatch" style={{ background: 'var(--vermillion)' }} /> Position
           </span>
           <span className="legend-key">
-            <span className="legend-swatch" style={{ borderLeftColor: 'var(--accent)', background: 'var(--surface-sunk)' }} /> Person
+            <span className="legend-swatch" style={{ background: 'var(--ink)' }} /> Person
           </span>
           <span className="legend-key">
-            <span className="legend-swatch" style={{ borderStyle: 'dashed', borderLeftColor: 'var(--ink-3)' }} /> Reporting line
+            <span className="legend-swatch" style={{ background: 'var(--stone)' }} /> Reporting line
           </span>
           <span className="legend-key">
             <span className="legend-swatch hatch" /> Unknown — never interpolated

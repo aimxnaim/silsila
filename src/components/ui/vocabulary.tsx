@@ -26,10 +26,16 @@ export const RELATION_MEANING: Record<LineageRelation, string> = {
   succeeded: 'A successor exists but the titles barely overlap. Check by hand.',
 };
 
+/**
+ * Colour carries the category, consistently across every view:
+ *   vermillion tint  the seat was relabelled — same work, new wording
+ *   saffron          a structural event, or something needing a human
+ *   ink              genuinely new
+ */
 export function RelationBadge({ relation }: { relation: LineageRelation }) {
   const tone =
-    relation === 'succeeded' ? 'warn'
-    : relation === 'created' ? 'default'
+    relation === 'rename' || relation === 'redesignated' ? 'accent'
+    : relation === 'split' || relation === 'merge' || relation === 'succeeded' ? 'warn'
     : 'ink';
   return <Badge tone={tone}>{RELATION_LABEL[relation]}</Badge>;
 }

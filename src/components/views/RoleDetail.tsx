@@ -70,7 +70,7 @@ export function RoleDetail({
               </div>
               <div
                 className="row spread"
-                style={{ marginTop: 'var(--s4)', paddingTop: 'var(--s3)', borderTop: '1px solid var(--line)' }}
+                style={{ marginTop: 'var(--s4)', paddingTop: 'var(--s3)', borderTop: '1px solid var(--hairline)' }}
               >
                 <span className="small muted">
                   Weighted 0.45 / 0.30 / 0.15 / 0.10
@@ -78,7 +78,7 @@ export function RoleDetail({
                 <strong className="tnum">{Math.round(verdict.confidence * 100)}% confident</strong>
               </div>
               {verdict.needsReview ? (
-                <p className="small" style={{ color: 'var(--warn)', marginTop: 'var(--s3)' }}>
+                <p className="small" style={{ color: 'var(--saffron-deep)', marginTop: 'var(--s3)' }}>
                   Below the threshold at which we are willing to let the machine's
                   answer stand alone. A person should look at this one.
                 </p>
