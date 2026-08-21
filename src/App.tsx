@@ -73,7 +73,7 @@ export function App() {
   return (
     <>
       <header className="appbar no-print">
-        <div className="shell appbar-inner">
+        <div className="shell-app appbar-inner">
           <button
             className="wordmark"
             onClick={() => setEntered(false)}
@@ -107,7 +107,7 @@ export function App() {
         </div>
       </header>
 
-      <main className="shell page">
+      <main className="shell-app page">
         {!model ? (
           <div className="card">
             <Empty title="No records loaded">

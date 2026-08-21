@@ -36,6 +36,17 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
 /* --- Layout ------------------------------------------------------------ */
 .shell { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
 
+/**
+ * The application pages sit in a narrower column than the landing page.
+ *
+ * Both are centred, but the landing page's visual mass is a 52ch paragraph
+ * and three cards, so it reads as a comfortable column. Dense tables at the
+ * same 1180px read as sprawl. Narrowing the application shell makes the two
+ * feel like the same document, which is what matters — the measured widths
+ * being equal does not help if one of them looks twice as wide.
+ */
+.shell-app { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
+
 .stack { display: flex; flex-direction: column; }
 .row   { display: flex; align-items: center; }
 .gap-1 { gap: var(--s1); } .gap-2 { gap: var(--s2); } .gap-3 { gap: var(--s3); }

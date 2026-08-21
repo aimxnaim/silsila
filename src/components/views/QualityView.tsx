@@ -54,6 +54,21 @@ export function QualityView({
         </p>
       </div>
 
+      <Card>
+        <Eyebrow>In one sentence</Eyebrow>
+        <p style={{ marginTop: 'var(--s3)', fontSize: 16 }} className="measure">
+          Real HR records are messy. Dates are missing, two documents disagree, someone
+          is recorded in a job that had already closed. <strong>Every tool has to decide
+          what to do about that.</strong>
+        </p>
+        <p className="measure muted" style={{ marginTop: 'var(--s3)' }}>
+          Most of them quietly fill the gap with a sensible-looking guess, because a
+          chart with holes in it looks broken. We do the opposite: we show you the hole.
+          The four kinds of problem below are everything this file could not settle, and
+          not one of them has been filled in.
+        </p>
+      </Card>
+
       <div className="grid-3">
         {KINDS.map((kind) => (
           <Card tight key={kind}>

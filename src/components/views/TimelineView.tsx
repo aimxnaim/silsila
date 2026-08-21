@@ -30,6 +30,8 @@ import {
 } from '../../domain/dates.ts';
 import { snapshotAt } from '../../domain/metrics.ts';
 import { narratePosition, featuredPerson, PLAIN_LABEL } from '../../domain/narrate.ts';
+import { chains } from '../../domain/chains.ts';
+import { StoryStrip } from './StoryStrip.tsx';
 import { Badge, Button, Card, CardHead, Eyebrow } from '../ui/primitives.tsx';
 import { RelationBadge } from '../ui/vocabulary.tsx';
 
@@ -75,6 +77,11 @@ export function TimelineView({
   }, [model, divisions]);
 
   const [division, setDivision] = useState(busiest);
+
+  // The chart is powerful but it is not the way in. It starts closed.
+  const [chartOpen, setChartOpen] = useState(false);
+
+  const allChains = useMemo(() => chains(model), [model]);
 
   const shown = useMemo(
     () =>
@@ -161,7 +168,47 @@ export function TimelineView({
         </div>
       ) : null}
 
-      {/* ---- 3+4. How to read it, then the chart ------------------------ */}
+      {/* ---- 3. Every change, told left to right ------------------------ */}
+      <div>
+        <div className="page-head">
+          <Eyebrow>What actually happened</Eyebrow>
+          <h2 style={{ marginTop: 'var(--s3)', maxWidth: '26ch' }}>
+            Every job that <em>changed</em>, start to finish
+          </h2>
+          <p className="measure muted" style={{ marginTop: 'var(--s4)', fontSize: 16 }}>
+            Read each row left to right. Each card is one version of a job — what it was
+            called, when it existed, and who was sitting in it. The arrow between two
+            cards says what the change actually meant.
+          </p>
+          <p className="measure muted small" style={{ marginTop: 'var(--s3)' }}>
+            {allChains.length} jobs in this organisation have a history worth reading.
+            The other {model.positions.size - allChains.reduce((n, c) => n + c.members.length, 0)}{' '}
+            were created once and never changed. Click any card for the full record.
+          </p>
+        </div>
+
+        {allChains.map((chain) => (
+          <StoryStrip key={chain.id} model={model} chain={chain} onOpenPosition={onOpenPosition} />
+        ))}
+      </div>
+
+      {/* ---- 4. The same information on a time axis --------------------- */}
+      <div className="row gap-3 wrap spread no-print">
+        <div>
+          <Eyebrow>Optional</Eyebrow>
+          <h3 style={{ marginTop: 6 }}>The same information, on a time axis</h3>
+          <p className="small muted" style={{ marginTop: 4, maxWidth: '58ch' }}>
+            Useful once you know what you are looking for — it shows jobs, people and
+            reporting lines running in parallel, so you can see what was happening
+            elsewhere at the same moment.
+          </p>
+        </div>
+        <button className="btn" onClick={() => setChartOpen((v) => !v)}>
+          {chartOpen ? 'Hide the chart' : 'Show the chart'}
+        </button>
+      </div>
+
+      {chartOpen ? (
       <Card flush>
         <CardHead
           title={<span>The {division} team, over time</span>}
@@ -373,6 +420,8 @@ export function TimelineView({
           </p>
         </div>
       </Card>
+
+      ) : null}
 
       {/* ---- 5. The organisation at the chosen moment -------------------- */}
       <div className="grid-2">
