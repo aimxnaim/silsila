@@ -1,0 +1,359 @@
+/* Styles specific to named parts of the application. */
+
+/* ====================================================================== *
+ * Landing
+ * ====================================================================== */
+.landing { padding: var(--s9) 0 var(--s8); }
+
+.wordmark { display: flex; align-items: baseline; gap: var(--s3); }
+.wordmark .latin {
+  font-size: var(--text-small);
+  letter-spacing: 0.30em;
+  text-transform: uppercase;
+  font-weight: 560;
+}
+.wordmark .arabic {
+  font-size: 17px;
+  color: var(--ink-2);
+  /* Arabic needs its own stack; Inter has no coverage. */
+  font-family: 'Noto Naskh Arabic', 'Geeza Pro', 'Segoe UI', serif;
+}
+
+.hero-claim { margin-top: var(--s6); max-width: 17ch; }
+.hero-sub   { margin-top: var(--s5); max-width: 56ch; font-size: 17px; color: var(--ink-2); line-height: 1.6; }
+
+/* Three outlined panels sharing one border. No fills. */
+.stat-strip {
+  margin-top: var(--s7);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  overflow: hidden;
+}
+.stat-cell { padding: var(--s5); border-right: 1px solid var(--line); }
+.stat-cell:last-child { border-right: 0; }
+.stat-value {
+  font-size: 44px;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stat-label { margin-top: var(--s3); font-size: var(--text-small); color: var(--ink-2); max-width: 26ch; }
+
+@media (max-width: 760px) {
+  .stat-strip { grid-template-columns: 1fr; }
+  .stat-cell { border-right: 0; border-bottom: 1px solid var(--line); }
+  .stat-cell:last-child { border-bottom: 0; }
+}
+
+/* ====================================================================== *
+ * Application chrome
+ * ====================================================================== */
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(247, 246, 243, 0.86);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.appbar-inner { display: flex; align-items: center; gap: var(--s5); height: 58px; }
+
+.tabs { display: flex; gap: var(--s1); margin-left: auto; }
+.tab {
+  padding: 7px 13px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab:hover { background: var(--surface-hover); color: var(--ink); }
+.tab[aria-selected='true'] {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.page { padding: var(--s6) 0 var(--s9); }
+.page-head { margin-bottom: var(--s5); }
+
+/* ====================================================================== *
+ * Timeline — the connection view
+ * ====================================================================== */
+.tl { --lane-h: 26px; --label-w: 232px; }
+
+.tl-scale { display: flex; margin-left: var(--label-w); border-bottom: 1px solid var(--line); }
+.tl-tick {
+  flex: 1 1 0;
+  font-size: var(--text-micro);
+  color: var(--ink-3);
+  text-align: center;
+  padding-bottom: 5px;
+  border-left: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+.tl-tick:first-child { border-left: 0; }
+
+.tl-group { border-bottom: 1px solid var(--line); }
+.tl-group:last-child { border-bottom: 0; }
+.tl-group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  background: var(--surface-sunk);
+  border-bottom: 1px solid var(--line);
+}
+
+.tl-row { display: flex; align-items: stretch; min-height: 34px; border-bottom: 1px solid var(--line); }
+.tl-row:last-child { border-bottom: 0; }
+.tl-row:hover { background: var(--surface-hover); }
+
+.tl-label {
+  width: var(--label-w);
+  flex: 0 0 var(--label-w);
+  padding: var(--s2) var(--s4);
+  border-right: 1px solid var(--line);
+  font-size: var(--text-small);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+}
+.tl-label-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.tl-track { position: relative; flex: 1 1 auto; padding: var(--s2) 0; }
+
+/* Bars are outlined rectangles. The lane is signalled by border treatment
+   and a left rule, never by a filled colour block. */
+.tl-bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: var(--lane-h);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--s2);
+  border: 1px solid var(--line-strong);
+  border-left-width: 3px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: var(--text-micro);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.tl-bar:hover { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(26,25,23,0.06); }
+
+/* Three lanes, three border treatments. */
+.tl-bar.lane-role      { border-left-color: var(--ink); }
+.tl-bar.lane-person    { border-left-color: var(--accent); background: var(--surface-sunk); }
+.tl-bar.lane-reporting { border-style: dashed; border-left-color: var(--ink-3); color: var(--ink-2); }
+.tl-bar.lane-unknown {
+  border-style: dashed;
+  border-left-color: var(--unknown);
+  background-image: var(--hatch);
+  color: var(--ink-3);
+}
+
+/* Event markers: a 2px rule, not a filled dot. */
+.tl-event {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  opacity: 0.55;
+}
+
+.tl-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 5;
+}
+.tl-playhead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  background: var(--accent);
+}
+
+.tl-body { position: relative; }
+.tl-playhead-wrap {
+  position: absolute;
+  inset: 0 0 0 var(--label-w);
+  pointer-events: none;
+  z-index: 5;
+}
+
+@media (max-width: 900px) {
+  .tl { --label-w: 150px; }
+}
+
+/* --- Scrubber ---------------------------------------------------------- */
+.scrubber { display: flex; align-items: center; gap: var(--s4); }
+.scrubber input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 auto;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+.scrubber input[type='range']::-webkit-slider-runnable-track {
+  height: 1px; background: var(--line-strong);
+}
+.scrubber input[type='range']::-moz-range-track {
+  height: 1px; background: var(--line-strong);
+}
+.scrubber input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 3px;
+  height: 20px;
+  background: var(--accent);
+  border: 0;
+  border-radius: 1px;
+  margin-top: -10px;
+}
+.scrubber input[type='range']::-moz-range-thumb {
+  width: 3px; height: 20px; background: var(--accent); border: 0; border-radius: 1px;
+}
+
+/* --- Headcount chart. Outlined columns. -------------------------------- */
+.chart { display: flex; align-items: flex-end; gap: 2px; height: 92px; }
+.chart-col {
+  flex: 1 1 0;
+  border: 1px solid var(--line-strong);
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  background: var(--surface);
+  min-height: 2px;
+  position: relative;
+}
+.chart-col.is-current { border-color: var(--accent); }
+.chart-col.is-current::after {
+  content: '';
+  position: absolute;
+  left: -1px; right: -1px; bottom: 0;
+  height: 2px;
+  background: var(--accent);
+}
+
+/* ====================================================================== *
+ * Signals — the classifier's reasoning, rendered
+ * ====================================================================== */
+.signal { display: grid; grid-template-columns: 132px 1fr 44px; align-items: center; gap: var(--s3); }
+.signal-track { height: 5px; border: 1px solid var(--line-strong); border-radius: 3px; overflow: hidden; }
+.signal-fill { height: 100%; background: var(--ink); }
+.signal-value { text-align: right; font-variant-numeric: tabular-nums; font-size: var(--text-small); }
+
+/* ====================================================================== *
+ * Lineage chain
+ * ====================================================================== */
+.chain { display: flex; flex-direction: column; gap: 0; }
+.chain-node {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: var(--s3) var(--s4);
+  background: var(--surface);
+}
+.chain-node.is-current { border-color: var(--ink); border-width: 1.5px; }
+.chain-link {
+  margin-left: var(--s5);
+  padding: var(--s2) 0 var(--s2) var(--s4);
+  border-left: 1px solid var(--line-strong);
+  font-size: var(--text-micro);
+  color: var(--ink-2);
+}
+
+/* ====================================================================== *
+ * Drawer
+ * ====================================================================== */
+.scrim {
+  position: fixed; inset: 0;
+  background: rgba(26, 25, 23, 0.22);
+  z-index: 40;
+  animation: fade 140ms ease;
+}
+.drawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(560px, 100%);
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  animation: slide 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.drawer-head {
+  display: flex; align-items: flex-start; gap: var(--s4);
+  padding: var(--s5); border-bottom: 1px solid var(--line);
+}
+.drawer-body { padding: var(--s5); overflow-y: auto; }
+
+@keyframes fade  { from { opacity: 0; } }
+@keyframes slide { from { transform: translateX(14px); opacity: 0; } }
+
+/* ====================================================================== *
+ * Dropzone
+ * ====================================================================== */
+.drop {
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r);
+  padding: var(--s8) var(--s5);
+  text-align: center;
+  background: var(--surface);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.drop.is-hot { border-color: var(--accent); background: var(--surface-sunk); }
+
+/* ====================================================================== *
+ * Misc
+ * ====================================================================== */
+.notice {
+  display: flex; gap: var(--s3); align-items: flex-start;
+  border: 1px solid var(--line-strong);
+  border-left-width: 3px;
+  border-radius: var(--r-sm);
+  padding: var(--s3) var(--s4);
+  font-size: var(--text-small);
+  background: var(--surface);
+}
+.notice-error  { border-left-color: var(--accent); }
+.notice-info   { border-left-color: var(--ink); }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--s4); font-size: var(--text-micro); color: var(--ink-2); }
+.legend-key { display: inline-flex; align-items: center; gap: 6px; }
+.legend-swatch { width: 22px; height: 12px; border: 1px solid var(--line-strong); border-left-width: 3px; border-radius: 3px; }
+
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--s4); }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s4); }
+
+.empty { padding: var(--s8) var(--s5); text-align: center; color: var(--ink-2); }
+
+.select {
+  padding: 7px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: var(--text-small);
+  cursor: pointer;
+}
