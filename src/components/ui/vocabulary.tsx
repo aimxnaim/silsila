@@ -3,28 +3,17 @@
  *
  * Kept in one place because these six words are the product's vocabulary. If
  * they drift between views, the reader stops trusting them.
+ *
+ * The wording itself lives in domain/narrate.ts, so that the terminal output of
+ * `npm run verify` and the interface say exactly the same thing.
  */
 
-import type { LineageRelation } from '../../domain/types.ts';
+import type { IssueKind, LineageRelation } from '../../domain/types.ts';
+import { PLAIN_LABEL, PLAIN_MEANING } from '../../domain/narrate.ts';
 import { Badge } from './primitives.tsx';
 
-export const RELATION_LABEL: Record<LineageRelation, string> = {
-  rename: 'Renamed',
-  redesignated: 'Redesignated',
-  split: 'Split from',
-  merge: 'Merged from',
-  created: 'New position',
-  succeeded: 'Succeeded',
-};
-
-export const RELATION_MEANING: Record<LineageRelation, string> = {
-  rename: 'Same job, new wording. Headcount did not grow.',
-  redesignated: 'Same job, new wording and a changed grade.',
-  split: 'One position divided into several.',
-  merge: 'Several positions consolidated into one.',
-  created: 'Genuinely new. No predecessor in the records.',
-  succeeded: 'A successor exists but the titles barely overlap. Check by hand.',
-};
+export const RELATION_LABEL = PLAIN_LABEL;
+export const RELATION_MEANING = PLAIN_MEANING;
 
 /**
  * Colour carries the category, consistently across every view:
@@ -40,16 +29,16 @@ export function RelationBadge({ relation }: { relation: LineageRelation }) {
   return <Badge tone={tone}>{RELATION_LABEL[relation]}</Badge>;
 }
 
-export const ISSUE_LABEL = {
-  conflict: 'Conflict',
-  missing: 'Missing',
-  inferred: 'Inferred',
-  inconsistent: 'Inconsistent',
-} as const;
+export const ISSUE_LABEL: Record<IssueKind, string> = {
+  conflict: 'Two records disagree',
+  missing: 'Something was never written down',
+  inferred: 'We worked it out ourselves',
+  inconsistent: 'Two records contradict each other',
+};
 
-export const ISSUE_MEANING = {
-  conflict: 'Two sources describe the same period differently.',
-  missing: 'A fact we need was never recorded.',
-  inferred: 'A value shown was derived by us, not read from a record.',
-  inconsistent: 'Two records contradict each other on their face.',
-} as const;
+export const ISSUE_MEANING: Record<IssueKind, string> = {
+  conflict: 'Two different documents describe the same period and say different things.',
+  missing: 'A fact we needed simply is not in any record. We leave it blank.',
+  inferred: 'A date shown was calculated by us, not read from a document. We say so.',
+  inconsistent: 'Two records cannot both be true — for example, someone in a job that had already closed.',
+};

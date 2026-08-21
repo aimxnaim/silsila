@@ -37,13 +37,20 @@ export function QualityView({
   return (
     <div className="stack gap-5">
       <div className="page-head">
-        <Eyebrow>Requirement 6 · incomplete records</Eyebrow>
-        <h2 style={{ marginTop: 'var(--s3)' }}>What these records cannot tell us</h2>
-        <p className="measure muted" style={{ marginTop: 'var(--s3)' }}>
-          {model.stats.rowsRead} rows were read and {model.stats.rowsUsed} were usable.
-          Below is everything the data does not settle. None of it has been filled in.
-          On the timeline these periods are drawn as a diagonal hatch rather than a
-          colour, because a gap is not a category.
+        <Eyebrow>Where the records fall short</Eyebrow>
+        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '24ch' }}>
+          What we <em>refuse to guess</em>
+        </h2>
+        <p className="measure muted" style={{ marginTop: 'var(--s4)', fontSize: 16 }}>
+          We read {model.stats.rowsRead} rows and could use {model.stats.rowsUsed} of
+          them. Everything below is a question the records do not answer — and we have
+          left every one of them blank rather than filling it in with a plausible guess.
+        </p>
+        <p className="measure muted small" style={{ marginTop: 'var(--s3)' }}>
+          This is the opposite of what most software does. A tool that quietly draws a
+          straight line through missing data produces a tidy chart that the people who
+          own the data know is wrong — which is exactly why they stop trusting it. On
+          the timeline these periods appear as diagonal stripes, never as a colour.
         </p>
       </div>
 

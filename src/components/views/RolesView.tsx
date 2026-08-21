@@ -36,11 +36,18 @@ export function RolesView({
   return (
     <div className="stack gap-5">
       <div className="page-head">
-        <Eyebrow>Requirement 2 · role history</Eyebrow>
-        <h2 style={{ marginTop: 'var(--s3)' }}>Every position, and what its arrival actually meant</h2>
-        <p className="measure muted" style={{ marginTop: 'var(--s3)' }}>
-          Grouped by the classifier's verdict. Open any position to see its lineage
-          chain and the four measurements behind the call.
+        <Eyebrow>Every job in the organisation</Eyebrow>
+        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '22ch' }}>
+          Which of these jobs are <em>actually new</em>?
+        </h2>
+        <p className="measure muted" style={{ marginTop: 'var(--s4)', fontSize: 16 }}>
+          Sorting a list of job titles alphabetically tells you nothing. These are
+          grouped by what each job&rsquo;s <strong>arrival actually meant</strong> —
+          whether somebody was hired, or an existing job was simply given a new name.
+        </p>
+        <p className="measure muted small" style={{ marginTop: 'var(--s3)' }}>
+          Click any row to see where the job came from, where it went, and the four
+          measurements behind our conclusion.
         </p>
       </div>
 
@@ -50,7 +57,7 @@ export function RolesView({
           aria-selected={filter === 'all'}
           onClick={() => setFilter('all')}
         >
-          All {model.positions.size}
+          Everything ({model.positions.size})
         </button>
         {ORDER.map((rel) => {
           const n = grouped.get(rel)!.length;
@@ -78,10 +85,10 @@ export function RolesView({
             <table>
               <thead>
                 <tr>
-                  <th>Position</th>
-                  <th>Division</th>
-                  <th>Existed</th>
-                  <th style={{ width: 96 }}>Confidence</th>
+                  <th>The job</th>
+                  <th>Part of</th>
+                  <th>Existed from — to</th>
+                  <th style={{ width: 110 }}>How sure we are</th>
                 </tr>
               </thead>
               <tbody>
@@ -100,7 +107,11 @@ export function RolesView({
                       </td>
                       <td className="small tnum">
                         {Math.round(v.confidence * 100)}%
-                        {v.needsReview ? <div className="micro" style={{ color: 'var(--saffron-deep)' }}>needs review</div> : null}
+                        {v.needsReview ? (
+                          <div className="micro" style={{ color: 'var(--saffron-deep)' }}>
+                            a person should check
+                          </div>
+                        ) : null}
                       </td>
                     </tr>
                   );

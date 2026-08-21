@@ -42,13 +42,18 @@ export function PeopleView({
   return (
     <div className="stack gap-5">
       <div className="page-head">
-        <Eyebrow>Requirement 3 · person journeys</Eyebrow>
-        <h2 style={{ marginTop: 'var(--s3)' }}>Everyone in the records, most-affected first</h2>
-        <p className="measure muted" style={{ marginTop: 'var(--s3)' }}>
-          Sorted by how many structural changes happened underneath each person —
-          renames, splits and merges of the seat they were sitting in. The people at
-          the top of this list did not necessarily change jobs. Their jobs changed
-          around them.
+        <Eyebrow>Everyone in the records</Eyebrow>
+        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '24ch' }}>
+          Who had their job <em>change around them</em>?
+        </h2>
+        <p className="measure muted" style={{ marginTop: 'var(--s4)', fontSize: 16 }}>
+          The people at the top of this list mostly did not move. Their <em>jobs</em>{' '}
+          moved — renamed, split apart, or merged into something else while they sat
+          there. On a normal HR record that is indistinguishable from someone who keeps
+          switching roles, which is how good employees get misread.
+        </p>
+        <p className="measure muted small" style={{ marginTop: 'var(--s3)' }}>
+          Click anyone to see their full history and exactly what happened around them.
         </p>
       </div>
 
@@ -73,9 +78,9 @@ export function PeopleView({
               <tr>
                 <th>Person</th>
                 <th>In the records</th>
-                <th>Seats held</th>
-                <th>Distinct titles</th>
-                <th>Structural changes</th>
+                <th>Jobs held</th>
+                <th>Different titles</th>
+                <th>Times their job changed around them</th>
               </tr>
             </thead>
             <tbody>

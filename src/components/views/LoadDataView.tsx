@@ -57,12 +57,15 @@ export function LoadDataView({
   return (
     <div className="stack gap-5">
       <div className="page-head">
-        <Eyebrow>Requirement 1 · structured source</Eyebrow>
-        <h2 style={{ marginTop: 'var(--s3)' }}>Load your own records</h2>
-        <p className="measure muted" style={{ marginTop: 'var(--s3)' }}>
-          Export people and positions from whatever HR system you already run — every
-          one of them can produce a CSV — and drop it here. Parsing happens in your
-          browser. Nothing is uploaded, and there is no server to upload it to.
+        <Eyebrow>Bring your own data</Eyebrow>
+        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '22ch' }}>
+          Try it on <em>your</em> organisation
+        </h2>
+        <p className="measure muted" style={{ marginTop: 'var(--s4)', fontSize: 16 }}>
+          Export people and jobs from whatever HR system you already use — every one of
+          them can produce a spreadsheet — and drop the file here. Not sure of the
+          format? Download our sample, open it in Excel, replace the rows with your own,
+          and drop it back.
         </p>
       </div>
 

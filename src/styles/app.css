@@ -38,8 +38,8 @@
  */
 .stat-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 2px;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: var(--s4);
   margin-top: 52px;
 }
 .stat-cell {
@@ -74,7 +74,7 @@
 }
 .appbar-inner { display: flex; align-items: center; gap: 20px; padding: 14px 0; flex-wrap: wrap; }
 
-.tabs { display: flex; gap: 2px; margin-left: auto; overflow-x: auto; }
+.tabs { display: flex; gap: 2px; margin-left: auto; overflow-x: auto; min-width: 0; }
 .tab {
   background: none; border: none;
   padding: 12px 16px;
@@ -96,31 +96,60 @@
 
 /* ====================================================================== *
  * Timeline — the connection view
+ *
+ * The hardest thing about this chart is that a first-time reader has to be
+ * told three things before it means anything: time runs left to right, each
+ * row is one lane, and the colour says which kind of thing the lane holds.
+ * The layout below is arranged so that all three are answerable without
+ * anyone explaining them.
  * ====================================================================== */
-.tl { --lane-h: 30px; --label-w: 236px; }
+.tl { --lane-h: 30px; --label-w: 260px; }
 
-.tl-scale { display: flex; margin-left: var(--label-w); border-bottom: 1px solid var(--hairline); }
-.tl-tick {
-  flex: 1 1 0;
-  font-size: 11px;
-  color: var(--ink-3);
-  text-align: center;
-  padding-bottom: 6px;
-  border-left: 1px solid var(--hairline);
-  font-variant-numeric: tabular-nums;
-}
-.tl-tick:first-child { border-left: 0; }
-
-.tl-group { border-bottom: 1px solid var(--hairline); }
-.tl-group:last-child { border-bottom: 0; }
-.tl-group-head {
-  display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
-  padding: var(--s3) var(--s4);
+/* --- "How to read this" strip, sitting directly above the chart -------- */
+.readme-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: var(--s4);
+  padding: var(--s4) var(--s5);
   background: var(--paper-2);
   border-bottom: 1px solid var(--hairline);
 }
+.readme-key { display: flex; gap: 10px; align-items: flex-start; }
+.readme-swatch {
+  width: 26px; height: 16px; border-radius: 3px; flex: none; margin-top: 2px;
+  background: var(--stone);
+}
+.readme-key b { display: block; font-size: 12.5px; font-weight: 500; }
+.readme-key span { display: block; font-size: 11.5px; color: var(--ink-2); line-height: 1.45; }
 
-.tl-row { display: flex; align-items: stretch; min-height: 40px; border-bottom: 1px solid var(--hairline); }
+/* --- Year axis --------------------------------------------------------- */
+.tl-scale { display: flex; margin-left: var(--label-w); border-bottom: 1px solid var(--hairline); }
+.tl-year {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  text-align: left;
+  padding: 0 0 6px 8px;
+  border-left: 1px solid var(--hairline);
+  font-variant-numeric: tabular-nums;
+}
+.tl-year:first-child { border-left: 0; padding-left: 0; }
+
+/* Vertical year gridlines behind every lane, so time is readable. */
+.tl-gridline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--hairline); }
+
+/* --- Groups ------------------------------------------------------------ */
+.tl-group { border-bottom: 1px solid var(--hairline); }
+.tl-group:last-child { border-bottom: 0; }
+
+/* The group header states the story in a plain sentence. A pill reading
+   "Succeeded" tells a first-time reader nothing; a sentence does. */
+.tl-group-head { padding: var(--s3) var(--s4); background: var(--paper-2); border-bottom: 1px solid var(--hairline); }
+.tl-group-title { display: flex; align-items: baseline; gap: var(--s2); flex-wrap: wrap; }
+.tl-group-title strong { font-size: 14px; font-weight: 500; }
+.tl-story { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; max-width: 78ch; }
+
+.tl-row { display: flex; align-items: stretch; min-height: 42px; border-bottom: 1px solid var(--hairline); }
 .tl-row:last-child { border-bottom: 0; }
 
 .tl-label {
@@ -128,15 +157,21 @@
   flex: 0 0 var(--label-w);
   padding: var(--s2) var(--s4);
   border-right: 1px solid var(--hairline);
-  font-size: 12px;
-  display: flex; flex-direction: column; justify-content: center; gap: 1px;
+  font-size: 12.5px;
+  display: flex; align-items: center; gap: 8px;
+  min-width: 0;
 }
+.tl-dot { width: 10px; height: 10px; border-radius: 2px; flex: none; background: var(--stone); }
+.tl-dot--role   { background: var(--vermillion); }
+.tl-dot--person { background: var(--ink); }
+.tl-label-text { min-width: 0; }
+.tl-label-kind { display: block; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
 .tl-label-title {
-  font-weight: 500; color: var(--ink);
+  display: block; font-weight: 500; color: var(--ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-.tl-track { position: relative; flex: 1 1 auto; padding: 5px 0; }
+.tl-track { position: relative; flex: 1 1 auto; padding: 6px 0; }
 
 /**
  * The lanes. FILLED blocks — this is where the design earns its keep.
@@ -149,15 +184,16 @@
   transform: translateY(-50%);
   height: var(--lane-h);
   display: flex; align-items: center;
-  padding: 0 10px;
+  padding: 0 9px;
   border: none;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   cursor: pointer;
-  transition: transform 180ms ease, opacity 180ms ease;
+  transition: transform 180ms ease, filter 180ms ease;
 }
-.tl-bar:hover { transform: translateY(calc(-50% - 1px)); }
+.tl-bar:hover { transform: translateY(calc(-50% - 1px)); filter: brightness(1.08); }
 
 .tl-bar.lane-role      { background: var(--vermillion); color: #fff; }
 .tl-bar.lane-person    { background: var(--ink);        color: var(--paper); }
@@ -170,8 +206,12 @@
   cursor: help;
 }
 
-/* A structural event: a saffron rule through the whole group. */
-.tl-event { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--saffron); }
+/* "still open" — a seat or an assignment with no recorded end. */
+.tl-bar.is-open::after {
+  content: '';
+  position: absolute; right: 0; top: 0; bottom: 0; width: 10px;
+  background: linear-gradient(90deg, transparent, rgba(250,249,245,.55));
+}
 
 .tl-body { position: relative; }
 .tl-playhead-wrap { position: absolute; inset: 0 0 0 var(--label-w); pointer-events: none; z-index: 5; }
@@ -187,16 +227,28 @@
   background: var(--vermillion);
 }
 
-@media (max-width: 900px) { .tl { --label-w: 150px; } }
+@media (max-width: 900px) { .tl { --label-w: 168px; } }
 
 /* --- Scrubber ---------------------------------------------------------- */
 .scrubber { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .scrubber input[type='range'] {
-  flex: 1 1 auto; min-width: 220px;
+  flex: 1 1 auto; min-width: 200px;
   accent-color: var(--vermillion);
   cursor: pointer;
 }
 .scrub-out { font-family: var(--mono); font-size: 13px; min-width: 64px; }
+
+/* --- Featured story ---------------------------------------------------- */
+.story {
+  border: 1px solid var(--hairline);
+  border-left: 4px solid var(--vermillion);
+  border-radius: 8px;
+  padding: var(--s5);
+  background: var(--paper);
+}
+.story h3 { font-size: 20px; letter-spacing: -0.02em; }
+.story p { margin-top: var(--s3); font-size: 15px; color: var(--ink-2); max-width: 66ch; }
+.story em { color: var(--vermillion); }
 
 /* --- Headcount chart --------------------------------------------------- */
 .chart { display: flex; align-items: flex-end; gap: 3px; height: 84px; }
@@ -290,9 +342,9 @@
 /* ====================================================================== *
  * Misc
  * ====================================================================== */
-.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s4); }
-.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s4); }
-.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 2px; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: var(--s4); }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: var(--s4); }
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: var(--s3); }
 
 .empty { text-align: center; padding: 60px 20px; color: var(--ink-2); }
 .empty h3 { font-size: 16px; font-weight: 500; color: var(--ink); }
