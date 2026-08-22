@@ -12,12 +12,10 @@
  * first from the other end — the same seats, keyed by person instead of by
  * job. The reader arrives with one of the two questions, not both.
  *
- * Which pane, and how it is drawn, are separate choices, so they get separate
- * controls at either end of the same row. Cards are for reading a department
- * you do not know: faces and titles, scannable at arm's length. The table is
- * for a reader who has stopped browsing and started counting — columns of the
- * sort you would export. The dress survives the switch between panes, because
- * a reader who wanted columns for the roles wants them for the people too.
+ * Both panes are tables. A card grid was tried and dropped: it led with the
+ * holder's face and name, which buried the job title the roles pane exists to
+ * list, and it made counting harder than it needs to be. Columns of the sort
+ * you would export are the right dress for both questions here.
  */
 
 import { useMemo, useState } from 'react';
@@ -29,16 +27,7 @@ import { Avatar } from '../ui/Avatar.tsx';
 import { Badge } from '../ui/primitives.tsx';
 import { deptAbbr, deptColor } from '../ui/vocabulary.tsx';
 
-type Layout = 'cards' | 'table';
 type Pane = 'roles' | 'people';
-
-/** Grade, team and dates, in the one order they read well in. */
-function roleMeta(role: DepartmentRole): string {
-  return [
-    role.level === null ? null : `Grade ${role.level}`,
-    role.orgUnit,
-  ].filter(Boolean).join(' · ');
-}
 
 function roleStatus(role: DepartmentRole) {
   if (role.closed) return <Badge>Closed</Badge>;
@@ -48,19 +37,16 @@ function roleStatus(role: DepartmentRole) {
 
 export function DeptView({
   model, division, onBack, onOpenPerson, onOpenPosition,
-  defaultLayout = 'cards', defaultPane = 'roles',
+  defaultPane = 'roles',
 }: {
   model: OrgModel;
   division: string;
   onBack: () => void;
   onOpenPerson: (id: string) => void;
   onOpenPosition: (id: string) => void;
-  /** Which dress the list opens in. Exists so the smoke test can render both. */
-  defaultLayout?: Layout;
-  /** Which list opens first. Same reason: both panes need rendering. */
+  /** Which list opens first. Exists so the smoke test can render both panes. */
   defaultPane?: Pane;
 }) {
-  const [layout, setLayout] = useState<Layout>(defaultLayout);
   const [pane, setPane] = useState<Pane>(defaultPane);
 
   const summary = useMemo(
@@ -143,15 +129,11 @@ export function DeptView({
         ))}
       </div>
 
-      {/* ---- Which list, and how it is drawn ----------------------------- */}
-      <div className="row gap-4 wrap spread no-print">
+      {/* ---- Which list ---------------------------------------------------- */}
+      <div className="row gap-4 wrap no-print">
         <div className="segmented" role="group" aria-label="Which list to show">
           <button aria-pressed={pane === 'roles'} onClick={() => setPane('roles')}>Roles</button>
           <button aria-pressed={pane === 'people'} onClick={() => setPane('people')}>People</button>
-        </div>
-        <div className="segmented" role="group" aria-label="How to show the list">
-          <button aria-pressed={layout === 'cards'} onClick={() => setLayout('cards')}>Cards</button>
-          <button aria-pressed={layout === 'table'} onClick={() => setLayout('table')}>Table</button>
         </div>
       </div>
 
@@ -181,41 +163,6 @@ export function DeptView({
             <p className="small faint" style={{ padding: 'var(--s5)' }}>
               No seats are recorded against this department.
             </p>
-          ) : layout === 'cards' ? (
-            <div className="rolecard-grid">
-              {roles.map((r) => (
-                <button
-                  key={r.positionId}
-                  className={`rolecard ${r.closed ? 'rolecard--closed' : ''}`.trim()}
-                  onClick={() => onOpenPosition(r.positionId)}
-                >
-                  <span className="rolecard-top">
-                    {r.holder ? (
-                      <Avatar name={r.holder.name} />
-                    ) : (
-                      <span className="rolecard-empty" aria-hidden="true">—</span>
-                    )}
-                    <span className="rolecard-who">
-                      <span className="rolecard-name">
-                        {r.holder?.name ?? 'Vacant'}
-                      </span>
-                      <span className="rolecard-title">{r.title}</span>
-                    </span>
-                  </span>
-
-                  <span className="rolecard-foot">
-                    <span className="rolecard-meta">{roleMeta(r)}</span>
-                    <span className="rolecard-since">
-                      {r.holder && r.since
-                        ? `${r.filled ? 'since' : 'last held'} ${formatMonthYear(r.since)}`
-                        : r.createdAt ? `open since ${formatMonthYear(r.createdAt)}` : ''}
-                    </span>
-                  </span>
-
-                  <span className="rolecard-badge">{roleStatus(r)}</span>
-                </button>
-              ))}
-            </div>
           ) : (
             <table>
               <thead>
@@ -269,26 +216,6 @@ export function DeptView({
             <p className="small faint" style={{ padding: 'var(--s5)' }}>
               Nobody is recorded against this department.
             </p>
-          ) : layout === 'cards' ? (
-            <div className="personcard-grid">
-              {staff.map((p) => (
-                <button
-                  key={p.personId}
-                  className="personcard"
-                  onClick={() => onOpenPerson(p.personId)}
-                >
-                  <Avatar name={p.name} />
-                  <span className="personcard-body">
-                    <span className="personcard-name">{p.name}</span>
-                    <span className="personcard-title">{p.title}</span>
-                    <span className="personcard-meta">
-                      {p.orgUnit} · {tenureOf(p.personId)}
-                    </span>
-                  </span>
-                  {p.current ? <Badge tone="ok">Current</Badge> : <Badge>Moved on</Badge>}
-                </button>
-              ))}
-            </div>
           ) : (
             <table>
               <thead>

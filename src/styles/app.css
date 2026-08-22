@@ -748,97 +748,6 @@
 }
 .gradepill b { font-size: 13.5px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
 
-/* ---- Role cards ------------------------------------------------------- */
-.rolecard-grid,
-.personcard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
-  gap: var(--s4);
-  padding: var(--s5) 22px;
-}
-
-.rolecard,
-.personcard {
-  position: relative;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  padding: 16px 18px;
-  text-align: left;
-  transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
-}
-.rolecard:hover,
-.personcard:hover { box-shadow: var(--lift); transform: translateY(-2px); border-color: var(--ink-4); }
-.rolecard:focus-visible,
-.personcard:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-
-/* A closed seat is history, not an option. It stays legible and stays clickable
-   — its story is the whole point of the product — but it should not compete
-   with the seats that still exist. */
-.rolecard--closed { background: var(--surface-2); }
-.rolecard--closed .rolecard-name,
-.rolecard--closed .rolecard-title { color: var(--ink-3); }
-
-.rolecard { display: flex; flex-direction: column; gap: 12px; }
-/* The right padding is the status pill's berth. The pill is positioned out of
-   flow so it can sit against the corner, which means the name beside it would
-   otherwise run underneath rather than ellipsing short of it. */
-.rolecard-top { display: flex; align-items: center; gap: 10px; min-width: 0; padding-right: 68px; }
-.rolecard-who { min-width: 0; display: block; }
-
-/* The holder leads, the title sits under it: this page answers "who does what
-   here" far more often than it answers "which seats exist". */
-.rolecard-name {
-  display: block; font-size: 14px; font-weight: 650; color: var(--ink);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.rolecard-title {
-  display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 1px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-
-/* The dash where an avatar would be, so a vacant seat keeps the row rhythm
-   rather than shunting its title left of every neighbour's. */
-.rolecard-empty {
-  width: 32px; height: 32px; flex: none;
-  border-radius: 50%;
-  border: 1px dashed var(--line);
-  display: grid; place-items: center;
-  color: var(--ink-4); font-size: 13px;
-}
-
-.rolecard-foot {
-  display: flex; flex-direction: column; gap: 2px;
-  padding-top: 11px;
-  border-top: 1px solid var(--line-soft);
-  font-size: 12px; color: var(--ink-4);
-}
-.rolecard-meta { color: var(--ink-3); }
-.rolecard-since { font-variant-numeric: tabular-nums; }
-.rolecard-badge { position: absolute; top: 14px; right: 14px; }
-
-/* ---- Person cards ----------------------------------------------------- */
-.personcard { display: flex; align-items: center; gap: 12px; }
-.personcard-body { min-width: 0; flex: 1 1 auto; }
-.personcard-name {
-  display: block; font-size: 14px; font-weight: 650; color: var(--ink);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.personcard-title {
-  display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 1px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.personcard-meta {
-  display: block; font-size: 11.5px; color: var(--ink-4); margin-top: 3px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-
-/* Printing a department should give you the tables, not a wall of cards. */
-@media print {
-  .rolecard-grid, .personcard-grid { grid-template-columns: 1fr 1fr; gap: var(--s3); padding: var(--s3) 0; }
-  .rolecard:hover, .personcard:hover { box-shadow: none; transform: none; }
-}
-
 /* ---- Back link -------------------------------------------------------- */
 .backlink {
   background: none; border: 0; padding: 0;
@@ -900,6 +809,30 @@
 .glance-key i { display: block; flex: none; width: 9px; height: 9px; border-radius: 2px; }
 .glance-key b { font-weight: 700; color: var(--ink); }
 .glance-key span { color: var(--ink-3); }
+
+/* ---- The working, folded away -------------------------------------------
+ *
+ * Where the evidence for a glance lives once it stops being the first thing
+ * in the drawer. A native <details> rather than a toggle in state: it prints
+ * open, it is keyboard-operable for free, and find-in-page reaches inside it.
+ */
+.disclose { margin-top: var(--s4); border-top: 1px solid var(--line-soft); padding-top: var(--s3); }
+.disclose > summary {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  cursor: pointer; list-style: none;
+  font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+}
+.disclose > summary::-webkit-details-marker { display: none; }
+.disclose > summary::before {
+  content: '›'; display: inline-block; margin-right: var(--s2);
+  color: var(--ink-4); transition: transform 120ms ease;
+}
+.disclose[open] > summary::before { transform: rotate(90deg); }
+.disclose > summary:hover { color: var(--ink); }
+.disclose > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: var(--r-sm); }
+.disclose > summary > span { margin-left: auto; font-weight: 700; color: var(--ink); }
+.disclose > *:not(summary) { margin-top: var(--s3); }
+@media print { .disclose > *:not(summary) { display: block; } }
 
 .glance-whole { margin: 0; font-size: 11.5px; color: var(--ink-4); }
 .glance-foot {
