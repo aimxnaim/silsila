@@ -66,14 +66,18 @@ for (const p of analysablePeople(model)) {
     <AnalysisView {...analysis} scope="person" onScopeChange={noop} personId={p.id} />]);
 }
 
-// Both dresses, for every division. The cards and the table are separate render
-// paths over the same data — a vacant seat or a missing grade breaks exactly one
-// of them, so rendering only the default would miss half the surface.
+// Both panes in both dresses, for every division. Roles and people are separate
+// render paths, and so are the cards and the table over each — a vacant seat or
+// a missing grade breaks exactly one of the four, and only one of them is on
+// screen at a time now, so rendering the default would miss three quarters of
+// the surface.
 for (const division of new Set([...model.positions.values()].map((pos) => pos.division))) {
-  for (const layout of ['cards', 'table']) {
-    cases.push(['DeptView ' + division + ' (' + layout + ')',
-      <DeptView model={model} division={division} defaultLayout={layout}
-        onBack={noop} onOpenPerson={noop} onOpenPosition={noop} />]);
+  for (const pane of ['roles', 'people']) {
+    for (const layout of ['cards', 'table']) {
+      cases.push(['DeptView ' + division + ' (' + pane + '/' + layout + ')',
+        <DeptView model={model} division={division} defaultPane={pane} defaultLayout={layout}
+          onBack={noop} onOpenPerson={noop} onOpenPosition={noop} />]);
+    }
   }
 }
 

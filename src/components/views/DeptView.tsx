@@ -7,12 +7,17 @@
  * them. Roles first, because a role outlives whoever is sitting in it, and the
  * seat is the thing this product models.
  *
- * Both lists are the same data in two dresses. Cards are for reading a
- * department you do not know: faces and titles, scannable at arm's length.
- * The table is for a reader who has stopped browsing and started counting —
- * sortable columns of the sort you would export. Neither is a subset of the
- * other, so the switch sits above both and moves them together; splitting it
- * into two controls would only ask the reader to make the same choice twice.
+ * Those are two questions, so they get two panes rather than two stacked
+ * lists. Stacked, the page was a long scroll whose second half repeated the
+ * first from the other end — the same seats, keyed by person instead of by
+ * job. The reader arrives with one of the two questions, not both.
+ *
+ * Which pane, and how it is drawn, are separate choices, so they get separate
+ * controls at either end of the same row. Cards are for reading a department
+ * you do not know: faces and titles, scannable at arm's length. The table is
+ * for a reader who has stopped browsing and started counting — columns of the
+ * sort you would export. The dress survives the switch between panes, because
+ * a reader who wanted columns for the roles wants them for the people too.
  */
 
 import { useMemo, useState } from 'react';
@@ -25,6 +30,7 @@ import { Badge } from '../ui/primitives.tsx';
 import { deptAbbr, deptColor } from '../ui/vocabulary.tsx';
 
 type Layout = 'cards' | 'table';
+type Pane = 'roles' | 'people';
 
 /** Grade, team and dates, in the one order they read well in. */
 function roleMeta(role: DepartmentRole): string {
@@ -41,17 +47,21 @@ function roleStatus(role: DepartmentRole) {
 }
 
 export function DeptView({
-  model, division, onBack, onOpenPerson, onOpenPosition, defaultLayout = 'cards',
+  model, division, onBack, onOpenPerson, onOpenPosition,
+  defaultLayout = 'cards', defaultPane = 'roles',
 }: {
   model: OrgModel;
   division: string;
   onBack: () => void;
   onOpenPerson: (id: string) => void;
   onOpenPosition: (id: string) => void;
-  /** Which dress the two lists open in. Exists so the smoke test can render both. */
+  /** Which dress the list opens in. Exists so the smoke test can render both. */
   defaultLayout?: Layout;
+  /** Which list opens first. Same reason: both panes need rendering. */
+  defaultPane?: Pane;
 }) {
   const [layout, setLayout] = useState<Layout>(defaultLayout);
+  const [pane, setPane] = useState<Pane>(defaultPane);
 
   const summary = useMemo(
     () => departments(model).find((d) => d.division === division),
@@ -133,22 +143,31 @@ export function DeptView({
         ))}
       </div>
 
-      {/* ---- How the two lists below are drawn --------------------------- */}
+      {/* ---- Which list, and how it is drawn ----------------------------- */}
       <div className="row gap-4 wrap spread no-print">
-        <div className="segmented" role="group" aria-label="How to show roles and people">
+        <div className="segmented" role="group" aria-label="Which list to show">
+          <button aria-pressed={pane === 'roles'} onClick={() => setPane('roles')}>Roles</button>
+          <button aria-pressed={pane === 'people'} onClick={() => setPane('people')}>People</button>
+        </div>
+        <div className="segmented" role="group" aria-label="How to show the list">
           <button aria-pressed={layout === 'cards'} onClick={() => setLayout('cards')}>Cards</button>
           <button aria-pressed={layout === 'table'} onClick={() => setLayout('table')}>Table</button>
         </div>
-        <div className="row gap-3 wrap">
+      </div>
+
+      {/* The grade ladder belongs to the seats, so it goes when they do. */}
+      {pane === 'roles' && (
+        <div className="row gap-3 wrap no-print">
           {grades.map(([label, n]) => (
             <span className="gradepill" key={label}>
               <b className="tnum">{n}</b> {label}
             </span>
           ))}
         </div>
-      </div>
+      )}
 
       {/* ---- Roles ------------------------------------------------------- */}
+      {pane === 'roles' && (
       <div className="card card-flush">
         <div className="card-head">
           <h3>Roles in this department</h3>
@@ -233,8 +252,10 @@ export function DeptView({
           </table>
         )}
       </div>
+      )}
 
       {/* ---- People ------------------------------------------------------ */}
+      {pane === 'people' && (
       <div className="card card-flush">
         <div className="card-head">
           <h3>People</h3>
@@ -307,6 +328,7 @@ export function DeptView({
           </table>
         )}
       </div>
+      )}
     </div>
   );
 }
