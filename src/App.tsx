@@ -17,11 +17,14 @@
  * which is the shape of the HR portal this tool is meant to sit beside. Every
  * destination is reachable in one click from anywhere, and the chrome never
  * scrolls away from under the reader.
+ *
+ * There is no splash screen in front of it. The Overview opens on load with
+ * records already in it, because a tool that reconstructs a history should
+ * show one before it asks for anything.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOrgModel } from './hooks/useOrgModel.ts';
-import { Landing } from './components/Landing.tsx';
 import { OverviewView } from './components/views/OverviewView.tsx';
 import { TimeChart } from './components/views/TimeChart.tsx';
 import { RolesView } from './components/views/RolesView.tsx';
@@ -91,7 +94,6 @@ const TABS: Array<{ id: Tab; label: string; crumb: string }> = [
 
 export function App() {
   const { model, metrics, error, load, loadDemo, resolveIssue, clearError } = useOrgModel();
-  const [entered, setEntered] = useState(false);
   const [tab, setTab] = useState<Tab>('overview');
   const [quarter, setQuarter] = useState(0);
 
@@ -107,10 +109,17 @@ export function App() {
   /** The position panel stays a drawer: it is opened from inside other views. */
   const [position, setPosition] = useState<string | null>(null);
 
-  const enter = useCallback(() => {
-    if (!model) loadDemo();
-    setEntered(true);
-  }, [model, loadDemo]);
+  /**
+   * The dashboard IS the front door, so there is no click that decides what to
+   * read. The demonstration dataset loads once on mount and the reader lands on
+   * a populated Overview; loading a file of their own replaces it in place.
+   */
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (seeded.current) return;
+    seeded.current = true;
+    loadDemo();
+  }, [loadDemo]);
 
   // Start the scrubber at the end of the window: the most recent quarter is
   // the one a reader is arriving to ask about.
@@ -161,8 +170,6 @@ export function App() {
     setPosition(null);
   }, []);
 
-  if (!entered) return <Landing onEnter={enter} />;
-
   const tabCrumb = TABS.find((t) => t.id === tab)?.crumb ?? 'Overview';
   const crumb =
     page?.kind === 'person' ? (model?.people.get(page.id)?.name ?? 'Employee record')
@@ -180,9 +187,9 @@ export function App() {
       <nav className="rail no-print" aria-label="Sections">
         <button
           className="rail-logo"
-          onClick={() => setEntered(false)}
-          title="Back to the front page"
-          aria-label="Back to the front page"
+          onClick={() => goTab('overview')}
+          title="Back to the overview"
+          aria-label="Back to the overview"
         >
           SL
         </button>
@@ -220,7 +227,7 @@ export function App() {
       <div className="frame-main">
         {/* ---- Breadcrumb ---------------------------------------------- */}
         <header className="topbar no-print">
-          <button className="crumb" onClick={() => setEntered(false)}>Silsilah</button>
+          <button className="crumb" onClick={() => goTab('overview')}>Silsilah</button>
           <span className="crumb-sep" aria-hidden="true">/</span>
           <span className="crumb-now">{crumb}</span>
 

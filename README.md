@@ -246,8 +246,7 @@ src/
 ├── hooks/         The single piece of application state
 ├── components/
 │   ├── ui/            Card, Badge, Button, Drawer, SignalBar, vocabulary
-│   ├── views/         One file per tab, plus the two detail panels
-│   └── Landing.tsx
+│   └── views/         One file per tab, plus the two detail panels
 └── styles/        tokens.css · base.css · app.css
 ```
 

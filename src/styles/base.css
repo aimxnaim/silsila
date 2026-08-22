@@ -40,9 +40,6 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
 
 /* --- Layout ------------------------------------------------------------ */
 
-/** The landing page, which sits outside the application frame. */
-.shell { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
-
 /**
  * The application content column.
  *
