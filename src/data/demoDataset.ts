@@ -46,22 +46,28 @@ E021,Ustaz Faizal bin Abdul Latif,P007,Head of Islamic Banking,Executive,Islamic
 E022,Melissa Chong Sue Lin,P008,Head of Global Banking,Executive,Global Banking,8,"Menara Maybank, Kuala Lumpur",Permanent,2021-01-01,,2021-01-04,,P001,,,"HRIS export, row 008",high
 E023,Shahrul Nizam bin Abdullah,P210,"Product Manager, MAE",Mobile Banking,Group Digital,4,"Bangsar South, Kuala Lumpur",Permanent,2021-02-01,,2021-02-01,2022-03-31,P002,,,"HRIS export, row 210",high
 E023,Shahrul Nizam bin Abdullah,P009,Head of Group Digital,Executive,Group Digital,8,"Bangsar South, Kuala Lumpur",Permanent,2022-04-01,,2022-04-01,,P001,,Promoted to lead new division,Appointment letter dated 21 Mar 2022,high
-E024,Amirul Hakim bin Roslan,P511,Core Banking Engineer,Core Banking Platforms,Group Technology,3,Maybank Cyberjaya,Permanent,2021-01-04,,2021-01-04,,P002,,,"HRIS export, row 511",high
+E024,Amirul Hakim bin Roslan,P511,Core Banking Engineer,Core Banking Platforms,Group Technology,3,Maybank Cyberjaya,Permanent,2021-01-04,2023-03-31,2021-01-04,2023-03-31,P002,,,"HRIS export, row 511",high
+E024,Amirul Hakim bin Roslan,P901,Platform Product Manager,Digital Product,Group Digital,4,"Bangsar South, Kuala Lumpur",Permanent,2023-04-01,,2023-04-01,,P009,,Transferred to Group Digital,Internal transfer letter dated 02 Mar 2023,high
+E030,Ng Hui Shan,P517,Data Engineer,Data & Analytics,Group Technology,3,Maybank Cyberjaya,Permanent,2021-09-01,2023-09-30,2021-09-01,2023-09-30,P002,,,"HRIS export, row 517",high
+E030,Ng Hui Shan,P902,Operations Data Lead,Payments Operations,Group Operations,4,"Menara Maybank, Kuala Lumpur",Permanent,2023-10-02,,2023-10-02,,P003,,Transferred to Group Operations,Internal transfer letter dated 11 Sep 2023,high
+E033,Rachel Teoh Sze Wei,P211,Product Designer,Digital Product,Group Digital,3,"Bangsar South, Kuala Lumpur",Permanent,2021-05-03,2024-01-31,2021-05-03,2024-01-31,P009,,,"HRIS export, row 211",high
+E033,Rachel Teoh Sze Wei,P903,Branch Digital Adoption Lead,Branch Operations,Community Financial Services,4,"Menara Maybank, Kuala Lumpur",Permanent,2024-02-01,,2024-02-01,,P004,,Transferred to Community Financial Services,Internal transfer letter dated 08 Jan 2024,high
+E027,Izzat Haiqal bin Suhaimi,P514,Security Operations Analyst,Cybersecurity,Group Technology,3,Maybank Cyberjaya,Permanent,2021-01-04,2024-04-30,2021-01-04,2024-04-30,P002,,,"HRIS export, row 514",high
+E027,Izzat Haiqal bin Suhaimi,P904,Technology Risk Specialist,Regulatory Compliance,Group Risk & Compliance,4,"Menara Maybank, Kuala Lumpur",Permanent,2024-05-02,,2024-05-02,,P005,,Transferred to Group Risk & Compliance,Internal transfer letter dated 15 Apr 2024,high
+E032,Faiz Iskandar bin Mansor,P519,QA Automation Engineer,Core Banking Platforms,Group Technology,3,Maybank Cyberjaya,Permanent,2021-04-01,2024-08-31,2021-04-01,2024-08-31,P002,,,"HRIS export, row 519",high
+E032,Faiz Iskandar bin Mansor,P905,Technical Recruiter,Talent & Rewards,Group Human Capital,3,"Menara Maybank, Kuala Lumpur",Permanent,2024-09-02,,2024-09-02,,P006,,Transferred to Group Human Capital,Internal transfer letter dated 19 Aug 2024,high
+E038,Meor Hafiz bin Kamal,P217,Growth Analyst,Digital Product,Group Digital,3,"Bangsar South, Kuala Lumpur",Permanent,2023-03-01,2024-12-31,2023-03-01,2024-12-31,P009,,,"HRIS export, row 217b",high
+E038,Meor Hafiz bin Kamal,P906,Islamic Digital Product Lead,Islamic Product,Islamic Banking,5,"Menara Maybank, Kuala Lumpur",Permanent,2025-01-06,,2025-01-06,,P007,,Transferred to Islamic Banking,Internal transfer letter dated 12 Dec 2024,high
 E025,Chong Mei Yee,P512,Core Banking Engineer II,Core Banking Platforms,Group Technology,4,Maybank Cyberjaya,Permanent,2022-02-01,,2022-02-01,,P002,,,"HRIS export, row 512",high
 E026,Kavitha a/p Ramasamy,P513,Integration Engineer,Core Banking Platforms,Group Technology,3,Maybank Cyberjaya,Permanent,2021-06-01,,2021-06-01,,P002,,,"HRIS export, row 513",high
-E027,Izzat Haiqal bin Suhaimi,P514,Security Operations Analyst,Cybersecurity,Group Technology,3,Maybank Cyberjaya,Permanent,2021-01-04,,2021-01-04,,P002,,,"HRIS export, row 514",high
 E028,Lee Chun Kit,P515,Security Engineer,Cybersecurity,Group Technology,4,Maybank Cyberjaya,Permanent,2022-05-02,,2022-05-02,,P002,,,"HRIS export, row 515",high
 E029,Zainab binti Othman,P516,Head of Cybersecurity,Cybersecurity,Group Technology,6,Maybank Cyberjaya,Permanent,2021-01-04,,2021-01-04,,P002,,,"HRIS export, row 516",high
-E030,Ng Hui Shan,P517,Data Engineer,Data & Analytics,Group Technology,3,Maybank Cyberjaya,Permanent,2021-09-01,,2021-09-01,,P002,,,"HRIS export, row 517",high
 E031,Thulasi a/p Krishnan,P518,Analytics Translator,Data & Analytics,Group Technology,3,Maybank Cyberjaya,Permanent,2023-08-01,,2023-08-01,,P002,,,"HRIS export, row 518",high
-E032,Faiz Iskandar bin Mansor,P519,QA Automation Engineer,Core Banking Platforms,Group Technology,3,Maybank Cyberjaya,Permanent,2021-04-01,,2021-04-01,,P002,,,"HRIS export, row 519",high
-E033,Rachel Teoh Sze Wei,P211,Product Designer,Digital Product,Group Digital,3,"Bangsar South, Kuala Lumpur",Permanent,2021-05-03,,2021-05-03,,P009,,,"HRIS export, row 211",high
 E034,Hakim Zulfadli bin Rahim,P212,Senior Product Designer,Digital Product,Group Digital,4,"Bangsar South, Kuala Lumpur",Permanent,2023-02-01,,2023-02-01,,P009,,,"HRIS export, row 212",high
 E035,Vincent Chua Boon Hock,P213,iOS Engineer,Mobile Banking,Group Digital,3,"Bangsar South, Kuala Lumpur",Permanent,2021-03-01,,2021-03-01,,P202,,,"HRIS export, row 213",high
 E035,Vincent Chua Boon Hock,P213,iOS Engineer,Mobile Banking,Group Digital,3,"Bangsar South, Kuala Lumpur",Permanent,2021-03-01,,2021-03-01,,P002,,Reporting line per org chart,Org chart 2023 (PowerPoint),low
 E036,Siti Aisyah binti Jamaludin,P214,Android Engineer,Mobile Banking,Group Digital,3,"Bangsar South, Kuala Lumpur",Permanent,2021-03-01,,2021-03-01,,P202,,,"HRIS export, row 214",high
 E037,Adriana Yap Li Ching,P216,Digital Marketing Executive,Digital Product,Group Digital,2,"Bangsar South, Kuala Lumpur",Permanent,2022-01-04,,2022-01-04,,P009,,,"HRIS export, row 216",high
-E038,Meor Hafiz bin Kamal,P217,Growth Analyst,Digital Product,Group Digital,3,"Bangsar South, Kuala Lumpur",Permanent,2023-03-01,,2023-03-01,,P009,,,"HRIS export, row 217",high
 E039,Roslinda binti Ahmad,P110,"Branch Manager, Jalan Tuanku",Branch Operations,Community Financial Services,4,"Menara Maybank, Kuala Lumpur",Permanent,2021-01-04,,2021-01-04,,P004,,,"HRIS export, row 110",high
 E040,Koh Beng Huat,P111,"Branch Manager, Georgetown",Branch Operations,Community Financial Services,4,Penang,Permanent,2021-01-04,,2021-01-04,,P004,,,"HRIS export, row 111",high
 E041,Norazlin binti Mat Yusof,P112,"Branch Manager, Johor Bahru City",Branch Operations,Community Financial Services,4,Johor Bahru,Permanent,2021-01-04,,2021-01-04,,P004,,,"HRIS export, row 112",high

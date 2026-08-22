@@ -95,25 +95,25 @@ P({ id: 'P803', title: 'AI Governance Specialist', unit: 'Regulatory Compliance'
 const filler = [
   // Group Technology
   ['P510', 'Site Reliability Engineer', 'Cloud & Infrastructure', 'Group Technology', 3, CYB, '2021-03-01', null, 'P002'],
-  ['P511', 'Core Banking Engineer', 'Core Banking Platforms', 'Group Technology', 3, CYB, '2021-01-04', null, 'P002'],
+  ['P511', 'Core Banking Engineer', 'Core Banking Platforms', 'Group Technology', 3, CYB, '2021-01-04', '2023-03-31', 'P002'],
   ['P512', 'Core Banking Engineer II', 'Core Banking Platforms', 'Group Technology', 4, CYB, '2022-02-01', null, 'P002'],
   ['P513', 'Integration Engineer', 'Core Banking Platforms', 'Group Technology', 3, CYB, '2021-06-01', null, 'P002'],
-  ['P514', 'Security Operations Analyst', 'Cybersecurity', 'Group Technology', 3, CYB, '2021-01-04', null, 'P002'],
+  ['P514', 'Security Operations Analyst', 'Cybersecurity', 'Group Technology', 3, CYB, '2021-01-04', '2024-04-30', 'P002'],
   ['P515', 'Security Engineer', 'Cybersecurity', 'Group Technology', 4, CYB, '2022-05-02', null, 'P002'],
   ['P516', 'Head of Cybersecurity', 'Cybersecurity', 'Group Technology', 6, CYB, '2021-01-04', null, 'P002'],
-  ['P517', 'Data Engineer', 'Data & Analytics', 'Group Technology', 3, CYB, '2021-09-01', null, 'P002'],
+  ['P517', 'Data Engineer', 'Data & Analytics', 'Group Technology', 3, CYB, '2021-09-01', '2023-09-30', 'P002'],
   ['P518', 'Analytics Translator', 'Data & Analytics', 'Group Technology', 3, CYB, '2023-08-01', null, 'P002'],
-  ['P519', 'QA Automation Engineer', 'Core Banking Platforms', 'Group Technology', 3, CYB, '2021-04-01', null, 'P002'],
+  ['P519', 'QA Automation Engineer', 'Core Banking Platforms', 'Group Technology', 3, CYB, '2021-04-01', '2024-08-31', 'P002'],
 
   // Group Digital
   ['P210', 'Product Manager, MAE', 'Mobile Banking', 'Group Digital', 4, BGS, '2021-02-01', null, 'P009'],
-  ['P211', 'Product Designer', 'Digital Product', 'Group Digital', 3, BGS, '2021-05-03', null, 'P009'],
+  ['P211', 'Product Designer', 'Digital Product', 'Group Digital', 3, BGS, '2021-05-03', '2024-01-31', 'P009'],
   ['P212', 'Senior Product Designer', 'Digital Product', 'Group Digital', 4, BGS, '2023-02-01', null, 'P009'],
   ['P213', 'iOS Engineer', 'Mobile Banking', 'Group Digital', 3, BGS, '2021-03-01', null, 'P202'],
   ['P214', 'Android Engineer', 'Mobile Banking', 'Group Digital', 3, BGS, '2021-03-01', null, 'P202'],
   ['P215', 'Frontend Engineer', 'Web Channels', 'Group Digital', 3, BGS, '2021-07-01', null, 'P203'],
   ['P216', 'Digital Marketing Executive', 'Digital Product', 'Group Digital', 2, BGS, '2022-01-04', null, 'P009'],
-  ['P217', 'Growth Analyst', 'Digital Product', 'Group Digital', 3, BGS, '2023-03-01', null, 'P009'],
+  ['P217', 'Growth Analyst', 'Digital Product', 'Group Digital', 3, BGS, '2023-03-01', '2024-12-31', 'P009'],
 
   // Community Financial Services
   ['P110', 'Branch Manager, Jalan Tuanku', 'Branch Operations', 'Community Financial Services', 4, KL, '2021-01-04', null, 'P004'],
@@ -158,6 +158,21 @@ const filler = [
 for (const [id, title, unit, div, level, loc, created, closed, reports] of filler) {
   P({ id, title, unit, div, level, loc, created, closed, reports });
 }
+
+/* ------------------------------------------------------------------ *
+ * 5. Internal transfers.
+ *
+ * Six people who crossed a divisional boundary. Without these the
+ * mobility view has nothing to draw: every other move in this dataset
+ * stays inside its own division, which is itself a finding, but not one
+ * a flow diagram can show.
+ * ------------------------------------------------------------------ */
+P({ id: 'P901', title: 'Platform Product Manager', unit: 'Digital Product', div: 'Group Digital', level: 4, loc: BGS, created: '2023-04-01', reports: 'P009' });
+P({ id: 'P902', title: 'Operations Data Lead', unit: 'Payments Operations', div: 'Group Operations', level: 4, loc: KL, created: '2023-10-02', reports: 'P003' });
+P({ id: 'P903', title: 'Branch Digital Adoption Lead', unit: 'Branch Operations', div: 'Community Financial Services', level: 4, loc: KL, created: '2024-02-01', reports: 'P004' });
+P({ id: 'P904', title: 'Technology Risk Specialist', unit: 'Regulatory Compliance', div: 'Group Risk & Compliance', level: 4, loc: KL, created: '2024-05-02', reports: 'P005' });
+P({ id: 'P905', title: 'Technical Recruiter', unit: 'Talent & Rewards', div: 'Group Human Capital', level: 3, loc: KL, created: '2024-09-02', reports: 'P006' });
+P({ id: 'P906', title: 'Islamic Digital Product Lead', unit: 'Islamic Product', div: 'Islamic Banking', level: 5, loc: KL, created: '2025-01-06', reports: 'P007' });
 
 /* ------------------------------------------------------------------ *
  * 4. People. 62 of them, with assignments that produce real trajectories.
@@ -242,23 +257,43 @@ A('E023', 'Shahrul Nizam bin Abdullah', [
   ['P009', '2022-04-01', null, 'P001', 'Appointment letter dated 21 Mar 2022', 'high', 'Promoted to lead new division'],
 ]);
 
+// -- Internal transfers: six people who crossed a division. ----------------
+A('E024', 'Amirul Hakim bin Roslan', [
+  ['P511', '2021-01-04', '2023-03-31', 'P002', 'HRIS export, row 511', 'high', null],
+  ['P901', '2023-04-01', null, 'P009', 'Internal transfer letter dated 02 Mar 2023', 'high', 'Transferred to Group Digital'],
+]);
+A('E030', 'Ng Hui Shan', [
+  ['P517', '2021-09-01', '2023-09-30', 'P002', 'HRIS export, row 517', 'high', null],
+  ['P902', '2023-10-02', null, 'P003', 'Internal transfer letter dated 11 Sep 2023', 'high', 'Transferred to Group Operations'],
+]);
+A('E033', 'Rachel Teoh Sze Wei', [
+  ['P211', '2021-05-03', '2024-01-31', 'P009', 'HRIS export, row 211', 'high', null],
+  ['P903', '2024-02-01', null, 'P004', 'Internal transfer letter dated 08 Jan 2024', 'high', 'Transferred to Community Financial Services'],
+]);
+A('E027', 'Izzat Haiqal bin Suhaimi', [
+  ['P514', '2021-01-04', '2024-04-30', 'P002', 'HRIS export, row 514', 'high', null],
+  ['P904', '2024-05-02', null, 'P005', 'Internal transfer letter dated 15 Apr 2024', 'high', 'Transferred to Group Risk & Compliance'],
+]);
+A('E032', 'Faiz Iskandar bin Mansor', [
+  ['P519', '2021-04-01', '2024-08-31', 'P002', 'HRIS export, row 519', 'high', null],
+  ['P905', '2024-09-02', null, 'P006', 'Internal transfer letter dated 19 Aug 2024', 'high', 'Transferred to Group Human Capital'],
+]);
+A('E038', 'Meor Hafiz bin Kamal', [
+  ['P217', '2023-03-01', '2024-12-31', 'P009', 'HRIS export, row 217b', 'high', null],
+  ['P906', '2025-01-06', null, 'P007', 'Internal transfer letter dated 12 Dec 2024', 'high', 'Transferred to Islamic Banking'],
+]);
+
 /* -- The wider organisation: one seat each, straightforward histories. ---- */
 const simple = [
-  ['E024', 'Amirul Hakim bin Roslan', 'P511', '2021-01-04'],
   ['E025', 'Chong Mei Yee', 'P512', '2022-02-01'],
   ['E026', 'Kavitha a/p Ramasamy', 'P513', '2021-06-01'],
-  ['E027', 'Izzat Haiqal bin Suhaimi', 'P514', '2021-01-04'],
   ['E028', 'Lee Chun Kit', 'P515', '2022-05-02'],
   ['E029', 'Zainab binti Othman', 'P516', '2021-01-04'],
-  ['E030', 'Ng Hui Shan', 'P517', '2021-09-01'],
   ['E031', 'Thulasi a/p Krishnan', 'P518', '2023-08-01'],
-  ['E032', 'Faiz Iskandar bin Mansor', 'P519', '2021-04-01'],
-  ['E033', 'Rachel Teoh Sze Wei', 'P211', '2021-05-03'],
   ['E034', 'Hakim Zulfadli bin Rahim', 'P212', '2023-02-01'],
   ['E035', 'Vincent Chua Boon Hock', 'P213', '2021-03-01'],
   ['E036', 'Siti Aisyah binti Jamaludin', 'P214', '2021-03-01'],
   ['E037', 'Adriana Yap Li Ching', 'P216', '2022-01-04'],
-  ['E038', 'Meor Hafiz bin Kamal', 'P217', '2023-03-01'],
   ['E039', 'Roslinda binti Ahmad', 'P110', '2021-01-04'],
   ['E040', 'Koh Beng Huat', 'P111', '2021-01-04'],
   ['E041', 'Norazlin binti Mat Yusof', 'P112', '2021-01-04'],
