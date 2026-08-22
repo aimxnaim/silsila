@@ -11,6 +11,7 @@ import { classifyLineage } from '../src/domain/lineage.ts';
 import { metrics } from '../src/domain/metrics.ts';
 import { PRESETS, previousRange, rangeFor, recordsCurrentTo } from '../src/domain/window.ts';
 import { departures, headcountAt, medianTimeInRoleYears, turnover, vacancies } from '../src/domain/workforce.ts';
+import { criticalRoles, meanSpan, reportingDepth, spans, successionCoverage } from '../src/domain/structure.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '../src/data/demoDataset.ts';
 
 const parsed = parseCSV(DEMO_DATASET_CSV);
@@ -96,6 +97,21 @@ check('headcount at the last quarter matches metrics',
   headcountAt(model, model.window.quarterCount - 1), m.headcountEnd);
 checkAbove('median time in role is positive', medianTimeInRoleYears(model), 0);
 check('turnover reports a thin denominator honestly', turnover(model, all).thin, false);
+
+const lastQ = model.window.quarterCount - 1;
+const spanList = spans(model, lastQ);
+
+checkAbove('spans exist', spanList.length, 0);
+// Asserts the ordering rule, not a particular seat: the transfers in Task 2
+// leave two seats tied at the top, separated only by alphabetical tiebreak.
+check('spans come back widest first',
+  spanList.every((s, i) => i === 0 || spanList[i - 1].reports >= s.reports), true);
+checkAbove('the widest span exceeds the mean', spanList[0].reports, meanSpan(model, lastQ));
+checkAbove('mean span is positive', meanSpan(model, lastQ), 0);
+checkAbove('critical roles found', criticalRoles(model, lastQ).length, 0);
+check('coverage totals match the critical roles',
+  successionCoverage(model, lastQ).total, criticalRoles(model, lastQ).length);
+checkAbove('the org is more than one layer deep', reportingDepth(model, lastQ), 1);
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
 if (failures > 0) process.exitCode = 1;
