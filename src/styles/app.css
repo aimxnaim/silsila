@@ -612,36 +612,114 @@
 .minicol i { width: 100%; max-width: 46px; border-radius: 5px 5px 0 0; background: var(--nu-bar); }
 .minicol span { font-size: 12px; color: var(--ink-3); }
 
-/* ---- The stacked column chart ------------------------------------------
+/* ---- The trend chart ----------------------------------------------------
  *
- * One column per period, segmented by state. Clicking a column drives the
- * table underneath, so the chart is a control and not just a picture.
+ * One SVG, uniformly scaled, holding a headcount line above an activity
+ * strip. Everything that has to line up — crosshair, columns, year bands,
+ * axis — shares a single viewBox, so nothing can drift out of register at
+ * any container width, and one pointer handler serves both plots.
+ *
+ * Below about 840px the plot stops shrinking and the card scrolls sideways
+ * instead. The whole thing scales with the viewBox, labels included, so
+ * letting it shrink to fit a phone would render the axis at seven pixels.
  */
-.stack-chart {
-  display: flex; align-items: flex-end; gap: 18px;
-  height: 300px; margin-top: 26px;
-  border-bottom: 1px solid var(--line); padding-bottom: 2px;
+.tl2-scroll { margin-top: 14px; }
+.tl2-frame { position: relative; min-width: 840px; border-radius: var(--r-md); }
+.tl2-frame:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.tl2-svg { display: block; width: 100%; height: auto; cursor: crosshair; touch-action: pan-y; }
+
+.tl2-tick { font-size: 10.5px; fill: var(--ink-4); font-variant-numeric: tabular-nums; }
+.tl2-year { font-size: 12px; font-weight: 600; fill: var(--ink-4); }
+.tl2-year[data-on='true'] { fill: var(--ink); }
+.tl2-basenum { font-size: 11px; font-weight: 700; fill: var(--ink-4); font-variant-numeric: tabular-nums; }
+
+/* ---- Legend. Four marks, one line, no key to memorise. ----------------- */
+.tl2-legend { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); margin-top: 16px; }
+.tl2-legend span { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--ink-3); }
+.tl2-legend i { display: block; flex: none; }
+.tl2-mark-line  { width: 16px; height: 2.5px; border-radius: 2px; background: var(--ink); }
+.tl2-mark-col   {
+  width: 8px; height: 13px; border-radius: 2px;
+  background: linear-gradient(
+    to top,
+    var(--ok-bar) 0 45%, var(--wr-bar) 45% 74%, var(--nu-bar) 74% 100%
+  );
 }
-.stack-col {
-  flex: 1 1 0; min-width: 0; height: 100%;
-  display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px;
-  background: none; border: 0;
-  border-radius: 8px 8px 0 0; padding: 6px 4px 0;
-  transition: background 140ms ease;
+.tl2-mark-ref   { width: 16px; border-top: 1.5px dashed var(--ink-4); }
+.tl2-mark-hatch { width: 13px; height: 13px; border-radius: 2px; border: 1px dashed var(--line); background: var(--hatch); }
+
+/* ---- The live readout ---------------------------------------------------
+ *
+ * The figures for whichever quarter is live, always on screen. A tooltip on
+ * its own would mean every number vanishes the moment the reader's eye moves
+ * from the chart down to the table it drives.
+ */
+.tl2-readout {
+  display: flex; flex-wrap: wrap; gap: 2px;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface-2); padding: 4px;
+  transition: border-color 140ms ease;
 }
-.stack-col:hover { background: var(--surface-2); }
-.stack-col[aria-pressed='true'] { background: var(--canvas); }
-.stack-num { font-size: 15px; font-weight: 700; color: var(--ink-4); font-variant-numeric: tabular-nums; }
-.stack-col[aria-pressed='true'] .stack-num { color: var(--ink); }
-.stack-bars {
-  width: 100%; max-width: 52px;
-  display: flex; flex-direction: column; justify-content: flex-end;
-  border-radius: 6px 6px 0 0; overflow: hidden;
+.tl2-readout[data-hover='true'] { border-color: var(--ink-4); }
+.tl2-read {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 5px 13px; min-width: 76px;
 }
-.stack-col[aria-pressed='true'] .stack-bars { box-shadow: 0 0 0 2px var(--brand); }
-.stack-axis { display: flex; gap: 18px; margin-top: 10px; }
-.stack-axis span { flex: 1 1 0; text-align: center; font-size: 13px; font-weight: 500; color: var(--ink-4); }
-.stack-axis span[data-on='true'] { color: var(--ink); }
+.tl2-read + .tl2-read { box-shadow: inset 1px 0 0 var(--line); }
+.tl2-read span {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ink-4); white-space: nowrap;
+}
+.tl2-read b { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.15; }
+.tl2-read i { font-style: normal; font-size: 11px; font-weight: 600; color: var(--ink-4); }
+.tl2-read i[data-dir='up']   { color: var(--ok-fg); }
+.tl2-read i[data-dir='down'] { color: var(--brand); }
+
+/* ---- The hover read ----------------------------------------------------- */
+.tl2-tip {
+  position: absolute; top: 10px; z-index: 3;
+  pointer-events: none; min-width: 150px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--pop);
+  padding: 9px 11px;
+}
+.tl2-tip-head { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.tl2-tip dl { display: grid; gap: 3px; }
+.tl2-tip dl > div { display: flex; justify-content: space-between; gap: var(--s4); }
+.tl2-tip dt { font-size: 11.5px; color: var(--ink-3); }
+.tl2-tip dd { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.tl2-tip-note {
+  font-size: 11px; color: var(--ink-3); line-height: 1.4; max-width: 24ch;
+  margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line-soft);
+}
+
+/* ---- An empty quarter, with somewhere to go -----------------------------
+ *
+ * Selecting a quarter where nothing happened is a legitimate thing to do, so
+ * the answer is "nothing", not a silently corrected selection. The nearest
+ * quarters that DO hold something are offered as one click each.
+ */
+.tl2-empty { padding: 26px 22px 30px; display: grid; gap: 8px; justify-items: start; }
+.tl2-empty b { font-size: 14px; color: var(--ink-2); }
+.tl2-empty > span { font-size: 12.5px; color: var(--ink-4); }
+.tl2-chips { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: 2px; }
+.tl2-chips button {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-pill); padding: 6px 12px;
+  font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+  transition: border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+.tl2-chips button:hover { border-color: var(--ink-4); color: var(--ink); box-shadow: var(--lift); }
+.tl2-chips i {
+  font-style: normal; font-size: 11px; font-weight: 700; color: var(--ink-4);
+  background: var(--surface-3); border-radius: var(--r-pill); padding: 1px 7px;
+}
+
+/* A tighter segmented control, for inside a card head. */
+.segmented-sm button { padding: 5px 11px; font-size: 12px; }
 
 /* ---- Lane mode: one row per job ---------------------------------------- */
 .lane-head { display: grid; grid-template-columns: 300px 1fr; gap: 0 16px; margin-top: 22px; }
@@ -658,6 +736,12 @@
 .lane-label b { font-size: 14px; font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lane-label span { font-size: 12px; color: var(--ink-3); margin-top: 2px; display: block; }
 .lane-track { position: relative; height: 26px; border-radius: 6px; background: var(--surface-3); }
+/* The selected quarter, carried across from the trend view so both modes
+   agree on where "now" is. */
+.lane-now {
+  position: absolute; top: -3px; bottom: -3px; width: 1.5px;
+  background: var(--brand); opacity: 0.5; border-radius: 1px;
+}
 .lane-bar {
   position: absolute; top: 3px; height: 20px;
   border: 0; border-radius: 5px;
