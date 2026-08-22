@@ -126,12 +126,34 @@ function Line({ spec, ink }: { spec: Spec; ink: string }) {
 
 export function SignalChart({ spec, severity }: { spec: Spec; severity: Severity }) {
   const ink = SEVERITY_INK[severity];
-  const empty = spec.series.every((s) => s.points.every((p) => p.value === 0));
+  const values = spec.series.flatMap((s) => s.points.map((p) => p.value));
+  const empty = values.every((v) => v === 0);
+
+  /**
+   * A row of identical bars is the worst thing this component can draw. It
+   * looks like a rendering fault, it hides the emphasised bar completely, and
+   * it invites a reader to see a comparison where the records contain none —
+   * which is the exact failure this whole page exists to avoid. A reference
+   * line rescues it, because "all of them, above the threshold" is a finding;
+   * without one, the honest output is a sentence.
+   */
+  const flat =
+    spec.kind === 'bar' && values.length > 1 && !spec.reference &&
+    values.every((v) => v === values[0]);
 
   // A chart of nothing is worse than no chart: it implies a shape that is not
   // there. The caption still runs, so the reader knows what was looked for.
   if (empty) {
     return <div className="wi-unknown">{spec.caption} Nothing recorded in this period.</div>;
+  }
+
+  if (flat) {
+    return (
+      <div className="wi-unknown">
+        {spec.caption} Every record here shows the same figure &mdash;{' '}
+        {values[0]} {spec.unit} &mdash; so there is no spread to compare.
+      </div>
+    );
   }
 
   return (
