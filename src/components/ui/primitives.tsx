@@ -1,9 +1,10 @@
 /**
  * The shared vocabulary of the interface.
  *
- * There are deliberately very few of these. The design has one container
- * (a bordered rectangle), one filled element (an ink button), and outlined
- * badges. Everything else is type and space.
+ * There are deliberately very few of these. The design has one container (a
+ * white card on the canvas), two filled buttons — ink for the primary action,
+ * red for the one destructive or irreversible one — and pills whose colour
+ * carries a state. Everything else is type and space.
  */
 
 import type { ReactNode } from 'react';
@@ -30,7 +31,7 @@ export function CardHead({ title, meta }: { title: ReactNode; meta?: ReactNode }
 
 /* --------------------------------------------------------------- Badge */
 
-type BadgeTone = 'default' | 'ink' | 'accent' | 'warn';
+type BadgeTone = 'default' | 'ink' | 'accent' | 'warn' | 'ok';
 
 export function Badge({ children, tone = 'default' }: { children: ReactNode; tone?: BadgeTone }) {
   const cls = tone === 'default' ? '' : `badge-${tone}`;
@@ -44,12 +45,16 @@ export function Button({
 }: {
   children: ReactNode;
   onClick?: () => void;
-  variant?: 'default' | 'primary' | 'quiet';
+  variant?: 'default' | 'primary' | 'brand' | 'quiet';
   small?: boolean;
   disabled?: boolean;
   type?: 'button' | 'submit';
 }) {
-  const variantClass = variant === 'primary' ? 'btn-primary' : variant === 'quiet' ? 'btn-quiet' : '';
+  const variantClass =
+    variant === 'primary' ? 'btn-primary'
+    : variant === 'brand' ? 'btn-brand'
+    : variant === 'quiet' ? 'btn-quiet'
+    : '';
   return (
     <button
       type={type}

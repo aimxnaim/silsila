@@ -203,7 +203,7 @@ export function OverviewView({
                   <tr key={p.personId} className="clickable" onClick={() => onOpenPerson(p.personId)}>
                     <td><Avatar name={p.name} /></td>
                     <td>
-                      <div style={{ fontWeight: 500 }}>{p.name}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{p.name}</div>
                       <div className="micro faint mono">{p.personId}</div>
                     </td>
                     <td className="small">{p.title}</td>
@@ -269,7 +269,7 @@ export function OverviewView({
                   <tr key={event.positionId} className="clickable" onClick={() => onOpenPosition(event.positionId)}>
                     <td><span className="feed-when">{formatMonthYear(event.date)}</span></td>
                     <td>
-                      <div style={{ fontWeight: 500 }}>{event.title}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{event.title}</div>
                       <div className="micro faint">{event.orgUnit} · {event.division}</div>
                     </td>
                     <td>
@@ -297,7 +297,7 @@ export function OverviewView({
                     <td className="small tnum">
                       {Math.round(event.confidence * 100)}%
                       {event.needsReview ? (
-                        <div className="micro" style={{ color: 'var(--saffron-deep)' }}>check</div>
+                        <div className="micro" style={{ color: 'var(--wr-fg)' }}>check</div>
                       ) : null}
                     </td>
                   </tr>

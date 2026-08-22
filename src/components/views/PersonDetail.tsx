@@ -84,43 +84,72 @@ export function PersonDetail({
 
   return (
     <Drawer
-      title={person.name}
-      subtitle={currentPosition?.title ?? 'No current position recorded'}
+      title="Employee record"
+      subtitle={<span className="mono">{person.id}</span>}
       onClose={onClose}
     >
-      {/* ---- Profile header --------------------------------------------- */}
-      <div className="profile-head">
-        <Avatar name={person.name} large />
-        <div className="profile-id">
-          <div className="profile-name">{person.name}</div>
-          <div className="profile-role">{currentPosition?.title ?? '—'}</div>
-          <div className="row gap-2 wrap" style={{ marginTop: 'var(--s3)' }}>
-            {stillHere
-              ? <Badge tone="ink">Currently employed</Badge>
-              : <Badge>Left {formatMonthYear(latest?.endDate ?? null)}</Badge>}
-            {structural.length > 0 ? (
-              <Badge tone="accent">
-                {structural.length} structural change{structural.length === 1 ? '' : 's'}
-              </Badge>
-            ) : null}
+      {/* ---- Profile header ---------------------------------------------
+       *
+       * Portrait left behind a rule, identity and actions top-right, fields
+       * beneath — the layout of the HR portal this sits beside. The red disc
+       * on the portrait is where that system puts its edit affordance; here it
+       * is inert and the caption underneath says why, because Silsilah reads
+       * records and never writes them.
+       */}
+      <Card>
+        <div className="profile-head">
+          <div className="profile-photo">
+            <span className="profile-photo-wrap">
+              <Avatar name={person.name} large />
+              <span className="profile-photo-dot" aria-hidden="true" />
+            </span>
+            <span className="profile-photo-note">no photo on record</span>
+          </div>
+
+          <div className="profile-id">
+            <div className="row spread gap-4 wrap" style={{ alignItems: 'flex-start' }}>
+              <div>
+                <div className="profile-name">{person.name}</div>
+                <div className="profile-role">{currentPosition?.title ?? '—'}</div>
+              </div>
+              <div className="no-print">
+                <Button
+                  variant="primary"
+                  onClick={() => onShowOnTimeline(toQuarterIndex(first?.startDate) ?? 0)}
+                >
+                  Show on timeline
+                </Button>
+              </div>
+            </div>
+
+            <div className="row gap-2 wrap" style={{ marginTop: 'var(--s3)' }}>
+              {stillHere
+                ? <Badge tone="ok">Currently employed</Badge>
+                : <Badge>Left {formatMonthYear(latest?.endDate ?? null)}</Badge>}
+              {structural.length > 0 ? (
+                <Badge tone="accent">
+                  {structural.length} structural change{structural.length === 1 ? '' : 's'}
+                </Badge>
+              ) : null}
+            </div>
+
+            <div className="field-grid">
+              <Field label="Employee code" value={<span className="mono">{person.id}</span>} />
+              <Field label="Department" value={currentPosition?.division} />
+              <Field label="Team" value={currentPosition?.orgUnit} />
+              <Field label="Grade" value={currentPosition?.level !== null && currentPosition?.level !== undefined ? currentPosition.level : null} />
+              <Field label="Employment status" value={latest?.employmentType} />
+              <Field label="Location" value={currentPosition?.location} />
+              <Field label="Time on record" value={tenure(first?.startDate, latest?.endDate ?? null)} />
+              <Field label="Joined" value={formatMonthYear(first?.startDate)} />
+              <Field label="Reports to" value={manager?.title} />
+              <Field label="Jobs held" value={assignments.length} />
+              <Field label="Distinct job titles" value={distinctTitles.size} />
+              <Field label="Record source" value={<span className="small">{latest?.source}</span>} />
+            </div>
           </div>
         </div>
-      </div>
-
-      <div className="field-grid">
-        <Field label="Employee code" value={<span className="mono">{person.id}</span>} />
-        <Field label="Department" value={currentPosition?.division} />
-        <Field label="Team" value={currentPosition?.orgUnit} />
-        <Field label="Grade" value={currentPosition?.level !== null && currentPosition?.level !== undefined ? currentPosition.level : null} />
-        <Field label="Employment status" value={latest?.employmentType} />
-        <Field label="Location" value={currentPosition?.location} />
-        <Field label="Time on record" value={tenure(first?.startDate, latest?.endDate ?? null)} />
-        <Field label="Joined" value={formatMonthYear(first?.startDate)} />
-        <Field label="Reports to" value={manager?.title} />
-        <Field label="Jobs held" value={assignments.length} />
-        <Field label="Distinct job titles" value={distinctTitles.size} />
-        <Field label="Record source" value={<span className="small">{latest?.source}</span>} />
-      </div>
+      </Card>
 
       {/* ---- The argument ------------------------------------------------ */}
       {sameJobManyTitles ? (
@@ -209,12 +238,6 @@ export function PersonDetail({
             </p>
           ) : null}
         </div>
-      </div>
-
-      <div className="no-print">
-        <Button onClick={() => onShowOnTimeline(toQuarterIndex(first?.startDate) ?? 0)}>
-          Show this on the timeline
-        </Button>
       </div>
     </Drawer>
   );

@@ -8,8 +8,10 @@
  *    page that cannot be traced to data is exactly what this product objects
  *    to elsewhere, so hardcoding them here would be incoherent.
  *
- * 2. The colour blocks touch — 2px apart, no radius, no shadow. Blocks that
- *    almost touch look like a mistake; blocks that touch look like a decision.
+ * 2. It is the same design system as the console, one notch looser. The bar,
+ *    the cards, the pills and the red are all the ones behind the door; only
+ *    the type scale and the whitespace change. A front page in a different
+ *    visual language would make the product look like two products.
  *
  * 3. There is one primary action, and no form. A landing page for a tool like
  *    this should get out of the way rather than collect anything.
@@ -60,15 +62,22 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
 
   return (
     <main className="landing">
-      <div className="shell landing-top">
-        <Eyebrow>Organisational memory</Eyebrow>
-        <Eyebrow>Prototype · synthetic data</Eyebrow>
+      <div className="landing-top">
+        <div className="shell row spread gap-3 wrap">
+          <div className="wordmark">
+            <span className="latin">SILSILAH</span>
+            <span className="rule" />
+            <span className="arabic" lang="ar" dir="rtl">سلسلة</span>
+          </div>
+          <span className="badge">Prototype · synthetic data</span>
+        </div>
       </div>
 
       <div className="shell landing-body">
         <div className="hero-mark">
+          <span className="tile" aria-hidden="true">SL</span>
           <span className="latin">SILSILAH</span>
-          <span className="rule" />
+          <span className="rule" aria-hidden="true" />
           <span className="arabic" lang="ar" dir="rtl">سلسلة</span>
         </div>
 
@@ -84,7 +93,7 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
         </p>
 
         <div className="hero-cta">
-          <button className="btn btn-primary" onClick={onEnter}>Use demo dataset</button>
+          <button className="btn btn-primary" onClick={onEnter}>Open the demonstration</button>
           <a className="btn" href="#how">How it decides</a>
         </div>
 
@@ -92,20 +101,25 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
           <>
             <div className="stat-strip">
               <div className="stat-cell stat-cell--v">
-                <span className="stat-value">{preview.relabelled}</span>
-                <span className="stat-label">roles renamed, split or merged —<br />not created</span>
+                <span className="stat-tag">Relabelled</span>
+                <span className="stat-value tnum">{preview.relabelled}</span>
+                <span className="stat-label">
+                  roles renamed, split or merged — not created
+                </span>
               </div>
               <div className="stat-cell stat-cell--s">
-                <span className="stat-value">{preview.genuinelyNew}</span>
-                <span className="stat-label">genuinely new seats<br />in five years</span>
+                <span className="stat-tag">Real growth</span>
+                <span className="stat-value tnum">{preview.genuinelyNew}</span>
+                <span className="stat-label">genuinely new seats in five years</span>
               </div>
               <div className="stat-cell stat-cell--k">
-                <span className="stat-value">{preview.unconfirmed}</span>
-                <span className="stat-label">findings we<br />can&rsquo;t confirm</span>
+                <span className="stat-tag">Unconfirmed</span>
+                <span className="stat-value tnum">{preview.unconfirmed}</span>
+                <span className="stat-label">findings we can&rsquo;t confirm from the records</span>
               </div>
             </div>
 
-            <p className="micro faint" style={{ marginTop: 'var(--s3)' }}>
+            <p className="micro faint" style={{ marginTop: 'var(--s4)' }}>
               Computed at page load from {preview.people} people and {preview.positions}{' '}
               positions. Headcount moved {preview.from} → {preview.to} over the period.
               Nothing on this page is typed by hand.
@@ -134,7 +148,7 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
             ['Level change', 'Whether the grade attached to the seat was altered.'],
           ].map(([title, body]) => (
             <div className="card card-tight" key={title}>
-              <h3 style={{ fontSize: 14 }}>{title}</h3>
+              <h4>{title}</h4>
               <p className="small muted" style={{ marginTop: 'var(--s2)' }}>{body}</p>
             </div>
           ))}

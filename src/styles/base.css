@@ -2,50 +2,56 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body, #root { margin: 0; padding: 0; }
+html, body { height: 100%; }
 
 body {
-  background: var(--paper);
+  background: var(--canvas);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 /**
- * Type gets big and it gets tight. Timid type is what makes a colourful
- * design look amateur; the whole direction depends on committing here.
+ * Type is dense and it is bold. A console read all day wants short line
+ * lengths and heavy weights at small sizes, which is the opposite of the
+ * editorial direction this replaced — there, the headline did the work; here,
+ * the table does, and the headline gets out of its way.
  */
-h1, h2, h3, h4 { margin: 0; font-weight: 500; letter-spacing: -0.02em; line-height: 1.15; }
-h1 { font-size: clamp(40px, 7vw, 76px); line-height: 1.02; letter-spacing: -0.035em; }
-h2 { font-size: clamp(24px, 3vw, 34px); letter-spacing: -0.025em; }
+h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1.08; letter-spacing: -0.03em; }
+h2 { font-size: 26px; letter-spacing: -0.025em; }
 h3 { font-size: 17px; }
+h4 { font-size: 15px; }
 p  { margin: 0; }
-em { font-style: normal; color: var(--vermillion); }
+em { font-style: normal; color: var(--brand); }
+strong { font-weight: 700; }
 
-a { color: var(--vermillion); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: 3px; }
+a { color: var(--brand); text-decoration: none; }
+a:hover { color: var(--brand-deep); text-decoration: underline; text-underline-offset: 3px; }
 
 button { font-family: inherit; font-size: inherit; cursor: pointer; }
 
-:focus-visible { outline: 2px solid var(--vermillion); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 3px; }
 
-::selection { background: var(--vermillion); color: #fff; }
+::selection { background: var(--brand); color: #fff; }
 
 /* --- Layout ------------------------------------------------------------ */
+
+/** The landing page, which sits outside the application frame. */
 .shell { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
 
 /**
- * The application pages sit in a narrower column than the landing page.
+ * The application content column.
  *
- * Both are centred, but the landing page's visual mass is a 52ch paragraph
- * and three cards, so it reads as a comfortable column. Dense tables at the
- * same 1180px read as sprawl. Narrowing the application shell makes the two
- * feel like the same document, which is what matters — the measured widths
- * being equal does not help if one of them looks twice as wide.
+ * It is centred inside the frame rather than filling it. The rail already
+ * pushes everything right, so a full-bleed column would leave the page
+ * lopsided — heavy on the left, ragged on the right. A capped, centred column
+ * keeps the reading edge stable no matter how wide the window gets.
  */
-.shell-app { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
+.shell-app { max-width: var(--maxw); margin: 0 auto; width: 100%; }
 
 .stack { display: flex; flex-direction: column; }
 .row   { display: flex; align-items: center; }
@@ -59,28 +65,28 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
 /* --- Type utilities ---------------------------------------------------- */
 .eyebrow {
   font-size: 11px;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--ink-3);
-  font-weight: 500;
+  color: var(--ink-4);
+  font-weight: 700;
 }
-.muted   { color: var(--ink-2); }
-.faint   { color: var(--ink-3); }
+.muted   { color: var(--ink-3); }
+.faint   { color: var(--ink-4); }
 .small   { font-size: 13px; }
-.micro   { font-size: 11.5px; }
-.mono    { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
-.accent  { color: var(--vermillion); }
+.micro   { font-size: 12px; }
+.mono    { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.accent  { color: var(--brand); }
 .tnum    { font-variant-numeric: tabular-nums; }
-.measure { max-width: 60ch; }
+.measure { max-width: 68ch; }
 
-/* --- The card. A hairline rectangle on paper. -------------------------- */
+/* --- The card. A white rectangle floating on the canvas. --------------- */
 .card {
-  background: var(--paper);
-  border: 1px solid var(--hairline);
-  border-radius: 8px;
-  padding: var(--s5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 22px 24px;
 }
-.card-tight { padding: var(--s4); }
+.card-tight { padding: var(--s4) 18px; }
 .card-flush { padding: 0; overflow: hidden; }
 
 .card-head {
@@ -88,85 +94,107 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s4);
-  padding: var(--s4) var(--s5);
-  border-bottom: 1px solid var(--hairline);
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
 }
-.card-head h3 { font-size: 17px; font-weight: 500; }
+.card-head h3 { font-size: 15px; font-weight: 700; }
 
-.divider { height: 1px; background: var(--hairline); border: 0; margin: 0; }
+.divider { height: 1px; background: var(--line); border: 0; margin: 0; }
 
-/* --- Buttons. Ink is the primary; nothing else is filled. -------------- */
+/* --- Buttons ------------------------------------------------------------
+ *
+ * Ink is the primary and red is reserved. In the reference system the red
+ * button is the one irreversible action on the screen; using it for "open the
+ * demo" would spend that signal on nothing.
+ */
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--s2);
-  padding: 11px 22px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: transparent;
+  padding: 9px 17px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
   color: var(--ink);
-  font-size: 14px;
-  transition: border-color 150ms ease, background 150ms ease, opacity 150ms ease;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease, opacity 140ms ease;
 }
-.btn:hover { border-color: var(--ink); }
+.btn:hover { border-color: #C4CBD4; background: var(--surface-2); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .btn-primary {
   background: var(--ink);
   border-color: var(--ink);
-  color: var(--paper);
+  color: #fff;
 }
-.btn-primary:hover { opacity: 0.82; border-color: var(--ink); }
+.btn-primary:hover { background: #000; border-color: #000; }
 
-.btn-quiet { border-color: transparent; }
-.btn-quiet:hover { background: var(--paper-2); border-color: transparent; }
+.btn-brand {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+.btn-brand:hover { background: var(--brand-deep); border-color: var(--brand-deep); }
 
-.btn-sm { padding: 7px 14px; font-size: 13px; }
+.btn-quiet { border-color: transparent; background: transparent; color: var(--ink-3); }
+.btn-quiet:hover { background: var(--surface-2); border-color: transparent; color: var(--ink); }
 
-/* --- Pills. Colour carries the category. ------------------------------- */
+.btn-sm { padding: 6px 13px; font-size: 12.5px; }
+
+/* --- Pills. Colour carries the state. ---------------------------------- */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  background: var(--stone);
-  color: var(--ink-2);
-  font-size: 11.5px;
-  font-weight: 500;
+  padding: 4px 11px;
+  border-radius: var(--r-pill);
+  background: var(--nu-bg);
+  color: var(--nu-fg);
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
 }
-.badge-ink     { background: var(--ink);            color: var(--paper); }
-.badge-accent  { background: var(--vermillion-tint); color: var(--vermillion-deep); }
-.badge-warn    { background: var(--saffron);        color: var(--saffron-deep); }
+.badge-ink    { background: var(--ink);        color: #fff; }
+.badge-accent { background: var(--brand-tint); color: var(--brand-deep); }
+.badge-warn   { background: var(--wr-bg);      color: var(--wr-fg); }
+.badge-ok     { background: var(--ok-bg);      color: var(--ok-fg); }
 
-/* --- Tables ------------------------------------------------------------ */
+/* --- Tables -------------------------------------------------------------
+ *
+ * Rows separate on the faintest line in the system and the header sits on the
+ * off-white. At this density a full-strength rule between every row turns the
+ * table into a grid of boxes and the eye stops tracking across it.
+ */
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 thead th {
   text-align: left;
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink-3);
-  font-weight: 500;
-  padding: var(--s3) var(--s4);
-  background: var(--paper-2);
-  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-4);
+  font-weight: 700;
+  padding: 13px var(--s5);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
   position: sticky;
   top: 0;
   z-index: 1;
 }
 tbody td {
-  padding: var(--s3) var(--s4);
-  border-bottom: 1px solid var(--hairline);
-  vertical-align: top;
+  padding: 13px var(--s5);
+  border-bottom: 1px solid var(--line-faint);
+  vertical-align: middle;
+  color: var(--ink-2);
 }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr.clickable { cursor: pointer; }
-tbody tr.clickable:hover { background: var(--paper-2); }
+tbody tr.clickable:hover { background: var(--surface-2); }
 
 /* --- Unknown. Pattern, never colour. ----------------------------------- */
-.hatch { background-image: var(--hatch); border: 1px dashed #B5B2A8; }
+.hatch { background-image: var(--hatch); border: 1px dashed #C4CBD4; }
 
 /* --- Scroll containers must never make the page scroll sideways -------- */
 .scroll-x { overflow-x: auto; overflow-y: hidden; }
@@ -181,14 +209,17 @@ tbody tr.clickable:hover { background: var(--paper-2); }
 
 /* --- Print. Ctrl+P produces the review pack. --------------------------- */
 @media print {
-  body { background: #fff; font-size: 11pt; }
+  body { background: #fff; font-size: 10.5pt; }
   .no-print { display: none !important; }
-  .card { border-color: #ccc; break-inside: avoid; }
+  .card { border-color: #ccc; break-inside: avoid; box-shadow: none !important; }
   .shell { max-width: none; padding: 0; }
+  .frame { display: block !important; height: auto !important; overflow: visible !important; }
+  .frame-scroll { overflow: visible !important; }
+  .rail, .topbar, .tabstrip { display: none !important; }
+  .frame-main, .page { padding: 0 !important; overflow: visible !important; }
   thead th { background: #fff; }
   a { color: #000; text-decoration: none; }
-  .stat-cell { border: 1px solid #ccc !important; background: #fff !important; color: #000 !important; }
-  .stat-cell .stat-label { color: #444 !important; }
+  .kpi { border: 1px solid #ccc !important; break-inside: avoid; }
 }
 
 @media (max-width: 640px) {

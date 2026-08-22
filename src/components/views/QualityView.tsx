@@ -72,11 +72,9 @@ export function QualityView({
       <div className="grid-3">
         {KINDS.map((kind) => (
           <Card tight key={kind}>
-            <div className="row spread" style={{ alignItems: 'baseline' }}>
-              <strong>{ISSUE_LABEL[kind]}</strong>
-              <span className="tnum" style={{ fontSize: 22 }}>{byKind.get(kind)!.length}</span>
-            </div>
-            <p className="micro muted" style={{ marginTop: 'var(--s2)' }}>{ISSUE_MEANING[kind]}</p>
+            <span className="kpi-value tnum">{byKind.get(kind)!.length}</span>
+            <strong style={{ display: 'block', marginTop: 'var(--s2)' }}>{ISSUE_LABEL[kind]}</strong>
+            <p className="micro muted" style={{ marginTop: 4 }}>{ISSUE_MEANING[kind]}</p>
           </Card>
         ))}
       </div>
@@ -100,7 +98,7 @@ export function QualityView({
               {issues.map((issue) => (
                 <div
                   key={issue.id}
-                  style={{ padding: 'var(--s5)', borderBottom: '1px solid var(--hairline)' }}
+                  style={{ padding: 'var(--s5)', borderBottom: '1px solid var(--line)' }}
                 >
                   <div className="row gap-3 wrap" style={{ alignItems: 'baseline' }}>
                     <Badge tone={issue.resolution ? 'ink' : 'warn'}>
@@ -117,7 +115,7 @@ export function QualityView({
                       {issue.options.map((option, i) => (
                         <div className="card card-tight" key={`${issue.id}-${i}`}>
                           <div className="micro faint">Source</div>
-                          <div style={{ fontWeight: 500, marginTop: 2 }}>{option.source}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--ink)', marginTop: 2 }}>{option.source}</div>
                           <div className="small muted" style={{ marginTop: 'var(--s2)' }}>
                             Reports to{' '}
                             {option.reportsToPositionId

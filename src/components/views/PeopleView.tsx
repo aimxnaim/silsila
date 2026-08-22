@@ -12,6 +12,7 @@ import type { OrgModel } from '../../domain/types.ts';
 import { formatMonthYear } from '../../domain/dates.ts';
 import { structuralChangesFor } from '../../domain/metrics.ts';
 import { Badge, Card, CardHead, Eyebrow } from '../ui/primitives.tsx';
+import { Avatar } from '../ui/Avatar.tsx';
 
 export function PeopleView({
   model, onOpenPerson,
@@ -62,7 +63,7 @@ export function PeopleView({
           title="People"
           meta={`${rows.length} of ${model.people.size}`}
         />
-        <div style={{ padding: 'var(--s4) var(--s5)', borderBottom: '1px solid var(--hairline)' }} className="no-print">
+        <div style={{ padding: 'var(--s4) var(--s5)', borderBottom: '1px solid var(--line)' }} className="no-print">
           <input
             className="select"
             style={{ width: '100%', maxWidth: 320, cursor: 'text' }}
@@ -87,8 +88,13 @@ export function PeopleView({
               {rows.map(({ person, first, last, titleCount, moves, structural }) => (
                 <tr key={person.id} className="clickable" onClick={() => onOpenPerson(person.id)}>
                   <td>
-                    <div style={{ fontWeight: 500 }}>{person.name}</div>
-                    <div className="micro faint mono">{person.id}</div>
+                    <div className="row gap-3" style={{ minWidth: 0 }}>
+                      <Avatar name={person.name} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{person.name}</div>
+                        <div className="micro faint mono">{person.id}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="small muted tnum">
                     {formatMonthYear(first?.startDate)} —{' '}

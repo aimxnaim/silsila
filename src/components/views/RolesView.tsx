@@ -273,7 +273,7 @@ export function RolesView({
                       return (
                         <tr key={id} className="clickable" onClick={() => onOpenPosition(id)}>
                           <td>
-                            <div style={{ fontWeight: 500 }}>{pos.title}</div>
+                            <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{pos.title}</div>
                             <div className="micro faint">{pos.orgUnit}</div>
                           </td>
                           <td className="small muted">{pos.division}</td>
@@ -283,7 +283,7 @@ export function RolesView({
                           <td className="small tnum">
                             {Math.round(v.confidence * 100)}%
                             {v.needsReview ? (
-                              <div className="micro" style={{ color: 'var(--saffron-deep)' }}>
+                              <div className="micro" style={{ color: 'var(--wr-fg)' }}>
                                 a person should check
                               </div>
                             ) : null}

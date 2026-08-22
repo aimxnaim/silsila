@@ -87,7 +87,7 @@ export function TimeChart({
 
         <div
           className="row gap-4 wrap spread no-print"
-          style={{ padding: 'var(--s4) var(--s5)', borderBottom: '1px solid var(--hairline)' }}
+          style={{ padding: 'var(--s4) var(--s5)', borderBottom: '1px solid var(--line)' }}
         >
           <label className="row gap-2 small muted">
             Show me
@@ -109,7 +109,7 @@ export function TimeChart({
 
         <div className="readme-strip">
           <div className="readme-key">
-            <span className="readme-swatch" style={{ background: 'var(--vermillion)' }} />
+            <span className="readme-swatch" style={{ background: 'var(--brand)' }} />
             <span><b>Red bar = a job</b><span>One seat. Starts when created, ends when closed.</span></span>
           </div>
           <div className="readme-key">
@@ -117,7 +117,7 @@ export function TimeChart({
             <span><b>Black bar = a person</b><span>The human in that job, for exactly the period they sat in it.</span></span>
           </div>
           <div className="readme-key">
-            <span className="readme-swatch" style={{ background: 'var(--stone)' }} />
+            <span className="readme-swatch" style={{ background: 'var(--nu-bar)' }} />
             <span><b>Grey bar = their manager</b><span>Which job this one reported into at the time.</span></span>
           </div>
           <div className="readme-key">
@@ -266,7 +266,7 @@ export function TimeChart({
                 {snapshotForDivision.map((r) => (
                   <tr key={r.positionId} className="clickable" onClick={() => onOpenPosition(r.positionId)}>
                     <td>
-                      <div style={{ fontWeight: 500 }}>{r.title}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.title}</div>
                       <div className="micro faint">{r.orgUnit}</div>
                     </td>
                     <td className="small">{r.holderName ?? <span className="faint">vacant</span>}</td>
