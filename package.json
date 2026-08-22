@@ -10,8 +10,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "generate:data": "node scripts/generate-dataset.mjs",
-    "verify": "node scripts/verify-domain.mjs",
-    "smoke": "node scripts/smoke-test.mjs"
+    "verify": "node --experimental-strip-types scripts/verify-domain.mjs",
+    "smoke": "node --experimental-strip-types scripts/smoke-test.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

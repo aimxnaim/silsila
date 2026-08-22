@@ -10,15 +10,16 @@ import { useMemo } from 'react';
 import type { Metrics, OrgModel } from '../../domain/types.ts';
 import { WINDOW_START_YEAR, toQuarterIndex } from '../../domain/dates.ts';
 import { departments } from '../../domain/overview.ts';
-import { deptAbbr, deptColor } from '../ui/vocabulary.tsx';
+import { deptAbbr, toneAt, toneOf } from '../ui/vocabulary.tsx';
 
 export function OverviewView({
-  model, metrics, onOpenDept, onGoToTimeline,
+  model, metrics, onOpenDept, onGoToTimeline, onAnalyse,
 }: {
   model: OrgModel;
   metrics: Metrics;
   onOpenDept: (division: string) => void;
   onGoToTimeline: () => void;
+  onAnalyse: () => void;
 }) {
   const depts = useMemo(() => departments(model), [model]);
   const relabelled = metrics.renameCount + metrics.splitCount + metrics.mergeCount;
@@ -51,38 +52,57 @@ export function OverviewView({
         </div>
       </div>
 
+      {/* ---- The one thing this page asks the reader to do -------------- */}
+      <button className="analyse" onClick={onAnalyse}>
+        <span className="analyse-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+            <circle cx="8.6" cy="8.6" r="5.4" />
+            <path d="M12.6 12.6L17 17" />
+            <path d="M6.4 9.6v1.8M8.6 7.2v4.2M10.8 8.8v2.6" />
+          </svg>
+        </span>
+        <span className="analyse-text">
+          <span className="analyse-title">Feature Analysis</span>
+          <span className="analyse-sub">
+            Read these records for patterns worth an HR conversation &mdash; across the
+            organisation, or for one person. Every finding shows the rule behind it.
+          </span>
+        </span>
+        <span className="analyse-go" aria-hidden="true">&rarr;</span>
+      </button>
+
       <div className="kpi-row">
-        <div className="kpi">
+        <div className="kpi" style={{ '--tone': toneAt(0).ink, '--tone-bg': toneAt(0).bg } as React.CSSProperties}>
           <div className="kpi-top">
             <span className="kpi-label">Total headcount</span>
-            <span className="kpi-tag kpi-tag--stone">H</span>
+            <span className="kpi-tag">H</span>
           </div>
           <span className="kpi-value tnum">{metrics.headcountEnd}</span>
           <span className="kpi-note">in seats at the end of the period</span>
         </div>
 
-        <div className="kpi">
+        <div className="kpi" style={{ '--tone': toneAt(2).ink, '--tone-bg': toneAt(2).bg } as React.CSSProperties}>
           <div className="kpi-top">
             <span className="kpi-label">Departments</span>
-            <span className="kpi-tag kpi-tag--stone">D</span>
+            <span className="kpi-tag">D</span>
           </div>
           <span className="kpi-value tnum">{depts.length}</span>
           <span className="kpi-note">{depts.slice(0, 3).map((d) => d.division).join(', ')}</span>
         </div>
 
-        <div className="kpi">
+        <div className="kpi" style={{ '--tone': toneAt(1).ink, '--tone-bg': toneAt(1).bg } as React.CSSProperties}>
           <div className="kpi-top">
             <span className="kpi-label">Relabelled, not new</span>
-            <span className="kpi-tag kpi-tag--verm">R</span>
+            <span className="kpi-tag">R</span>
           </div>
           <span className="kpi-value tnum">{relabelled}</span>
           <span className="kpi-note">renamed, split or merged — nobody was hired</span>
         </div>
 
-        <div className="kpi">
+        <div className="kpi" style={{ '--tone': toneAt(4).ink, '--tone-bg': toneAt(4).bg } as React.CSSProperties}>
           <div className="kpi-top">
             <span className="kpi-label">Genuinely new</span>
-            <span className="kpi-tag kpi-tag--ink">N</span>
+            <span className="kpi-tag">N</span>
           </div>
           <span className="kpi-value tnum">{metrics.genuinelyNewCount}</span>
           <span className="kpi-note">real growth over the period</span>
@@ -97,9 +117,18 @@ export function OverviewView({
 
         <div className="dept-grid">
           {depts.map((d) => (
-            <button key={d.division} className="dept" onClick={() => onOpenDept(d.division)}>
+            <button
+              key={d.division}
+              className="dept"
+              onClick={() => onOpenDept(d.division)}
+              style={{
+                '--tone': toneOf(d.division).ink,
+                '--tone-bg': toneOf(d.division).bg,
+                '--tone-line': toneOf(d.division).line,
+              } as React.CSSProperties}
+            >
               <span className="dept-top">
-                <span className="dept-tile" style={{ background: deptColor(d.division) }}>
+                <span className="dept-tile" style={{ background: 'var(--tone)' }}>
                   {deptAbbr(d.division)}
                 </span>
                 <span className="dept-name">{d.division}</span>
@@ -116,7 +145,7 @@ export function OverviewView({
                   style={{
                     display: 'block',
                     width: `${Math.round((d.headcount / largest) * 100)}%`,
-                    background: deptColor(d.division),
+                    background: 'var(--tone)',
                   }}
                 />
               </span>
@@ -144,9 +173,9 @@ export function OverviewView({
         </div>
 
         <div className="minichart">
-          {years.map((y) => (
+          {years.map((y, i) => (
             <div className="minicol" key={y.year} title={`${y.year} — ${y.n} jobs opened`}>
-              <i style={{ height: y.h }} />
+              <i style={{ height: y.h, background: toneAt(i).ink }} />
               <span>{y.year}</span>
             </div>
           ))}

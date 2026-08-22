@@ -94,8 +94,11 @@
   white-space: nowrap;
   transition: color 140ms ease, border-color 140ms ease;
 }
-.tab:hover { color: var(--ink); }
-.tab[aria-selected='true'] { color: var(--ink); border-bottom-color: var(--brand); }
+.tab:hover { color: var(--ink); background: var(--surface-2); }
+.tab[aria-selected='true'] {
+  color: var(--brand-deep); border-bottom-color: var(--brand); background: var(--brand-tint);
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+}
 
 /* Filter chips inside a page reuse .tab but sit in a bordered row. */
 .chiprow {
@@ -502,6 +505,9 @@
   gap: var(--s4);
 }
 .kpi {
+  --tone: var(--nu-bar);
+  --tone-bg: var(--nu-bg);
+  position: relative; overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
@@ -509,6 +515,9 @@
   display: flex; flex-direction: column; gap: var(--s2);
   transition: box-shadow 140ms ease;
 }
+/* A 4px rule along the top rather than a tinted card: four tinted cards in a
+   row start competing with the figures inside them. */
+.kpi::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--tone); }
 .kpi:hover { box-shadow: var(--lift); }
 .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s3); min-height: 34px; }
 .kpi-label {
@@ -520,11 +529,8 @@
   border-radius: var(--r-sm);
   display: grid; place-items: center;
   font-size: 12px; font-weight: 700;
+  background: var(--tone-bg); color: var(--tone);
 }
-.kpi-tag--stone { background: var(--nu-bg);      color: var(--nu-fg); }
-.kpi-tag--verm  { background: var(--brand-tint); color: var(--brand-deep); }
-.kpi-tag--saff  { background: var(--wr-bg);      color: var(--wr-fg); }
-.kpi-tag--ink   { background: var(--ok-bg);      color: var(--ok-fg); }
 .kpi-value { font-size: 34px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .kpi-note { font-size: 12.5px; color: var(--ink-3); line-height: 1.4; }
 
@@ -537,15 +543,24 @@
   gap: var(--s4);
 }
 .dept {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  --tone: var(--nu-bar);
+  --tone-bg: var(--nu-bg);
+  --tone-line: var(--line);
+  position: relative; overflow: hidden;
+  background: var(--tone-bg);
+  border: 1px solid var(--tone-line);
   border-radius: var(--r-lg);
-  padding: 18px 20px;
+  padding: 18px 20px 18px 22px;
   text-align: left;
   display: flex; flex-direction: column; gap: 3px;
   transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
 }
-.dept:hover { box-shadow: var(--lift); transform: translateY(-2px); border-color: #D5DBE4; }
+/* The left edge is what makes a wall of department cards scannable: at a
+   glance the reader sees eight colours, not eight rectangles. */
+.dept::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--tone); }
+.dept:hover { box-shadow: var(--lift); transform: translateY(-2px); border-color: var(--tone); }
+.dept-name { color: var(--tone); }
+.dept-bar { background: rgba(255, 255, 255, 0.72); }
 .dept[aria-pressed='true'] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
 /* A fixed height so a department whose name wraps to two lines still puts its
    headcount on the same line as its neighbours'. */
@@ -594,7 +609,7 @@
 /* ---- The small "work through the year" chart -------------------------- */
 .minichart { display: flex; align-items: flex-end; gap: 14px; height: 120px; margin-top: 22px; }
 .minicol { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
-.minicol i { width: 100%; max-width: 46px; border-radius: 5px 5px 0 0; background: var(--ok-bar); }
+.minicol i { width: 100%; max-width: 46px; border-radius: 5px 5px 0 0; background: var(--nu-bar); }
 .minicol span { font-size: 12px; color: var(--ink-3); }
 
 /* ---- The stacked column chart ------------------------------------------
@@ -710,6 +725,8 @@
 .avatar--c4 { background: var(--cat-4); }
 .avatar--c5 { background: var(--cat-5); }
 .avatar--c6 { background: var(--cat-6); }
+.avatar--c7 { background: var(--cat-7); }
+.avatar--c8 { background: var(--cat-8); }
 
 .avatar--lg {
   width: 132px; height: 132px;
@@ -789,3 +806,313 @@
   .drawer-body { padding: var(--s4) var(--s4) 56px; }
   thead th, tbody td { padding: 12px var(--s4); }
 }
+
+/* ==================================================================
+ * WORKFORCE INTELLIGENCE
+ *
+ * The page leans on the tokens the rest of the interface already uses.
+ * The only new idea here is the severity rail down the left edge of an
+ * insight card: it carries the status without colouring the whole card,
+ * which would turn a page of eight findings into a traffic jam.
+ * ================================================================== */
+
+.wi-head { display: flex; align-items: flex-start; gap: var(--s4); flex-wrap: wrap; justify-content: space-between; }
+.wi-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-4); }
+.wi-title { font-size: 27px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-top: 2px; }
+.wi-sub { font-size: 14px; color: var(--ink-3); margin-top: 6px; max-width: 62ch; }
+.wi-range { display: flex; align-items: center; gap: var(--s3); }
+.wi-range select {
+  font: inherit; font-size: 13px; padding: 7px 11px; border: 1px solid var(--line);
+  border-radius: var(--r-sm); background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.wi-updated { font-size: 12px; color: var(--ink-4); }
+
+/* ---- Snapshot ---------------------------------------------------- */
+.wi-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s4); }
+.wi-kpi {
+  --tone: var(--nu-bar);
+  --tone-bg: var(--nu-bg);
+  position: relative; overflow: hidden;
+  text-align: left; border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); padding: 18px 20px; cursor: pointer; transition: box-shadow .15s, border-color .15s;
+}
+.wi-kpi::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--tone); }
+.wi-kpi:hover { box-shadow: var(--lift); border-color: var(--tone); }
+.wi-kpi-value { color: var(--tone); }
+.wi-kpi-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); }
+.wi-kpi-value { display: block; font-size: 32px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-top: 8px; }
+.wi-kpi-note { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 6px; }
+
+/* ---- Insight cards ----------------------------------------------- */
+.wi-signals { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s4); }
+.wi-signal {
+  position: relative; text-align: left; border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); padding: 18px 20px 16px 22px; overflow: hidden; cursor: pointer;
+}
+.wi-signal::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--nu-bar); }
+.wi-signal--attention::before { background: var(--brand); }
+.wi-signal--review::before    { background: var(--wr-bar); }
+.wi-signal--positive::before  { background: var(--ok-bar); }
+/* Severity now tints the whole card. Three findings side by side used to be
+   three white rectangles distinguished by a sliver of colour and a word; the
+   reader had to read to sort them. Now they sort by eye. */
+.wi-signal--attention { background: linear-gradient(180deg, var(--brand-tint), var(--surface) 78%); border-color: var(--brand-line); }
+.wi-signal--review    { background: linear-gradient(180deg, var(--wr-bg), var(--surface) 78%); border-color: #EDD5AC; }
+.wi-signal--positive  { background: linear-gradient(180deg, var(--ok-bg), var(--surface) 78%); border-color: #BFE3CE; }
+.wi-signal--attention h4 { color: var(--brand-deep); }
+.wi-signal--review h4    { color: var(--wr-fg); }
+.wi-signal--positive h4  { color: var(--ok-fg); }
+.wi-sev { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-pill); }
+.wi-signal--attention .wi-sev { color: var(--brand-deep); background: var(--brand-tint); }
+.wi-signal--review .wi-sev    { color: var(--wr-fg);     background: var(--wr-bg); }
+.wi-signal--positive .wi-sev  { color: var(--ok-fg);     background: var(--ok-bg); }
+.wi-signal h4 { font-size: 15px; font-weight: 700; color: var(--ink); margin: 10px 0 0; }
+.wi-statement { font-size: 13px; color: var(--ink-2); margin-top: 6px; line-height: 1.5; }
+.wi-ev { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 5px; }
+.wi-ev li { font-size: 12.5px; color: var(--ink-3); display: flex; gap: 7px; }
+.wi-ev li::before { content: '\2022'; color: var(--ink-4); }
+.wi-basis { font-size: 11.5px; color: var(--ink-4); font-style: italic; margin-top: 11px; padding-top: 9px; border-top: 1px solid var(--line-faint); line-height: 1.45; }
+.wi-records { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--line-faint); display: grid; gap: 4px; }
+.wi-records li { font-size: 12px; }
+.wi-records button { font: inherit; background: none; border: 0; padding: 0; color: var(--brand); cursor: pointer; text-align: left; }
+.wi-records button:hover { text-decoration: underline; }
+.wi-cta { margin-top: 12px; font-size: 12.5px; font-weight: 600; color: var(--brand); background: none; border: 0; padding: 0; cursor: pointer; }
+.wi-thin { font-size: 11px; color: var(--wr-fg); background: var(--wr-bg); padding: 2px 7px; border-radius: var(--r-pill); margin-left: 6px; }
+
+/* ---- Intelligence areas ------------------------------------------ */
+.wi-areas { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s4); }
+.wi-area { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: 20px 22px; }
+.wi-area h3 { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0; letter-spacing: -.02em; }
+.wi-area-block { margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--line-faint); }
+.wi-area-block:first-of-type { border-top: 0; }
+.wi-area-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); }
+.wi-metric { display: flex; justify-content: space-between; gap: var(--s3); font-size: 13px; padding: 5px 0; color: var(--ink-2); }
+.wi-metric b { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* ---- The unknown ------------------------------------------------- */
+.wi-unknown {
+  background: var(--hatch); border: 1px dashed var(--line); border-radius: var(--r-sm);
+  padding: 12px 14px; font-size: 12.5px; color: var(--ink-3); margin-top: var(--s3);
+}
+
+/* ---- Flow and trend ---------------------------------------------- */
+.wi-flow { display: grid; gap: 7px; margin-top: var(--s3); }
+.wi-flow-row { display: grid; grid-template-columns: 1fr auto 1fr auto; align-items: center; gap: var(--s3); font-size: 12.5px; }
+.wi-flow-row span:first-child { text-align: right; color: var(--ink-2); }
+.wi-flow-arrow { color: var(--ink-4); }
+.wi-flow-bar { height: 6px; border-radius: 3px; background: var(--cat-3); }
+.wi-trend { display: flex; align-items: flex-end; gap: 6px; height: 96px; margin-top: var(--s4); }
+.wi-trend-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 5px; }
+.wi-trend-col i { display: block; width: 100%; background: var(--cat-1); border-radius: 2px 2px 0 0; min-height: 2px; }
+.wi-trend-col span { font-size: 10.5px; color: var(--ink-4); }
+
+/* ---- Change log --------------------------------------------------- */
+.wi-log { list-style: none; margin: 0; padding: 0; }
+.wi-log li { display: grid; grid-template-columns: 92px 1fr auto; gap: var(--s4); align-items: baseline; padding: 11px 0; border-top: 1px solid var(--line-faint); }
+.wi-log li:first-child { border-top: 0; }
+.wi-log-when { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-4); }
+.wi-log button { font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; color: var(--ink); font-weight: 600; font-size: 13.5px; }
+.wi-log button:hover { color: var(--brand); }
+.wi-log-what { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+
+@media (max-width: 1100px) {
+  .wi-kpis { grid-template-columns: repeat(2, 1fr); }
+  .wi-signals, .wi-areas { grid-template-columns: 1fr; }
+}
+
+/* ==================================================================== *
+ * FEATURE ANALYSIS
+ *
+ * The overview stays factual and the analysis is a thing the reader asks
+ * for, so the ask has to be visible from across the room without becoming
+ * an advertisement. One card, brand-tinted, full width, sitting between
+ * the page title and the figures — the first thing below the sentence
+ * that describes the data, and the only element on the overview that is
+ * not itself a number.
+ * ==================================================================== */
+
+.analyse {
+  display: flex; align-items: center; gap: var(--s4); width: 100%; text-align: left;
+  padding: 18px 20px; border: 1px solid var(--brand-line); border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--brand-tint), var(--surface) 140%);
+  cursor: pointer; transition: box-shadow .14s ease, border-color .14s ease;
+}
+.analyse:hover { box-shadow: var(--lift); border-color: var(--brand); }
+.analyse-mark {
+  flex: none; display: grid; place-items: center; width: 40px; height: 40px;
+  border-radius: var(--r-sm); background: var(--surface); color: var(--brand);
+  border: 1px solid var(--brand-line);
+}
+.analyse-text { display: block; }
+.analyse-title { display: block; font-size: 16px; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+.analyse-sub { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; max-width: 68ch; line-height: 1.5; }
+.analyse-go { flex: none; margin-left: auto; font-size: 18px; color: var(--brand); }
+
+/* ---- Scope switch -------------------------------------------------- *
+ * General and By person are two readings of one dataset, not two pages,
+ * so they get a segmented control rather than tabs. Tabs would imply the
+ * page changed; it does not — only the question does.
+ */
+.seg { display: inline-flex; padding: 3px; gap: 3px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface-3); }
+.seg button {
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-3);
+  padding: 6px 16px; border: 0; border-radius: var(--r-pill); background: none; cursor: pointer;
+}
+.seg button:hover { color: var(--ink); }
+.seg button[aria-selected='true'] { background: var(--surface); color: var(--ink); box-shadow: var(--lift); }
+
+/* ---- One person ---------------------------------------------------- */
+.pa-picker { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.pa-picker label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); }
+.pa-picker select {
+  font: inherit; font-size: 13.5px; color: var(--ink); padding: 8px 12px; min-width: 320px;
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface);
+}
+
+.pa-head {
+  display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap;
+  padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+}
+.pa-id { flex: 1 1 auto; min-width: 0; }
+.pa-name { font-size: 20px; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+.pa-role { font-size: 13.5px; color: var(--ink-2); margin-top: 2px; }
+.pa-status { font-size: 12px; color: var(--ink-4); margin-top: 4px; }
+.pa-head .wi-cta { margin-top: 0; }
+
+.pa-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s4); }
+.pa-stat { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: 16px 18px; }
+.pa-stat-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); }
+.pa-stat-value { display: block; font-size: 26px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-top: 7px; }
+.pa-stat-note { display: block; font-size: 12px; color: var(--ink-3); margin-top: 5px; }
+
+/* The unmet check is the point of this list, so it is drawn as clearly as
+ * the met one — amber, not greyed out. A faded failure reads as absence. */
+.pa-checks { list-style: none; margin: var(--s4) 0 0; padding: 0; display: grid; gap: 10px; }
+.pa-checks li { display: flex; gap: 11px; align-items: flex-start; font-size: 13px; color: var(--ink-2); }
+.pa-check-mark {
+  flex: none; display: grid; place-items: center; width: 20px; height: 20px; margin-top: 1px;
+  border-radius: 50%; font-size: 12px; font-weight: 700;
+}
+.pa-checks .is-met .pa-check-mark    { color: var(--ok-fg); background: var(--ok-bg); }
+.pa-checks .is-unmet .pa-check-mark  { color: var(--wr-fg); background: var(--wr-bg); }
+.pa-check-detail { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+.pa-verdict { font-size: 13px; font-weight: 600; color: var(--ink); margin-top: var(--s4); }
+
+.pa-moves { list-style: none; margin: var(--s4) 0 0; padding: 0; }
+.pa-moves li { display: grid; grid-template-columns: 96px 1fr auto; gap: var(--s4); align-items: baseline; padding: 10px 0; border-top: 1px solid var(--line-faint); }
+.pa-moves li:first-child { border-top: 0; }
+.pa-move-kind { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-pill); text-align: center; }
+.pa-move-kind--transfer    { color: var(--nu-fg); background: var(--nu-bg); }
+.pa-move-kind--progression { color: var(--ok-fg); background: var(--ok-bg); }
+.pa-move-kind--lateral     { color: var(--ink-3); background: var(--surface-3); }
+.pa-moves button { font: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.pa-moves button:hover { color: var(--brand); }
+.pa-move-date { font-size: 12px; color: var(--ink-4); }
+
+@media (max-width: 1100px) {
+  .pa-stats { grid-template-columns: repeat(2, 1fr); }
+  .pa-picker select { min-width: 0; width: 100%; }
+}
+
+/* ==================================================================== *
+ * SIGNAL CHARTS
+ *
+ * Every plot obeys the rule the rest of the interface obeys: the bar the
+ * finding is about carries the severity colour, everything around it is
+ * neutral. Colour here is not category encoding — it is emphasis, and if
+ * two things were emphasised nothing would be.
+ * ==================================================================== */
+
+.ch { margin: 14px 0 0; }
+
+/* ---- Bars ---------------------------------------------------------- */
+.ch-bars { display: grid; gap: 6px; }
+.ch-row { display: grid; grid-template-columns: minmax(0, 96px) 1fr 34px; gap: 10px; align-items: center; }
+.ch-label {
+  font-size: 11.5px; color: var(--ink-3); text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ch-track { position: relative; height: 15px; border-radius: 3px; background: var(--surface-3); overflow: visible; }
+.ch-fill { display: block; height: 100%; border-radius: 3px; transition: width .2s ease; }
+/* The reference repeats in every row, which is what draws the eye down it
+   as a single rule without needing an overlay that knows the grid widths. */
+.ch-ref { position: absolute; top: -2px; bottom: -2px; width: 0; border-left: 1.5px dashed var(--ink-4); }
+.ch-value { font-size: 12px; font-weight: 600; color: var(--ink-2); text-align: right; }
+
+/* ---- Line ---------------------------------------------------------- */
+.ch-line svg { display: block; width: 100%; height: 88px; }
+.ch-legend { display: flex; gap: var(--s4); flex-wrap: wrap; margin-bottom: 7px; }
+.ch-legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-3); }
+.ch-legend i { width: 13px; height: 2.5px; border-radius: 2px; }
+.ch-axis { display: flex; justify-content: space-between; gap: var(--s3); margin-top: 5px; font-size: 11px; color: var(--ink-4); }
+.ch-axis-peak { font-weight: 600; }
+
+/* ---- Caption ------------------------------------------------------- */
+.ch-caption { font-size: 11.5px; color: var(--ink-3); margin-top: 9px; line-height: 1.45; }
+.ch-ref-key { white-space: nowrap; color: var(--ink-4); }
+.ch-ref-key i { display: inline-block; width: 11px; border-top: 1.5px dashed var(--ink-4); vertical-align: middle; margin-right: 3px; }
+
+/* ---- Card head: the severity pill now says what it means ----------- */
+.wi-signal-top { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.wi-sev-meaning { font-size: 11px; color: var(--ink-4); }
+.wi-signal h4 { font-size: 16px; }
+.wi-statement { font-size: 13.5px; color: var(--ink-2); }
+.wi-basis b { color: var(--ink-3); font-style: normal; font-weight: 600; }
+
+@media (max-width: 620px) {
+  .ch-row { grid-template-columns: minmax(0, 72px) 1fr 30px; }
+}
+
+/* ==================================================================== *
+ * IDENTITY COLOUR
+ *
+ * Everything below reads a `--tone` triple set by the component, which
+ * comes from `toneOf()` — one hash, one hue per department, the same in
+ * every view. Nothing here picks a colour of its own.
+ * ==================================================================== */
+
+/* ---- The department chip ------------------------------------------- */
+.dept-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px; border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+.dept-chip--dot { padding: 0; border: 0; background: none; color: inherit; font-weight: 500; }
+.dept-chip--dot i { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+/* Inside a dense table the chip must not out-weigh the name beside it. */
+td .dept-chip { font-size: 11.5px; padding: 2px 8px; }
+
+/* ---- Person analysis ------------------------------------------------ */
+.pa-head {
+  --tone: var(--nu-bar);
+  --tone-bg: var(--nu-bg);
+  background: linear-gradient(180deg, var(--tone-bg), var(--surface) 90%);
+  border-left: 5px solid var(--tone);
+}
+.pa-name { color: var(--tone); }
+.pa-role { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.pa-stat {
+  --tone: var(--nu-bar);
+  --tone-bg: var(--nu-bg);
+  position: relative; overflow: hidden;
+}
+.pa-stat::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--tone); }
+.pa-stat-value { color: var(--tone); }
+
+/* ---- Charts: the subject bar sits in a tinted row ------------------- */
+.ch-row.is-subject { background: var(--surface-2); border-radius: 4px; }
+.ch-row.is-subject .ch-label { color: var(--ink); font-weight: 700; }
+.ch-row.is-subject .ch-value { color: var(--ink); font-weight: 700; }
+
+/* ---- Tables: a coloured left edge on hover, matching the row's dept - */
+.table tbody tr.clickable:hover { background: var(--surface-2); }
+
+/* ---- The scope switch takes the brand rather than plain white ------- */
+.seg button[aria-selected='true'] { color: var(--brand-deep); background: var(--brand-tint); }
+
+/* ---- Progression checks read as status, so they keep status colour -- */
+.pa-checks .is-met b   { color: var(--ok-fg); }
+.pa-checks .is-unmet b { color: var(--wr-fg); }

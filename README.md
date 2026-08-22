@@ -53,7 +53,7 @@ Drop in one spreadsheet. It rebuilds the history and answers both.
 | Reconstruct and present the journey of a person over time | **People** → detail panel: full trajectory with dates and manager changes |
 | Show how the two views connect | **Timeline** — position lane, person lane and reporting lane on one axis |
 | Present the history clearly and intuitively | Time scrubber, org snapshot at any quarter, headcount chart |
-| Handle incomplete or inconsistent records gracefully | **Data quality** — gaps, conflicts and inconsistencies, never auto-filled |
+| Handle incomplete or inconsistent records gracefully | Detected at ingest and shown in place — "not recorded", hatched unknowns, never auto-filled |
 
 A line-by-line audit against the brief is in
 [docs/BRIEF-MAPPING.md](docs/BRIEF-MAPPING.md).
@@ -187,8 +187,9 @@ Or push to GitHub and enable Pages against the `dist/` output.
 2. **Timeline** — the connection view. Drag the scrubber to move through time;
    the snapshot table and headcount chart follow. Pick a division to focus on.
 3. Click any bar to open its detail panel.
-4. **Data quality** — everything the records cannot confirm, and the conflict
-   you can settle.
+4. **Feature Analysis** — from the button on the overview. *General* reads the
+   whole organisation; *By person* runs the same rules against one record.
+   Every finding is drawn as a chart and states the rule behind it.
 5. **Load data** → *Download the sample*, edit it, drop it back in.
 
 ### Data format

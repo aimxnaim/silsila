@@ -25,23 +25,50 @@ looks like a status pill. **Familiarity is the feature.** The argument this
 product makes is contrarian enough on its own; the chrome around it should not
 also be asking for attention.
 
-What survived the change is the part that was always load-bearing: colour does a
-job, and uncertainty is drawn as pattern rather than hue.
+What survived the change is the part that was always load-bearing: every colour
+names something, and uncertainty is drawn as pattern rather than hue.
 
 ## The rule that makes it work
 
-**Colour always does a job. The same hue never means two things.**
+**Hue identifies. Weight emphasises. Status is reserved.**
 
-| Colour | Meaning |
+This is a revision. The first version of this document said *colour always does
+a job*, and the interface kept that promise so strictly that almost nothing was
+coloured: every section arrived as another white card on grey, and a reader had
+nothing to navigate by but headings. Restraint had stopped being legibility and
+become uniformity — which is a legibility failure of its own, just a quieter
+one. Told directly that the interface was hard to differentiate, we widened the
+palette rather than defending the rule.
+
+| Channel | Job |
 | --- | --- |
-| Brand red `#C8202F` | The present moment, the active thing, the one primary action |
-| Ink `#16202E` | A person, and every heading |
-| Green `#1F8A70` | Settled — a change we are confident about |
+| **Hue** (`--cat-1` … `--cat-10`) | IDENTITY — which department, which category. A department owns its hue in every view it appears in |
+| Brand red `#C8202F` | Attention, the present moment, the one primary action |
+| Green `#1F7A4D` | Settled — a change we are confident about |
 | Amber `#D99A2B` | Unsettled — needs a human |
-| Grey `#98A1AD` | Structure, and everything neutral |
+| **Weight** | EMPHASIS — solid against tint, 4px edge against hairline. This is how one thing now outranks another |
 | Hatch | We do not know |
 
-That last row is the move that lets the rest stay calm.
+Splitting identity (hue) from emphasis (weight) is what allows the wider
+palette. Previously colour had to carry both, so any second coloured element
+competed with the first and the only safe answer was to colour almost nothing.
+Now a chart can give every bar its department's hue and still say which one the
+finding is about, by drawing that one at full strength and stepping the rest
+back.
+
+Two consequences worth stating, because both were mistakes made and corrected
+while implementing this:
+
+- **Department hues are assigned, not hashed.** Hashing put three of the nine
+  demonstration departments on the same colour, which is worse than no colour:
+  it asserts that unrelated things are related. Divisions are sorted and dealt
+  hues in order, which is collision-free up to ten. Names outside that set —
+  a person on an avatar — still hash, where a collision costs nothing.
+- **Nothing dims unless something is emphasised.** A chart with no subject
+  draws every bar at full strength. Stepping all of them back would imply a
+  subject that is not there.
+
+The hatch row is still the move that lets the rest work.
 
 **Uncertainty is drawn as a diagonal hatch with a dashed border and no hue at
 all.** A grey "gap" state would collide with the neutral surfaces, and any
@@ -81,10 +108,13 @@ timeline are provably the same idea at two densities:
 | Unsettled | `#8A5C07` on `#FDF1DE` | `#D99A2B` |
 | Neutral | `#454E5B` on `#F0F2F5` | `#98A1AD` |
 
-Six further hues (`--cat-1` … `--cat-6`) identify people and departments —
-assigned by hashing the name, so a person keeps the same coloured disc in every
-view they appear in. They are deliberately desaturated. An avatar identifies; it
-does not rank, so none of them may out-shout the brand red.
+Ten identity hues (`--cat-1` … `--cat-10`) carry departments, categories and
+people. Each is a triple — a fill for bars and tiles, a tint for a panel behind
+text, and a line for that panel's border — so one hue can dress a whole card
+without a second colour being invented for it.
+
+They are levelled to a similar lightness on purpose. They identify one thing
+from another and must never imply a ranking between them; weight does that.
 
 ## The rules that keep it from looking generic
 
@@ -104,8 +134,9 @@ against that:
 - **Table rows separate on the faintest line in the system.** At this density a
   full-strength rule between every row turns the table into a grid of boxes and
   the eye stops tracking across it.
-- **Colour is never decorative.** If a fill cannot name what it means, it is
-  removed.
+- **Colour is never decorative.** If a fill cannot name what it means — an
+  identity, a status — it is removed. A wider palette raised the stakes on this
+  rule rather than relaxing it.
 
 ## Type
 

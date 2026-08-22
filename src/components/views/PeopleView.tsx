@@ -12,6 +12,7 @@ import { tenure } from '../../domain/dates.ts';
 import { structuralChangesFor } from '../../domain/metrics.ts';
 import { departments } from '../../domain/overview.ts';
 import { Avatar } from '../ui/Avatar.tsx';
+import { DeptChip } from '../ui/vocabulary.tsx';
 import { Badge } from '../ui/primitives.tsx';
 
 export function PeopleView({
@@ -109,7 +110,7 @@ export function PeopleView({
                     </div>
                   </td>
                   <td>{r.role}</td>
-                  <td>{r.division}</td>
+                  <td><DeptChip name={r.division} /></td>
                   <td className="tnum">{r.years}</td>
                   <td>{r.current ? <Badge tone="ok">Current</Badge> : <Badge>Moved on</Badge>}</td>
                   <td>

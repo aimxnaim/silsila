@@ -28,30 +28,50 @@ import { ingest } from '${root}src/domain/ingest.ts';
 import { classifyLineage } from '${root}src/domain/lineage.ts';
 import { metrics } from '${root}src/domain/metrics.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '${root}src/data/demoDataset.ts';
-import { Landing } from '${root}src/components/Landing.tsx';
 import { OverviewView } from '${root}src/components/views/OverviewView.tsx';
+import { AnalysisView } from '${root}src/components/views/AnalysisView.tsx';
 import { TimeChart } from '${root}src/components/views/TimeChart.tsx';
 import { RolesView } from '${root}src/components/views/RolesView.tsx';
 import { PeopleView } from '${root}src/components/views/PeopleView.tsx';
-import { QualityView } from '${root}src/components/views/QualityView.tsx';
 import { LoadDataView } from '${root}src/components/views/LoadDataView.tsx';
 import { RoleDetail } from '${root}src/components/views/RoleDetail.tsx';
 import { PersonDetail } from '${root}src/components/views/PersonDetail.tsx';
+import { DeptView } from '${root}src/components/views/DeptView.tsx';
+import { analysablePeople } from '${root}src/domain/personAnalysis.ts';
+import { registerDivisions } from '${root}src/components/ui/vocabulary.tsx';
 
 const model = ingest(parseCSV(DEMO_DATASET_CSV), DEMO_DATASET_LABEL);
 model.lineage = classifyLineage(model);
 const m = metrics(model);
 const noop = () => {};
 
+registerDivisions([...model.positions.values()].map((p) => p.division));
+
+const analysis = { model, metrics: m, preset: 'all', onPresetChange: noop, onSelectPerson: noop,
+  onBack: noop, onOpenDept: noop, onOpenPerson: noop, onOpenPosition: noop, onOpenArea: noop };
+
 const cases = [
-  ['Landing',      <Landing onEnter={noop} />],
-  ['Overview',     <OverviewView model={model} metrics={m} onOpenPosition={noop} onOpenPerson={noop} onGoToOrgChart={noop} />],
+  ['Overview',     <OverviewView model={model} metrics={m} onOpenDept={noop} onGoToTimeline={noop} onAnalyse={noop} />],
+  ['Analysis',     <AnalysisView {...analysis} scope="general" onScopeChange={noop} personId={null} />],
   ['TimeChart',    <TimeChart model={model} metrics={m} quarter={12} onQuarterChange={noop} onOpenPosition={noop} onOpenPerson={noop} />],
   ['Roles',        <RolesView model={model} onOpenPosition={noop} />],
   ['People',       <PeopleView model={model} onOpenPerson={noop} />],
-  ['Data quality', <QualityView model={model} onResolve={noop} onOpenPosition={noop} onOpenPerson={noop} />],
   ['Load data',    <LoadDataView error={null} onLoad={() => true} onLoadDemo={() => true} onClearError={noop} onLoaded={noop} />],
 ];
+
+// The per-person analysis is rendered for EVERY person, not a sample. Its
+// findings depend on that person's own history — a departed record, a seat
+// with no reports, a person who never moved — and any one of those shapes
+// could be the one that breaks it.
+for (const p of analysablePeople(model)) {
+  cases.push(['Analysis ' + p.id,
+    <AnalysisView {...analysis} scope="person" onScopeChange={noop} personId={p.id} />]);
+}
+
+for (const division of new Set([...model.positions.values()].map((pos) => pos.division))) {
+  cases.push(['DeptView ' + division,
+    <DeptView model={model} division={division} onBack={noop} onOpenPerson={noop} />]);
+}
 
 // Every position and every person gets its detail panel rendered. If one of
 // 78 positions has a lineage chain that breaks the renderer, we find it here
@@ -60,7 +80,7 @@ for (const id of model.positions.keys()) {
   cases.push(['RoleDetail ' + id, <RoleDetail model={model} positionId={id} onClose={noop} onOpenPosition={noop} onOpenPerson={noop} onShowOnTimeline={noop} />]);
 }
 for (const id of model.people.keys()) {
-  cases.push(['PersonDetail ' + id, <PersonDetail model={model} personId={id} onClose={noop} onOpenPosition={noop} onShowOnTimeline={noop} />]);
+  cases.push(['PersonDetail ' + id, <PersonDetail model={model} personId={id} backLabel="Back" onBack={noop} onOpenPosition={noop} onShowOnTimeline={noop} />]);
 }
 
 let failed = 0;

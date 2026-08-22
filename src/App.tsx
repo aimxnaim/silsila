@@ -1,17 +1,22 @@
 /**
  * Application shell.
  *
- * Six views, one per requirement in the brief. The mapping is deliberate and
- * is documented in docs/BRIEF-MAPPING.md:
+ * Five views, mapped to the brief. The mapping is deliberate and is documented
+ * in docs/BRIEF-MAPPING.md:
  *
  *   Overview      the dashboard: what the records contain
  *   Org chart     how a position evolved                 (requirement 2)
  *   People        how a person moved                     (requirement 3)
  *   Timeline      the two histories on one axis          (requirement 4)
- *   Data quality  what the records cannot confirm        (requirement 6)
  *   Load data     accept a structured source             (requirement 1)
  *
  * Requirement 5 — present it clearly — is not a view. It is the whole design.
+ *
+ * Feature Analysis sits beside those six rather than among them. The six show
+ * what the records contain; analysis interprets them, and interpretation is a
+ * thing a reader should choose rather than land in. It is entered from a
+ * button on the overview, keeps a rail button so it stays one click away, and
+ * takes no place in the tab strip.
  *
  * The frame is a rail, a breadcrumb and a tab strip around a scrolling canvas,
  * which is the shape of the HR portal this tool is meant to sit beside. Every
@@ -23,20 +28,24 @@
  * show one before it asks for anything.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOrgModel } from './hooks/useOrgModel.ts';
 import { OverviewView } from './components/views/OverviewView.tsx';
+import { AnalysisView } from './components/views/AnalysisView.tsx';
+import type { AnalysisScope } from './components/views/AnalysisView.tsx';
+import type { PresetId } from './domain/window.ts';
+import type { AreaId } from './domain/insights.ts';
 import { TimeChart } from './components/views/TimeChart.tsx';
 import { RolesView } from './components/views/RolesView.tsx';
 import { PeopleView } from './components/views/PeopleView.tsx';
-import { QualityView } from './components/views/QualityView.tsx';
 import { LoadDataView } from './components/views/LoadDataView.tsx';
 import { RoleDetail } from './components/views/RoleDetail.tsx';
 import { PersonDetail } from './components/views/PersonDetail.tsx';
 import { DeptView } from './components/views/DeptView.tsx';
 import { Button, Empty } from './components/ui/primitives.tsx';
+import { registerDivisions } from './components/ui/vocabulary.tsx';
 
-type Tab = 'overview' | 'orgchart' | 'people' | 'timeline' | 'quality' | 'load';
+type Tab = 'overview' | 'analysis' | 'orgchart' | 'people' | 'timeline' | 'load';
 
 /**
  * Rail glyphs.
@@ -49,6 +58,13 @@ const ICONS: Record<Tab, JSX.Element> = {
     <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7">
       <rect x="2" y="2" width="6" height="6" rx="1.5" /><rect x="10" y="2" width="6" height="6" rx="1.5" />
       <rect x="2" y="10" width="6" height="6" rx="1.5" /><rect x="10" y="10" width="6" height="6" rx="1.5" />
+    </svg>
+  ),
+  analysis: (
+    <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+      <circle cx="7.8" cy="7.8" r="4.9" />
+      <path d="M11.4 11.4L15.6 15.6" />
+      <path d="M5.8 8.7v1.6M7.8 6.5v3.8M9.8 7.9v2.4" />
     </svg>
   ),
   orgchart: (
@@ -69,12 +85,6 @@ const ICONS: Record<Tab, JSX.Element> = {
       <path d="M2 4.5h12" /><path d="M2 9h7" /><path d="M2 13.5h10" />
     </svg>
   ),
-  quality: (
-    <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <path d="M9 1.8l6.2 2.6v4.2c0 3.6-2.5 6.3-6.2 7.6-3.7-1.3-6.2-4-6.2-7.6V4.4z" strokeLinejoin="round" />
-      <path d="M9 6.4v3.2" strokeLinecap="round" /><circle cx="9" cy="11.9" r=".95" fill="currentColor" stroke="none" />
-    </svg>
-  ),
   load: (
     <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 11.5V2.5" /><path d="M5.5 6L9 2.5 12.5 6" />
@@ -83,19 +93,42 @@ const ICONS: Record<Tab, JSX.Element> = {
   ),
 };
 
-const TABS: Array<{ id: Tab; label: string; crumb: string }> = [
-  { id: 'overview', label: 'Overview', crumb: 'Overview' },
-  { id: 'orgchart', label: 'Org chart', crumb: 'Org chart' },
-  { id: 'people', label: 'People', crumb: 'All people' },
-  { id: 'timeline', label: 'Timeline', crumb: 'Timeline' },
-  { id: 'quality', label: 'Data quality', crumb: 'Data quality' },
-  { id: 'load', label: 'Load data', crumb: 'Load data' },
+/**
+ * The tab strip. Feature Analysis is deliberately absent from it: it is an act
+ * the reader chooses from the overview, not a peer destination sitting beside
+ * the raw views. It keeps a rail button so it stays one click away once they
+ * know it is there.
+ */
+const TABS: Array<{ id: Tab; label: string }> = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'orgchart', label: 'Org chart' },
+  { id: 'people', label: 'People' },
+  { id: 'timeline', label: 'Timeline' },
+  { id: 'load', label: 'Load data' },
 ];
 
+const CRUMB: Record<Tab, string> = {
+  overview: 'Company overview',
+  analysis: 'Feature Analysis',
+  orgchart: 'Org chart',
+  people: 'All people',
+  timeline: 'Timeline',
+  load: 'Load data',
+};
+
 export function App() {
-  const { model, metrics, error, load, loadDemo, resolveIssue, clearError } = useOrgModel();
+  const { model, metrics, error, load, loadDemo, clearError } = useOrgModel();
   const [tab, setTab] = useState<Tab>('overview');
+  const [preset, setPreset] = useState<PresetId>('all');
   const [quarter, setQuarter] = useState(0);
+
+  /**
+   * Feature Analysis state, held here rather than inside the view so that
+   * leaving for a person's record and coming back does not silently reset the
+   * question the reader was asking.
+   */
+  const [scope, setScope] = useState<AnalysisScope>('general');
+  const [subject, setSubject] = useState<string | null>(null);
 
   /**
    * Where a person or department page was opened FROM, so its back link can
@@ -110,7 +143,7 @@ export function App() {
   const [position, setPosition] = useState<string | null>(null);
 
   /**
-   * The dashboard IS the front door, so there is no click that decides what to
+   * The overview IS the front door, so there is no click that decides what to
    * read. The demonstration dataset loads once on mount and the reader lands on
    * a populated Overview; loading a file of their own replaces it in place.
    */
@@ -125,6 +158,17 @@ export function App() {
   // the one a reader is arriving to ask about.
   useEffect(() => {
     if (model) setQuarter(model.window.quarterCount - 1);
+  }, [model]);
+
+  /**
+   * Deal each department its hue as soon as a model exists, and before any
+   * view renders — during render rather than in an effect, because assigning
+   * afterwards would repaint every card, chip and chart bar one frame later.
+   * The call is idempotent and cheap: it no-ops unless the divisions changed.
+   */
+  useMemo(() => {
+    if (!model) return;
+    registerDivisions([...model.positions.values()].map((p) => p.division));
   }, [model]);
 
   const openPosition = useCallback((id: string) => setPosition(id), []);
@@ -170,7 +214,18 @@ export function App() {
     setPosition(null);
   }, []);
 
-  const tabCrumb = TABS.find((t) => t.id === tab)?.crumb ?? 'Overview';
+  /**
+   * Where each intelligence area sends the reader. The areas are questions,
+   * not destinations, so each maps onto the view that already answers it
+   * rather than a new page that would only restate the card.
+   */
+  const openArea = useCallback((id: AreaId) => {
+    if (id === 'progression' || id === 'retention' || id === 'mobility') goTab('people');
+    else if (id === 'succession' || id === 'structure') goTab('orgchart');
+    else goTab('timeline');
+  }, [goTab]);
+
+  const tabCrumb = CRUMB[tab];
   const crumb =
     page?.kind === 'person' ? (model?.people.get(page.id)?.name ?? 'Employee record')
     : page?.kind === 'dept' ? page.id
@@ -178,7 +233,7 @@ export function App() {
 
   const backLabel =
     page?.kind === 'person' && page.fromDept ? `Back to ${page.fromDept}`
-    : page?.kind === 'person' ? `Back to ${TABS.find((t) => t.id === page.from)?.crumb ?? 'Overview'}`
+    : page?.kind === 'person' ? `Back to ${CRUMB[page.from]}`
     : 'All departments';
 
   return (
@@ -207,6 +262,18 @@ export function App() {
             {ICONS[t.id]}
           </button>
         ))}
+
+        {/* Not a tab, but reachable from anywhere once the reader knows it exists. */}
+        <span className="rail-sep" aria-hidden="true" />
+        <button
+          className="rail-btn"
+          aria-current={tab === 'analysis'}
+          aria-label="Feature Analysis"
+          title="Feature Analysis"
+          onClick={() => goTab('analysis')}
+        >
+          {ICONS.analysis}
+        </button>
 
         <span className="rail-spacer" />
 
@@ -298,6 +365,23 @@ export function App() {
                   metrics={metrics!}
                   onOpenDept={openDept}
                   onGoToTimeline={() => goTab('timeline')}
+                  onAnalyse={() => goTab('analysis')}
+                />
+              ) : tab === 'analysis' ? (
+                <AnalysisView
+                  model={model}
+                  metrics={metrics!}
+                  preset={preset}
+                  onPresetChange={setPreset}
+                  scope={scope}
+                  onScopeChange={setScope}
+                  personId={subject}
+                  onSelectPerson={setSubject}
+                  onBack={() => goTab('overview')}
+                  onOpenDept={openDept}
+                  onOpenPerson={openPerson}
+                  onOpenPosition={openPosition}
+                  onOpenArea={openArea}
                 />
               ) : tab === 'timeline' ? (
                 <TimeChart
@@ -312,13 +396,6 @@ export function App() {
                 <RolesView model={model} onOpenPosition={openPosition} />
               ) : tab === 'people' ? (
                 <PeopleView model={model} onOpenPerson={openPerson} />
-              ) : tab === 'quality' ? (
-                <QualityView
-                  model={model}
-                  onResolve={resolveIssue}
-                  onOpenPosition={openPosition}
-                  onOpenPerson={openPerson}
-                />
               ) : (
                 <LoadDataView
                   error={error}

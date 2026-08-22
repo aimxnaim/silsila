@@ -59,12 +59,102 @@ export function deptAbbr(name: string): string {
   return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-const CAT = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)'];
+/** Identity hues available. Kept in step with `--cat-N` in tokens.css. */
+export const CAT_COUNT = 10;
 
-export function deptColor(name: string): string {
+/**
+ * Departments get their hue assigned, not hashed.
+ *
+ * Hashing was the obvious approach and it was wrong: on the demonstration
+ * dataset three of the nine departments landed on the same colour, which is
+ * worse than no colour at all — it actively asserts that two unrelated
+ * departments are the same thing. A hash cannot promise distinctness, and
+ * distinctness is the entire feature.
+ *
+ * So the divisions in the loaded model are sorted and dealt hues in order,
+ * which is collision-free up to CAT_COUNT and stable for a given dataset.
+ * Anything not registered — a person's name on an avatar, a label on a chart —
+ * still falls back to the hash, where a collision costs nothing because the
+ * label is sitting right beside it.
+ */
+const assigned = new Map<string, number>();
+
+export function registerDivisions(names: string[]): void {
+  const sorted = [...new Set(names)].sort();
+  if (sorted.length === assigned.size && sorted.every((n) => assigned.has(n))) return;
+
+  assigned.clear();
+  sorted.forEach((name, i) => assigned.set(name, (i % CAT_COUNT) + 1));
+}
+
+function hashIndex(name: string): number {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 997;
-  return CAT[h % CAT.length];
+  return (h % CAT_COUNT) + 1;
+}
+
+/**
+ * Which hue a name owns — the same one in every view it appears in. That
+ * stability is the whole value: the eye follows one colour for one department
+ * across a card, a chart bar, an avatar and a table row without re-reading the
+ * label each time.
+ */
+export function catIndex(name: string): number {
+  return assigned.get(name) ?? hashIndex(name);
+}
+
+export interface Tone {
+  /** Solid fill — bars, tiles, the 3px edge. */
+  ink: string;
+  /** Tint — a panel sitting behind text. */
+  bg: string;
+  /** Border for that panel. */
+  line: string;
+}
+
+/** The full triple for a name, for anything that needs more than a fill. */
+export function toneOf(name: string): Tone {
+  const i = catIndex(name);
+  return { ink: `var(--cat-${i})`, bg: `var(--cat-${i}-bg)`, line: `var(--cat-${i}-line)` };
+}
+
+/** The triple for a position in a list — charts, legends, anything ordered. */
+export function toneAt(index: number): Tone {
+  const i = (index % CAT_COUNT) + 1;
+  return { ink: `var(--cat-${i})`, bg: `var(--cat-${i}-bg)`, line: `var(--cat-${i}-line)` };
+}
+
+export function deptColor(name: string): string {
+  return toneOf(name).ink;
+}
+
+/**
+ * A department, wherever one is named in running text or a table cell.
+ *
+ * One component rather than a `<td>{division}</td>` in six files, because the
+ * point of the colour is that it is the SAME colour every time. Spelling the
+ * markup out per view is how that stops being true.
+ */
+export function DeptChip({ name, dot = false }: { name: string; dot?: boolean }) {
+  const tone = toneOf(name);
+
+  if (dot) {
+    return (
+      <span className="dept-chip dept-chip--dot" title={name}>
+        <i style={{ background: tone.ink }} aria-hidden="true" />
+        {name}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="dept-chip"
+      style={{ background: tone.bg, color: tone.ink, borderColor: tone.line }}
+    >
+      {name}
+    </span>
+  );
 }
 
 /* --------------------------------------------------------- The three states

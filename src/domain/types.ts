@@ -127,11 +127,6 @@ export interface DataIssue {
     confidence: SourceConfidence;
   }>;
   /** Set once a human resolves it in-session. Originals are never modified. */
-  resolution?: {
-    chosenLabel: string;
-    reportsToPositionId: string | null;
-    resolvedAt: string;
-  };
 }
 
 export interface OrgModel {
