@@ -10,6 +10,7 @@ import { ingest } from '../src/domain/ingest.ts';
 import { classifyLineage } from '../src/domain/lineage.ts';
 import { metrics } from '../src/domain/metrics.ts';
 import { PRESETS, previousRange, rangeFor, recordsCurrentTo } from '../src/domain/window.ts';
+import { departures, headcountAt, medianTimeInRoleYears, turnover, vacancies } from '../src/domain/workforce.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '../src/data/demoDataset.ts';
 
 const parsed = parseCSV(DEMO_DATASET_CSV);
@@ -85,6 +86,16 @@ check('12m range spans 4 quarters', rangeFor(model, '12m').quarters, 4);
 check('all-time starts at zero', rangeFor(model, 'all').from, 0);
 check('previous of 12m sits directly before it', previousRange(model, rangeFor(model, '12m')).to, rangeFor(model, '12m').from - 1);
 check('records current to the latest date on file', recordsCurrentTo(model), '2025-04-01');
+
+const all = rangeFor(model, 'all');
+check('three departures on record', departures(model, all).length, 3);
+check('nobody still in a seat counts as departed',
+  departures(model, all).filter((d) => !d.date).length, 0);
+checkAbove('some seats are open', vacancies(model, model.window.quarterCount - 1).length, 0);
+check('headcount at the last quarter matches metrics',
+  headcountAt(model, model.window.quarterCount - 1), m.headcountEnd);
+checkAbove('median time in role is positive', medianTimeInRoleYears(model), 0);
+check('turnover reports a thin denominator honestly', turnover(model, all).thin, false);
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
 if (failures > 0) process.exitCode = 1;
