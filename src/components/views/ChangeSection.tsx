@@ -32,7 +32,9 @@
 import { useMemo, useRef, useState } from 'react';
 import type { LineageRelation, Metrics, OrgModel } from '../../domain/types.ts';
 import { WINDOW_START_YEAR, formatMonthYear, quarterLabel, toQuarterIndex } from '../../domain/dates.ts';
+import { orgGlance } from '../../domain/glance.ts';
 import { Badge } from '../ui/primitives.tsx';
+import { GlanceBlock } from '../ui/Glance.tsx';
 import { STATE, stateOf, type State } from '../ui/vocabulary.tsx';
 
 interface Row {
@@ -66,11 +68,20 @@ interface QStat {
  * One viewBox, uniformly scaled, so the crosshair can cross the line plot and
  * the activity strip as a single element. Strokes are non-scaling so a 2px
  * line is 2px at every container width.
+ *
+ * TWO PANELS, TWO SCALES, SAID OUT LOUD. The line is people and the strip is
+ * seats, and they are measured against completely separate ceilings — the
+ * line against `ceiling`, the strip against `stripCeiling`. Sharing one frame
+ * and one crosshair made them look like one plot on one scale, so a column
+ * that rose higher than the line appeared to mean something, and it does not.
+ * Each panel now carries its own caption and its own axis numbers, and GAP is
+ * wide enough that they read as two plots that happen to share an x axis
+ * (which they must — that shared axis is why this is one viewBox at all).
  */
 const W = 960;
-const PAD = { l: 46, r: 16, t: 16 };
+const PAD = { l: 46, r: 16, t: 30 };
 const LINE_H = 168;
-const GAP = 18;
+const GAP = 44;
 const STRIP_H = 52;
 const AXIS_H = 34;
 const PLOT_TOP = PAD.t;
@@ -103,6 +114,7 @@ export function ChangeSection({
   onOpenPerson: (id: string) => void;
 }) {
   const N = model.window.quarterCount;
+  const glance = useMemo(() => orgGlance(model, metrics), [model, metrics]);
   const [mode, setMode] = useState<'trend' | 'job'>('trend');
   const [ledger, setLedger] = useState<'opened' | 'closed'>('opened');
   const [hoverQ, setHoverQ] = useState<number | null>(null);
@@ -244,12 +256,34 @@ export function ChangeSection({
 
   return (
     <section className="stack gap-5" id="how-it-changed">
+      <div>
+        <div style={{ fontSize: 17, fontWeight: 700 }}>How the organisation changed</div>
+        <div className="small muted" style={{ marginTop: 3, maxWidth: '68ch' }}>
+          {yearSpans[0]?.year}–{yearSpans[yearSpans.length - 1]?.year}. Did this place
+          actually grow, or were things renamed?
+        </div>
+      </div>
+
+      {/*
+        * The answer, before any of the evidence for it.
+        *
+        * Everything below this block — the mode toggle, the state key, the
+        * chart, the ledger — is the working. It is all still here, and a
+        * reader who wants to interrogate the number can, but none of it is
+        * the first thing they meet any more. The section used to open with a
+        * legend defining three words, which meant the reader had to learn a
+        * vocabulary before the picture could mean anything.
+        */}
+      <GlanceBlock glance={glance} />
+
+      <hr className="divider" />
+
       <div className="row spread gap-4 wrap" style={{ alignItems: 'flex-end' }}>
         <div>
-          <div style={{ fontSize: 17, fontWeight: 700 }}>How the organisation changed</div>
-          <div className="small muted" style={{ marginTop: 3, maxWidth: '68ch' }}>
-            {yearSpans[0]?.year}–{yearSpans[yearSpans.length - 1]?.year}. How many people
-            were in a seat, and which jobs opened and closed underneath them.
+          <span className="eyebrow">The working</span>
+          <div className="small muted" style={{ marginTop: 3, maxWidth: '60ch' }}>
+            How many people were in a seat each quarter, and which jobs opened
+            and closed underneath them.
           </div>
         </div>
 
@@ -376,7 +410,10 @@ export function ChangeSection({
                     opacity="0.9"
                   />
 
-                  {/* Y axis */}
+                  {/* Y axis, and the caption naming what this panel measures. */}
+                  <text x={PAD.l} y={PLOT_TOP - 12} className="tl2-panel">
+                    People in a seat — scale 0–{ceiling}
+                  </text>
                   {ticks.map((t) => (
                     <g key={t}>
                       <line
@@ -413,7 +450,18 @@ export function ChangeSection({
                     />
                   ))}
 
-                  {/* The activity strip: jobs opened, segmented by state. */}
+                  {/* The activity strip: jobs opened, segmented by state.
+                    *
+                    * Its own caption and its own two axis numbers, because it
+                    * is on its own scale. Without them a column taller than
+                    * the line reads as "more than the headcount", which is
+                    * not a thing this chart can say.
+                    */}
+                  <text x={PAD.l} y={STRIP_TOP - 12} className="tl2-panel">
+                    Jobs opened — its own scale, 0–{stripCeiling}
+                  </text>
+                  <text x={PAD.l - 9} y={STRIP_TOP + 4} className="tl2-tick" textAnchor="end">{stripCeiling}</text>
+                  <text x={PAD.l - 9} y={STRIP_BOT + 3.5} className="tl2-tick" textAnchor="end">0</text>
                   <line
                     x1={PAD.l} y1={STRIP_BOT} x2={W - PAD.r} y2={STRIP_BOT}
                     stroke="var(--line)" strokeWidth="1" vectorEffect="non-scaling-stroke"
