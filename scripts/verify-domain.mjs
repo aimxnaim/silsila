@@ -9,6 +9,7 @@ import { parseCSV } from '../src/domain/csv.ts';
 import { ingest } from '../src/domain/ingest.ts';
 import { classifyLineage } from '../src/domain/lineage.ts';
 import { metrics } from '../src/domain/metrics.ts';
+import { PRESETS, previousRange, rangeFor, recordsCurrentTo } from '../src/domain/window.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '../src/data/demoDataset.ts';
 
 const parsed = parseCSV(DEMO_DATASET_CSV);
@@ -78,6 +79,12 @@ console.log('\n=== CHECKS ===');
 check('headcount ends at 64', m.headcountEnd, 64);
 check('people ingested', model.people.size, 67);
 check('data issues found', model.issues.length, 4);
+
+check('four presets offered', PRESETS.length, 4);
+check('12m range spans 4 quarters', rangeFor(model, '12m').quarters, 4);
+check('all-time starts at zero', rangeFor(model, 'all').from, 0);
+check('previous of 12m sits directly before it', previousRange(model, rangeFor(model, '12m')).to, rangeFor(model, '12m').from - 1);
+check('records current to the latest date on file', recordsCurrentTo(model), '2025-04-01');
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
 if (failures > 0) process.exitCode = 1;
