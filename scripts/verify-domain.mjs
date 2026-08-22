@@ -13,6 +13,7 @@ import { PRESETS, previousRange, rangeFor, recordsCurrentTo } from '../src/domai
 import { departures, headcountAt, medianTimeInRoleYears, turnover, vacancies } from '../src/domain/workforce.ts';
 import { criticalRoles, meanSpan, reportingDepth, spans, successionCoverage } from '../src/domain/structure.ts';
 import { divisionFlows, mobilityRate, moves, netFlow } from '../src/domain/mobility.ts';
+import { progressionCandidates, progressionFor, stagnation } from '../src/domain/progression.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '../src/data/demoDataset.ts';
 
 const parsed = parseCSV(DEMO_DATASET_CSV);
@@ -124,6 +125,18 @@ checkAbove('mobility rate is positive', mobilityRate(model, all).rate, 0);
 check('every transfer is counted once as produced and once as received',
   netFlow(model, all).reduce((n, d) => n + d.produced, 0),
   netFlow(model, all).reduce((n, d) => n + d.received, 0));
+
+check('every candidate carries its three checks',
+  progressionCandidates(model).every((c) => c.checks.length === 3), true);
+check('a candidate only signals when every check is met',
+  progressionCandidates(model).every((c) => c.checks.every((k) => k.met)), true);
+check('an unknown person yields nothing', progressionFor(model, 'NOBODY'), null);
+// Both of these can fail: stagnation is defined as one seat, never left,
+// three years or more, and each clause is asserted against the real records.
+check('everyone flagged as stagnating holds exactly one seat',
+  stagnation(model).every((s) => model.people.get(s.personId).assignmentIds.length === 1), true);
+check('everyone flagged as stagnating has at least three years',
+  stagnation(model).every((s) => s.years >= 3), true);
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
 if (failures > 0) process.exitCode = 1;
