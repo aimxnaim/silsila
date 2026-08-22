@@ -2,71 +2,53 @@
 
 **A history engine for organisational structure.**
 
-Silsilah reconstructs how an organisation actually changed — how a role evolved,
-how a person moved, and where those two histories meet.
+Drop in one spreadsheet. Silsilah rebuilds how a role evolved, how a person
+moved, and where the two histories meet.
 
-**Lab 2 — People-Centric Tech & Collaboration**
-*Mapping How Roles and People Evolve Over Time · powered by Setel*
+**Lab 2 — People-Centric Tech & Collaboration** · powered by Setel
 
 | | |
 | --- | --- |
-| **Live demonstration** | `ADD DEPLOYMENT URL HERE` |
+| **Live demo** | `ADD DEPLOYMENT URL HERE` |
 | **Repository** | `ADD REPOSITORY URL HERE` |
 | **Stack** | React · TypeScript · Vite. No backend. |
 | **Run it** | `npm install && npm run dev` |
 
-> **Prototype.** All data in this build is synthetic. There is no backend, no
-> database and no account system. Every file is parsed in the browser.
+> **Prototype.** All data is synthetic. No backend, no database, no accounts.
+> Every file is parsed in the browser.
 
 ---
 
 ## The problem
 
-Every HR system on earth is a **state** system, not an **event** system. It
-stores what is true *now*.
+HR systems store what is true **now**. Rename a role and the old title is
+overwritten. Promote someone and the previous row is replaced. History is
+destroyed by a normal `UPDATE`.
 
-Rename a role and the old title is overwritten. Promote someone and the previous
-row is replaced. History is not lost by accident — it is destroyed as the normal
-consequence of an `UPDATE` statement.
+So two questions become hard or impossible:
 
-What survives is scattered: an HRIS export, a headcount spreadsheet, a
-redesignation letter in a shared drive, an org chart that was out of date the day
-it was drawn.
+- *Has this department actually grown, or have we just been renaming things?*
+- *How does this person's career relate to the structural changes around them?*
 
-So a simple question becomes a day of work:
+## What it does
 
-> *"Has this department actually grown over three years, or have we just been
-> renaming things?"*
-
-And a second question cannot be answered at all:
-
-> *"How does this person's career relate to the structural changes around them?"*
-
-## What Silsilah does
-
-Drop in one spreadsheet. It rebuilds the history and answers both.
-
-| The brief asks for | Where it lives |
+| Brief requirement | Where it lives |
 | --- | --- |
-| Accept organisational data from at least one structured source | **Load data** — real client-side CSV parsing, drag-and-drop, designed errors |
-| Reconstruct and present the history of a role over time | **Roles** → detail panel: ordered change history and lineage chain |
-| Reconstruct and present the journey of a person over time | **People** → detail panel: full trajectory with dates and manager changes |
-| Show how the two views connect | **Overview** → *How the organisation changed* — headcount and structural change on one quarterly axis |
-| Present the history clearly and intuitively | Hover any quarter for its figures, click to open its ledger, or read one row per job |
-| Handle incomplete or inconsistent records gracefully | Detected at ingest and shown in place — "not recorded", hatched unknowns, never auto-filled |
+| Accept structured org data | **Load data** — client-side CSV parsing, drag-and-drop |
+| History of a role over time | **Roles** → detail panel: change history + lineage chain |
+| Journey of a person over time | **People** → detail panel: trajectory, dates, manager changes |
+| Connect the two views | **Overview** → headcount and structural change on one quarterly axis |
+| Present it clearly | Hover a quarter for figures, click for its ledger |
+| Handle incomplete records | Flagged at ingest, shown in place — never auto-filled |
 
-A line-by-line audit against the brief is in
-[docs/BRIEF-MAPPING.md](docs/BRIEF-MAPPING.md).
+Line-by-line audit: [docs/BRIEF-MAPPING.md](docs/BRIEF-MAPPING.md).
 
 ---
 
-## The idea worth stealing: roles have lineage
+## The core idea: roles have lineage
 
-Every product on the market records **that** a title changed. None of them
-decides **whether it was still the same job**.
-
-Silsilah treats a position as a versioned object. Given the declared predecessor
-links in the data, it classifies every transition:
+Other tools record **that** a title changed. Silsilah decides **whether it was
+still the same job**. Every transition is classified:
 
 | Relation | Meaning |
 | --- | --- |
@@ -75,78 +57,64 @@ links in the data, it classifies every transition:
 | `split` | One position divided into several. |
 | `merge` | Several positions consolidated into one. |
 | `created` | Genuinely new — no predecessor. |
-| `succeeded` | A successor exists but the titles barely overlap. Check by hand. |
+| `succeeded` | Successor exists but titles barely overlap. Check by hand. |
 
-That distinction is the product. It is what lets the interface open with a
-headline a non-specialist can act on, computed from the data at load time:
+That distinction drives the headline on the overview:
 
 > **Headcount went from 44 to 64. 9 of those positions were relabelled, not created.**
 
-Organisations make budget, redundancy and pay-equity decisions on the assumption
-that they know which of those two things happened. Mostly, they do not.
+### How it decides
 
-### How the classifier decides
+Four signals, all shown in the interface:
 
-Four signals, all derived from the records, all shown in the interface:
-
-| Signal | How it is measured |
+| Signal | Measured by |
 | --- | --- |
-| Title similarity | Overlap coefficient over normalised title tokens, stopwords removed |
-| Date adjacency | Days between predecessor closing and successor opening, decaying over 180 days |
+| Title similarity | Overlap coefficient over normalised title tokens |
+| Date adjacency | Gap between predecessor closing and successor opening, decaying over 180 days |
 | Reporting continuity | Whether the manager survived the handover |
 | Structural certainty | Whether the declared dates exist at all |
 
-Confidence is a weighted blend:
-`0.45 × similarity + 0.30 × adjacency + 0.15 × reporting + 0.10 × structural`.
+`confidence = 0.45 × similarity + 0.30 × adjacency + 0.15 × reporting + 0.10 × structural`
 
-Every input is displayed next to the verdict, so a reader can disagree with the
-machine. **There is no model and no training data.** The reasoning is fully
-legible, which is the only reason a finding here could be taken to an audit
-committee.
+**No model, no training data.** The reasoning is fully legible, so a reader can
+disagree with the verdict.
 
-**Why overlap coefficient rather than Jaccard.** Job titles are two or three
-meaningful words long, so Jaccard — which divides by the size of the union —
-punishes a single changed word far too heavily:
+<details>
+<summary>Why overlap coefficient, not Jaccard</summary>
+
+Job titles are two or three words long, so Jaccard punishes one changed word too
+heavily:
 
 ```
 "Branch Operations Executive"  →  "Branch Operations Specialist"
 
-Jaccard:  1 shared / 3 union   = 0.33  →  classified as a NEW ROLE.  Wrong.
-Overlap:  1 shared / 2 smaller = 0.50  →  classified as a RENAME.    Correct.
+Jaccard:  1 shared / 3 union   = 0.33  →  NEW ROLE.  Wrong.
+Overlap:  1 shared / 2 smaller = 0.50  →  RENAME.    Correct.
 ```
 
-This was a real bug, caught by running the classifier headless against the
-dataset. It is documented in [src/domain/lineage.ts](src/domain/lineage.ts).
+A real bug, caught by running the classifier headless. See
+[src/domain/lineage.ts](src/domain/lineage.ts).
+</details>
 
 ---
 
 ## Honest gaps
 
-The brief asks for solutions that flag gaps rather than break. Most tools
-silently interpolate across missing data, which is exactly why the people who
-own that data do not trust them.
-
 Silsilah detects four kinds of problem and refuses to guess past any of them:
 
-- **Conflict** — two sources describe the same period with different reporting lines
-- **Missing** — no manager was ever recorded against a position
-- **Inferred** — a date shown is derived, not read from a record, and says so
-- **Inconsistent** — an assignment runs past the life of the position it belongs to
+- **Conflict** — two sources give different reporting lines for the same period
+- **Missing** — no manager ever recorded against a position
+- **Inferred** — a date is derived, not read from a record, and says so
+- **Inconsistent** — an assignment runs past the life of its position
 
-In the history chart, unknown periods render as a **diagonal hatch**, never as a
-colour. That keeps colour free to mean category and uses pattern for
-uncertainty — a convention borrowed from statistical charting, and one that
-survives greyscale printing and colour-blindness alike.
+Unknown periods render as a **diagonal hatch**, never a colour — colour means
+category, pattern means uncertainty. Survives greyscale and colour-blindness.
 
-Conflicts can be settled in-session by choosing a source. The original records
-are never modified. **Silsilah reads; it never writes back.**
+Conflicts can be settled in-session by choosing a source. **Silsilah reads; it
+never writes back.**
 
-One detail worth noting, because it is the difference between a warning system
-people use and one they learn to ignore: a position with no manager *and* no
-subordinates is flagged as orphaned, but a position with no manager that has
-people reporting into it is simply the top of the tree. Flagging the chief
-executive as a data defect would be a false positive, and false positives are
-how warning systems die.
+A position with no manager *but* with subordinates is the top of the tree, not a
+defect. Flagging the CEO as a data error is how warning systems die.
 
 ---
 
@@ -159,40 +127,29 @@ npm run dev          # http://localhost:5173
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Development server with hot reload |
+| `npm run dev` | Dev server with hot reload |
 | `npm run build` | Typecheck, then production build into `dist/` |
-| `npm run preview` | Serve the production build locally |
+| `npm run preview` | Serve the production build |
 | `npm run typecheck` | TypeScript, no emit |
-| `npm run verify` | Run the domain pipeline headless and print what it found |
-| `npm run smoke` | Render every view and detail panel; fail if any throws |
-| `npm run generate:data` | Regenerate the demonstration dataset |
+| `npm run verify` | Run the domain pipeline headless, print findings |
+| `npm run smoke` | Render every view and panel; fail if any throws |
+| `npm run generate:data` | Regenerate the demo dataset |
 
-### Deploying
-
-Static output, so any of these work with no configuration:
-
-```bash
-npx vercel --prod
-npx netlify deploy --prod --dir dist
-```
-
-Or push to GitHub and enable Pages against the `dist/` output.
+Static output — deploy with `npx vercel --prod`, `npx netlify deploy --prod --dir dist`,
+or GitHub Pages against `dist/`.
 
 ---
 
 ## Using it
 
-1. **Open the demonstration** — loads synthetic records for a fictional Malaysian
-   bank: 67 people, 84 positions, five and a half years.
-2. **How the organisation changed** — on the overview. Hover any quarter to read
-   its figures; click to select it and the ledger underneath follows. Switch to
-   *Job by job* for one row per seat, created to closed.
-3. **Departments** — every division, as cards and side by side. Open one for its
-   people and its grades.
-4. Click any row or bar to open its detail panel.
-5. **Feature Analysis** — from the button on the overview. *General* reads the
-   whole organisation; *By person* runs the same rules against one record.
-   Every finding is drawn as a chart and states the rule behind it.
+1. **Open the demonstration** — synthetic records for a fictional Malaysian bank:
+   67 people, 84 positions, five and a half years.
+2. **Overview** — hover a quarter for its figures, click to select it and the
+   ledger follows. Switch to *Job by job* for one row per seat.
+3. **Departments** — every division side by side. Open one for its people and grades.
+4. Click any row or bar for its detail panel.
+5. **Feature Analysis** — *General* reads the whole org; *By person* runs the
+   same rules against one record. Every finding states the rule behind it.
 6. **Load data** → *Download the sample*, edit it, drop it back in.
 
 ### Data format
@@ -212,10 +169,7 @@ change_reason, source, confidence
 ```
 
 `predecessor_positions` is semicolon-separated — that is what drives lineage.
-`source` and `confidence` are what make a finding auditable.
-
-A file missing a required column produces a sentence naming the column, not a
-blank screen.
+A missing required column produces a sentence naming it, not a blank screen.
 
 ---
 
@@ -223,72 +177,57 @@ blank screen.
 
 ```
 CSV text
-   │
-   ├─ parseCSV()          quote-aware reader, no dependency          domain/csv.ts
-   │
-   ├─ ingest()            people · positions · assignments           domain/ingest.ts
-   │                      collects every gap, conflict, inconsistency
-   │
-   ├─ classifyLineage()   rename / redesignated / split / merge      domain/lineage.ts
-   │                      four signals, weighted confidence
-   │
-   ├─ metrics()           headline stats, headcount, the connection  domain/metrics.ts
-   │
-   └─ React views         overview · roles · people · departments · load components/
+   ├─ parseCSV()          quote-aware reader, no dependency       domain/csv.ts
+   ├─ ingest()            people · positions · assignments        domain/ingest.ts
+   │                      collects every gap and conflict
+   ├─ classifyLineage()   rename / split / merge / …              domain/lineage.ts
+   ├─ metrics()           headline stats, headcount               domain/metrics.ts
+   └─ React views         overview · roles · people · departments components/
 ```
 
 ```
 src/
 ├── domain/        Pure TypeScript. No React. Runs headless in Node.
-│   ├── types.ts       The data model, and why it is shaped this way
+│   ├── types.ts       The data model
 │   ├── dates.ts       Quarter quantisation
-│   ├── csv.ts         Quote-aware parser and required-column contract
+│   ├── csv.ts         Parser and required-column contract
 │   ├── ingest.ts      Builds the model; collects data-quality issues
 │   ├── lineage.ts     THE CLASSIFIER. The product is this file.
 │   └── metrics.ts     Headline figures, snapshots, the connection
-├── data/          Generated demonstration dataset
+├── data/          Generated demo dataset
 ├── hooks/         The single piece of application state
-├── components/
-│   ├── ui/            Card, Badge, Button, Drawer, SignalBar, vocabulary
-│   └── views/         One file per tab, plus the two detail panels
+├── components/    ui/ primitives · views/ one file per tab
 └── styles/        tokens.css · base.css · app.css
 ```
 
-The domain layer has **no React import anywhere**. That is what lets
-`npm run verify` execute the entire pipeline in Node and print its findings —
-the numbers in this README were produced that way, not read off the screen.
+The domain layer has **no React import anywhere** — which is what lets
+`npm run verify` run the whole pipeline in Node. Every number in this README was
+produced that way, not read off the screen.
 
-Longer notes: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
+More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
 [docs/DATA-MODEL.md](docs/DATA-MODEL.md) · [docs/DESIGN.md](docs/DESIGN.md)
 
-**Why no backend.** Employment history is personal data under Malaysia's
-Personal Data Protection Act 2010. Parsing in the browser means employee records
-never leave the machine they are already on: no upload, no vendor holding HR
-data, no cross-border transfer to reason about, no breach surface. The
-architectural constraint and the privacy position are the same decision.
+**Why no backend.** Employment history is personal data under Malaysia's PDPA
+2010. Parsing in the browser means records never leave the machine they are
+already on: no upload, no vendor holding HR data, no breach surface.
 
 ---
 
 ## Verification
 
-Both of these run in CI-friendly fashion and both are committed:
-
 ```
 $ npm run verify
 
 === LINEAGE ===
-created         68     merge            2     redesignated     2
-rename           1     split            4     succeeded        1
+created  68    merge  2    redesignated  2    rename  1    split  4    succeeded  1
 
 rename         85%  sim 0.67  Branch Operations Executive  →  Branch Operations Specialist
-redesignated   85%  sim 0.67  Branch Operations Specialist →  Branch Experience Specialist
-split          70%  sim 0.67  Digital Channels Manager     →  Web Channels Manager
 merge         100%  sim 1.00  Cards Ops Lead + Payments Ops Lead → Payments & Cards Ops Lead
 succeeded      55%  sim 0.00  Regional Sales Manager, Northern → Territory Growth Lead  [needs review]
 
 === DATA QUALITY ===
 inferred      Start of Digital Onboarding Specialist is derived, not recorded
-missing       No reporting line was ever recorded for Sustainability Reporting Officer
+missing       No reporting line recorded for Sustainability Reporting Officer
 inconsistent  Low Wai Kit is recorded in a closed position
 conflict      Two sources disagree on who Vincent Chua Boon Hock reported to
 ```
@@ -299,35 +238,30 @@ rendered 151 views and panels, 401 kB of markup
 all clear
 ```
 
-`smoke` renders every view **and every one of the 78 position panels and 67
-person panels** through `react-dom/server`. A lineage chain that would break the
-renderer is found here rather than when someone clicks it.
+`smoke` renders every view **and all 78 position and 67 person panels** through
+`react-dom/server`, so a chain that would break the renderer is found here rather
+than when someone clicks it.
 
 ---
 
 ## Limitations
 
-Stated plainly, because a prototype that overclaims is worse than one that does not:
-
-- **No persistence.** Refreshing clears loaded data and any settled conflicts.
-- **Synthetic data.** The demonstration dataset is shaped like a large Malaysian
-  bank so it reads as familiar, but every person, position, date and document
-  reference in it was written for this project. It is not affiliated with or
-  endorsed by any bank.
+- **No persistence.** Refreshing clears loaded data and settled conflicts.
+- **Synthetic data.** Shaped like a large Malaysian bank so it reads as familiar,
+  but every record was written for this project. Not affiliated with any bank.
 - **Lineage is declared, not discovered.** Predecessor links come from the file.
-  Inferring them from unstructured redesignation letters is the obvious next step.
-- **The whole organisation at once** in the history chart. Per-division history
-  is read from the department pages instead.
-- **Quarterly resolution.** A restructure lands in the right quarter, not on the
+- **Whole organisation at once** in the history chart. Per-division history lives
+  on the department pages.
+- **Quarterly resolution.** A restructure lands in the right quarter, not the
   right day.
 
 ## What is next
 
 - Infer predecessor links from redesignation letters instead of requiring them
 - Restructuring impact: who was affected, and where they were six months later —
-  reported as temporal association, never as causation
+  as temporal association, never causation
 - Precedent for employees: who held this seat before you, and where did they go
-- A scheduled read-only sync against an HRIS export, then an embeddable widget
+- Scheduled read-only sync against an HRIS export, then an embeddable widget
 
 ---
 
@@ -336,8 +270,6 @@ Stated plainly, because a prototype that overclaims is worse than one that does 
 Eya Hia · Cheah Wan Xin · Muhammad Aiman Naim bin Mohd Faizul · Joanne Ngai Shi Ying
 
 Built for DevLeague 2026, Xsolla Curine Academy, Kuala Lumpur.
-
----
 
 *Silsilah* (سلسلة) is Arabic for *chain* — and the root of the Malay *salasilah*,
 lineage. A chain of role changes, a chain of career moves, and a chain of custody
