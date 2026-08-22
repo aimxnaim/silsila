@@ -60,6 +60,26 @@ export function metrics(model: OrgModel): Metrics {
   };
 }
 
+/**
+ * The most recent quarter in which a seat actually opened or closed.
+ *
+ * The end of the window is the obvious default and the wrong one: these
+ * records run to the end of a reporting period that has not happened yet, so
+ * the last few quarters are empty and the front page would open on a ledger
+ * saying "nothing". This lands the reader on the last quarter that has
+ * something in it, which is the one they came to ask about anyway.
+ */
+export function latestActiveQuarter(model: OrgModel): number {
+  let best = -1;
+  for (const pos of model.positions.values()) {
+    const opened = toQuarterIndex(pos.createdAt);
+    const closed = pos.closedAt ? toQuarterIndex(pos.closedAt) : null;
+    if (opened !== null && opened > best) best = opened;
+    if (closed !== null && closed > best) best = closed;
+  }
+  return best < 0 ? model.window.quarterCount - 1 : best;
+}
+
 /** Who held which position at the end of a given quarter. */
 export function snapshotAt(model: OrgModel, quarter: number) {
   const rows: Array<{

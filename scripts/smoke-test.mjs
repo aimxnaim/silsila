@@ -30,7 +30,7 @@ import { metrics } from '${root}src/domain/metrics.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '${root}src/data/demoDataset.ts';
 import { OverviewView } from '${root}src/components/views/OverviewView.tsx';
 import { AnalysisView } from '${root}src/components/views/AnalysisView.tsx';
-import { TimeChart } from '${root}src/components/views/TimeChart.tsx';
+import { DepartmentsView } from '${root}src/components/views/DepartmentsView.tsx';
 import { RolesView } from '${root}src/components/views/RolesView.tsx';
 import { PeopleView } from '${root}src/components/views/PeopleView.tsx';
 import { LoadDataView } from '${root}src/components/views/LoadDataView.tsx';
@@ -51,9 +51,9 @@ const analysis = { model, metrics: m, preset: 'all', onPresetChange: noop, onSel
   onBack: noop, onOpenDept: noop, onOpenPerson: noop, onOpenPosition: noop, onOpenArea: noop };
 
 const cases = [
-  ['Overview',     <OverviewView model={model} metrics={m} onOpenDept={noop} onGoToTimeline={noop} onAnalyse={noop} />],
+  ['Overview',     <OverviewView model={model} metrics={m} quarter={13} onQuarterChange={noop} onGoToDepartments={noop} onAnalyse={noop} onOpenPosition={noop} onOpenPerson={noop} />],
   ['Analysis',     <AnalysisView {...analysis} scope="general" onScopeChange={noop} personId={null} />],
-  ['TimeChart',    <TimeChart model={model} metrics={m} quarter={12} onQuarterChange={noop} onOpenPosition={noop} onOpenPerson={noop} />],
+  ['Departments',  <DepartmentsView model={model} metrics={m} onOpenDept={noop} />],
   ['Roles',        <RolesView model={model} onOpenPosition={noop} />],
   ['People',       <PeopleView model={model} onOpenPerson={noop} />],
   ['Load data',    <LoadDataView error={null} onLoad={() => true} onLoadDemo={() => true} onClearError={noop} onLoaded={noop} />],
@@ -77,10 +77,10 @@ for (const division of new Set([...model.positions.values()].map((pos) => pos.di
 // 78 positions has a lineage chain that breaks the renderer, we find it here
 // rather than when a judge clicks it.
 for (const id of model.positions.keys()) {
-  cases.push(['RoleDetail ' + id, <RoleDetail model={model} positionId={id} onClose={noop} onOpenPosition={noop} onOpenPerson={noop} onShowOnTimeline={noop} />]);
+  cases.push(['RoleDetail ' + id, <RoleDetail model={model} positionId={id} onClose={noop} onOpenPosition={noop} onOpenPerson={noop} onShowInTime={noop} />]);
 }
 for (const id of model.people.keys()) {
-  cases.push(['PersonDetail ' + id, <PersonDetail model={model} personId={id} backLabel="Back" onBack={noop} onOpenPosition={noop} onShowOnTimeline={noop} />]);
+  cases.push(['PersonDetail ' + id, <PersonDetail model={model} personId={id} backLabel="Back" onBack={noop} onOpenPosition={noop} onShowInTime={noop} />]);
 }
 
 let failed = 0;

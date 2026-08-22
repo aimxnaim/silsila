@@ -1,19 +1,24 @@
 /**
- * Timeline — the shape of the organisation over time, and every job on one axis.
+ * How the organisation changed — the history section of the overview.
  *
- * The first version drew one fat column per YEAR. That threw away three
- * quarters in four of data the model already computes, and it forced a reader
- * to answer "how big" and "how busy" from the same bar, which no single bar
- * can carry. So the trend view now draws both, stacked on one shared axis:
+ * This used to be a tab called "Timeline", and the name was the problem: it
+ * told a reader the shape of the thing rather than the question it answers.
+ * Nobody arrives at an HR tool wanting a timeline. They arrive wanting to
+ * know whether the place actually grew. So the section is named after the
+ * question, and it sits on the overview — the page that already claims to say
+ * what the records contain — instead of behind a tab of its own.
  *
- *   the line    HOW BIG — people holding a seat at the end of each quarter.
- *   the strip   HOW BUSY — jobs opened in that quarter, segmented by state.
+ * Two modes, because two different questions get asked of this data:
+ *
+ *   Quarter by quarter   the line   HOW BIG — people in a seat each quarter.
+ *                        the strip  HOW BUSY — jobs opened, by state.
+ *   Job by job           one row per seat, created to closed.
  *
  * Hover reads, click commits. Moving the pointer shows the numbers for a
- * quarter; clicking selects it, and everything below follows. Keeping those
- * two apart is what lets the chart be a control without the scrubber and the
+ * quarter; clicking selects it, and the ledger below follows. Keeping those
+ * two apart is what lets the chart be a control without the selection and the
  * chart ever disagreeing — the previous version had to guess a "sensible"
- * year when the scrubber pointed somewhere empty, and the guess was visible.
+ * year when the selection pointed somewhere empty, and the guess was visible.
  *
  * One honesty problem shapes the whole strip. Forty-four of this file's
  * eighty-four seats "open" in the first quarter, because that is where the
@@ -87,7 +92,7 @@ function axisTicks(max: number): { ceiling: number; values: number[] } {
   return { ceiling, values };
 }
 
-export function TimeChart({
+export function ChangeSection({
   model, metrics, quarter, onQuarterChange, onOpenPosition, onOpenPerson,
 }: {
   model: OrgModel;
@@ -218,6 +223,14 @@ export function TimeChart({
   const closedRows = rows.filter((r) => r.closedQ === quarter);
   const tableRows = ledger === 'opened' ? openedRows : closedRows;
 
+  /**
+   * The opening quarter is inheritance, not hiring, and the ledger has to say
+   * so in the same breath as the chart does. Without this the readout dashes
+   * the figure out as "not growth" while the list underneath cheerfully calls
+   * the same forty-four seats "opened".
+   */
+  const atBaseline = quarter === BASELINE_Q;
+
   /** Somewhere to go when a quarter is empty, instead of an empty table. */
   const nearest = useMemo(() => {
     const live = stats
@@ -230,19 +243,19 @@ export function TimeChart({
   }, [stats, quarter, ledger]);
 
   return (
-    <div className="stack gap-5">
+    <section className="stack gap-5" id="how-it-changed">
       <div className="row spread gap-4 wrap" style={{ alignItems: 'flex-end' }}>
         <div>
-          <div className="page-title">Timeline</div>
-          <div className="page-sub" style={{ maxWidth: '64ch' }}>
-            {yearSpans[0]?.year}–{yearSpans[yearSpans.length - 1]?.year}, quarter by quarter.
-            How big the organisation was, and how much moved.
+          <div style={{ fontSize: 17, fontWeight: 700 }}>How the organisation changed</div>
+          <div className="small muted" style={{ marginTop: 3, maxWidth: '68ch' }}>
+            {yearSpans[0]?.year}–{yearSpans[yearSpans.length - 1]?.year}. How many people
+            were in a seat, and which jobs opened and closed underneath them.
           </div>
         </div>
 
         <div className="segmented no-print">
-          <button aria-pressed={mode === 'trend'} onClick={() => setMode('trend')}>Over time</button>
-          <button aria-pressed={mode === 'job'} onClick={() => setMode('job')}>Every job</button>
+          <button aria-pressed={mode === 'trend'} onClick={() => setMode('trend')}>Quarter by quarter</button>
+          <button aria-pressed={mode === 'job'} onClick={() => setMode('job')}>Job by job</button>
         </div>
       </div>
 
@@ -263,13 +276,14 @@ export function TimeChart({
         <>
           <div className="card">
             <div className="row spread gap-4 wrap" style={{ alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>
-                  People in a seat, and jobs opened
-                </div>
-                <div className="small muted">
-                  Hover to read a quarter. Click to select it — the table below follows.
-                </div>
+              {/*
+                * No heading here. The section above already named this, and a card
+                * that repeats its own section title pushes the chart down a line
+                * for nothing. What a reader needs at this point is not the name
+                * again, it is how to work the thing.
+                */}
+              <div className="small muted" style={{ maxWidth: '30ch', paddingTop: 2 }}>
+                Hover to read a quarter. Click to select it &mdash; the ledger below follows.
               </div>
 
               {/* The numbers, always on screen, for whichever quarter is live. */}
@@ -506,7 +520,7 @@ export function TimeChart({
                 </span>
                 <div className="segmented segmented-sm no-print">
                   <button aria-pressed={ledger === 'opened'} onClick={() => setLedger('opened')}>
-                    Opened {openedRows.length}
+                    {atBaseline ? 'In place' : 'Opened'} {openedRows.length}
                   </button>
                   <button aria-pressed={ledger === 'closed'} onClick={() => setLedger('closed')}>
                     Closed {closedRows.length}
@@ -514,6 +528,13 @@ export function TimeChart({
                 </div>
               </div>
             </div>
+
+            {atBaseline && ledger === 'opened' ? (
+              <p className="tl2-basenote">
+                These {openedRows.length} seats already existed when the records begin.
+                They are where the file starts, not hiring.
+              </p>
+            ) : null}
 
             {tableRows.length === 0 ? (
               <div className="tl2-empty">
@@ -625,6 +646,6 @@ export function TimeChart({
           </p>
         </div>
       )}
-    </div>
+    </section>
   );
 }

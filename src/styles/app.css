@@ -519,6 +519,12 @@
    row start competing with the figures inside them. */
 .kpi::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--tone); }
 .kpi:hover { box-shadow: var(--lift); }
+/* One KPI is a button, because it leads to the departments tab. It has to
+   carry the same shape as the four divs beside it and still read as pressable. */
+.kpi-link { text-align: left; font: inherit; cursor: pointer; }
+.kpi-link:hover { border-color: var(--tone); }
+.kpi-link:hover .kpi-note { color: var(--ink-2); }
+.kpi-link:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s3); min-height: 34px; }
 .kpi-label {
   font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
@@ -693,6 +699,14 @@
 .tl2-tip-note {
   font-size: 11px; color: var(--ink-3); line-height: 1.4; max-width: 24ch;
   margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line-soft);
+}
+
+/* The opening quarter's ledger, which lists inheritance rather than hiring. */
+.tl2-basenote {
+  margin: 0; padding: 12px 22px;
+  font-size: 12.5px; line-height: 1.45; color: var(--ink-3);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
 }
 
 /* ---- An empty quarter, with somewhere to go -----------------------------

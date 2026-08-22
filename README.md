@@ -51,8 +51,8 @@ Drop in one spreadsheet. It rebuilds the history and answers both.
 | Accept organisational data from at least one structured source | **Load data** — real client-side CSV parsing, drag-and-drop, designed errors |
 | Reconstruct and present the history of a role over time | **Roles** → detail panel: ordered change history and lineage chain |
 | Reconstruct and present the journey of a person over time | **People** → detail panel: full trajectory with dates and manager changes |
-| Show how the two views connect | **Timeline** — position lane, person lane and reporting lane on one axis |
-| Present the history clearly and intuitively | Time scrubber, org snapshot at any quarter, headcount chart |
+| Show how the two views connect | **Overview** → *How the organisation changed* — headcount and structural change on one quarterly axis |
+| Present the history clearly and intuitively | Hover any quarter for its figures, click to open its ledger, or read one row per job |
 | Handle incomplete or inconsistent records gracefully | Detected at ingest and shown in place — "not recorded", hatched unknowns, never auto-filled |
 
 A line-by-line audit against the brief is in
@@ -133,7 +133,7 @@ Silsilah detects four kinds of problem and refuses to guess past any of them:
 - **Inferred** — a date shown is derived, not read from a record, and says so
 - **Inconsistent** — an assignment runs past the life of the position it belongs to
 
-On the timeline, unknown periods render as a **diagonal hatch**, never as a
+In the history chart, unknown periods render as a **diagonal hatch**, never as a
 colour. That keeps colour free to mean category and uses pattern for
 uncertainty — a convention borrowed from statistical charting, and one that
 survives greyscale printing and colour-blindness alike.
@@ -183,14 +183,17 @@ Or push to GitHub and enable Pages against the `dist/` output.
 ## Using it
 
 1. **Open the demonstration** — loads synthetic records for a fictional Malaysian
-   bank: 67 people, 78 positions, five and a half years.
-2. **Timeline** — the connection view. Drag the scrubber to move through time;
-   the snapshot table and headcount chart follow. Pick a division to focus on.
-3. Click any bar to open its detail panel.
-4. **Feature Analysis** — from the button on the overview. *General* reads the
+   bank: 67 people, 84 positions, five and a half years.
+2. **How the organisation changed** — on the overview. Hover any quarter to read
+   its figures; click to select it and the ledger underneath follows. Switch to
+   *Job by job* for one row per seat, created to closed.
+3. **Departments** — every division, as cards and side by side. Open one for its
+   people and its grades.
+4. Click any row or bar to open its detail panel.
+5. **Feature Analysis** — from the button on the overview. *General* reads the
    whole organisation; *By person* runs the same rules against one record.
    Every finding is drawn as a chart and states the rule behind it.
-5. **Load data** → *Download the sample*, edit it, drop it back in.
+6. **Load data** → *Download the sample*, edit it, drop it back in.
 
 ### Data format
 
@@ -231,7 +234,7 @@ CSV text
    │
    ├─ metrics()           headline stats, headcount, the connection  domain/metrics.ts
    │
-   └─ React views         timeline · roles · people · quality · load components/
+   └─ React views         overview · roles · people · departments · load components/
 ```
 
 ```
@@ -313,7 +316,8 @@ Stated plainly, because a prototype that overclaims is worse than one that does 
   endorsed by any bank.
 - **Lineage is declared, not discovered.** Predecessor links come from the file.
   Inferring them from unstructured redesignation letters is the obvious next step.
-- **One division at a time** on the timeline. Designed for a readable scale.
+- **The whole organisation at once** in the history chart. Per-division history
+  is read from the department pages instead.
 - **Quarterly resolution.** A restructure lands in the right quarter, not on the
   right day.
 

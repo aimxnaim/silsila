@@ -28,14 +28,14 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export function PersonDetail({
-  model, personId, backLabel, onBack, onOpenPosition, onShowOnTimeline,
+  model, personId, backLabel, onBack, onOpenPosition, onShowInTime,
 }: {
   model: OrgModel;
   personId: string;
   backLabel: string;
   onBack: () => void;
   onOpenPosition: (id: string) => void;
-  onShowOnTimeline: (quarter: number) => void;
+  onShowInTime: (quarter: number) => void;
 }) {
   const person = model.people.get(personId);
   if (!person) return null;
@@ -80,9 +80,9 @@ export function PersonDetail({
               <div className="no-print">
                 <Button
                   variant="primary"
-                  onClick={() => onShowOnTimeline(toQuarterIndex(first?.startDate) ?? 0)}
+                  onClick={() => onShowInTime(toQuarterIndex(first?.startDate) ?? 0)}
                 >
-                  Show on timeline
+                  Show when they joined
                 </Button>
               </div>
             </div>

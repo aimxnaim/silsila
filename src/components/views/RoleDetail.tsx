@@ -16,14 +16,14 @@ import { Drawer } from '../ui/Drawer.tsx';
 import { RELATION_MEANING, RelationBadge } from '../ui/vocabulary.tsx';
 
 export function RoleDetail({
-  model, positionId, onClose, onOpenPosition, onOpenPerson, onShowOnTimeline,
+  model, positionId, onClose, onOpenPosition, onOpenPerson, onShowInTime,
 }: {
   model: OrgModel;
   positionId: string;
   onClose: () => void;
   onOpenPosition: (id: string) => void;
   onOpenPerson: (id: string) => void;
-  onShowOnTimeline: (quarter: number) => void;
+  onShowInTime: (quarter: number) => void;
 }) {
   const pos = model.positions.get(positionId);
   if (!pos) return null;
@@ -188,8 +188,8 @@ export function RoleDetail({
       </div>
 
       <div className="no-print">
-        <Button onClick={() => onShowOnTimeline(toQuarterIndex(pos.createdAt) ?? 0)}>
-          Show this on the timeline
+        <Button onClick={() => onShowInTime(toQuarterIndex(pos.createdAt) ?? 0)}>
+          Show when this seat opened
         </Button>
       </div>
     </Drawer>
