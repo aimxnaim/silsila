@@ -14,6 +14,7 @@ import { departures, headcountAt, medianTimeInRoleYears, turnover, vacancies } f
 import { criticalRoles, meanSpan, reportingDepth, spans, successionCoverage } from '../src/domain/structure.ts';
 import { divisionFlows, mobilityRate, moves, netFlow } from '../src/domain/mobility.ts';
 import { progressionCandidates, progressionFor, stagnation } from '../src/domain/progression.ts';
+import { signals } from '../src/domain/insights.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '../src/data/demoDataset.ts';
 
 const parsed = parseCSV(DEMO_DATASET_CSV);
@@ -137,6 +138,29 @@ check('everyone flagged as stagnating holds exactly one seat',
   stagnation(model).every((s) => model.people.get(s.personId).assignmentIds.length === 1), true);
 check('everyone flagged as stagnating has at least three years',
   stagnation(model).every((s) => s.years >= 3), true);
+
+const RANK_ORDER = { attention: 0, review: 1, positive: 2 };
+const sig = signals(model, all);
+
+checkAbove('signals are produced', sig.length, 0);
+check('every signal carries a basis', sig.every((s) => s.basis.length > 0), true);
+check('every signal carries evidence', sig.every((s) => s.evidence.length > 0), true);
+// Genuinely sorted: every neighbour pair is in non-decreasing severity rank,
+// so a positive can never outrank something needing attention.
+check('signals are ordered by severity',
+  sig.every((s, i) => i === 0 || RANK_ORDER[sig[i - 1].severity] <= RANK_ORDER[s.severity]), true);
+check('an empty model yields no signals and does not throw',
+  signals({ ...model, people: new Map(), positions: new Map(), assignments: new Map(), lineage: new Map() }, all).length,
+  0);
+
+console.log('\n=== SIGNALS ===');
+for (const s of sig) {
+  console.log(`[${s.severity.toUpperCase()}] ${s.title}`);
+  console.log(`   ${s.statement}`);
+  for (const e of s.evidence) console.log(`   • ${e.label}: ${e.value}`);
+  console.log(`   basis: ${s.basis}`);
+  console.log(`   → ${s.action.label}\n`);
+}
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
 if (failures > 0) process.exitCode = 1;
