@@ -25,7 +25,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOrgModel } from './hooks/useOrgModel.ts';
-import { OverviewView } from './components/views/OverviewView.tsx';
+import { WorkforceView } from './components/views/WorkforceView.tsx';
+import type { PresetId } from './domain/window.ts';
+import type { AreaId } from './domain/insights.ts';
 import { TimeChart } from './components/views/TimeChart.tsx';
 import { RolesView } from './components/views/RolesView.tsx';
 import { PeopleView } from './components/views/PeopleView.tsx';
@@ -36,7 +38,7 @@ import { PersonDetail } from './components/views/PersonDetail.tsx';
 import { DeptView } from './components/views/DeptView.tsx';
 import { Button, Empty } from './components/ui/primitives.tsx';
 
-type Tab = 'overview' | 'orgchart' | 'people' | 'timeline' | 'quality' | 'load';
+type Tab = 'workforce' | 'orgchart' | 'people' | 'timeline' | 'quality' | 'load';
 
 /**
  * Rail glyphs.
@@ -45,7 +47,7 @@ type Tab = 'overview' | 'orgchart' | 'people' | 'timeline' | 'quality' | 'load';
  * an icon font would be one more thing to load before the first paint.
  */
 const ICONS: Record<Tab, JSX.Element> = {
-  overview: (
+  workforce: (
     <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7">
       <rect x="2" y="2" width="6" height="6" rx="1.5" /><rect x="10" y="2" width="6" height="6" rx="1.5" />
       <rect x="2" y="10" width="6" height="6" rx="1.5" /><rect x="10" y="10" width="6" height="6" rx="1.5" />
@@ -84,7 +86,7 @@ const ICONS: Record<Tab, JSX.Element> = {
 };
 
 const TABS: Array<{ id: Tab; label: string; crumb: string }> = [
-  { id: 'overview', label: 'Overview', crumb: 'Overview' },
+  { id: 'workforce', label: 'Workforce', crumb: 'Workforce Intelligence' },
   { id: 'orgchart', label: 'Org chart', crumb: 'Org chart' },
   { id: 'people', label: 'People', crumb: 'All people' },
   { id: 'timeline', label: 'Timeline', crumb: 'Timeline' },
@@ -94,7 +96,8 @@ const TABS: Array<{ id: Tab; label: string; crumb: string }> = [
 
 export function App() {
   const { model, metrics, error, load, loadDemo, resolveIssue, clearError } = useOrgModel();
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>('workforce');
+  const [preset, setPreset] = useState<PresetId>('all');
   const [quarter, setQuarter] = useState(0);
 
   /**
@@ -170,6 +173,17 @@ export function App() {
     setPosition(null);
   }, []);
 
+  /**
+   * Where each intelligence area sends the reader. The areas are questions,
+   * not destinations, so each maps onto the view that already answers it
+   * rather than a new page that would only restate the card.
+   */
+  const openArea = useCallback((id: AreaId) => {
+    if (id === 'progression' || id === 'retention' || id === 'mobility') goTab('people');
+    else if (id === 'succession' || id === 'structure') goTab('orgchart');
+    else goTab('timeline');
+  }, [goTab]);
+
   const tabCrumb = TABS.find((t) => t.id === tab)?.crumb ?? 'Overview';
   const crumb =
     page?.kind === 'person' ? (model?.people.get(page.id)?.name ?? 'Employee record')
@@ -187,7 +201,7 @@ export function App() {
       <nav className="rail no-print" aria-label="Sections">
         <button
           className="rail-logo"
-          onClick={() => goTab('overview')}
+          onClick={() => goTab('workforce')}
           title="Back to the overview"
           aria-label="Back to the overview"
         >
@@ -227,7 +241,7 @@ export function App() {
       <div className="frame-main">
         {/* ---- Breadcrumb ---------------------------------------------- */}
         <header className="topbar no-print">
-          <button className="crumb" onClick={() => goTab('overview')}>Silsilah</button>
+          <button className="crumb" onClick={() => goTab('workforce')}>Silsilah</button>
           <span className="crumb-sep" aria-hidden="true">/</span>
           <span className="crumb-now">{crumb}</span>
 
@@ -292,12 +306,16 @@ export function App() {
                   onBack={closePage}
                   onOpenPerson={openPerson}
                 />
-              ) : tab === 'overview' ? (
-                <OverviewView
+              ) : tab === 'workforce' ? (
+                <WorkforceView
                   model={model}
                   metrics={metrics!}
+                  preset={preset}
+                  onPresetChange={setPreset}
                   onOpenDept={openDept}
-                  onGoToTimeline={() => goTab('timeline')}
+                  onOpenPerson={openPerson}
+                  onOpenPosition={openPosition}
+                  onOpenArea={openArea}
                 />
               ) : tab === 'timeline' ? (
                 <TimeChart

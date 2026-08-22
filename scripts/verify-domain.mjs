@@ -116,6 +116,21 @@ check('coverage totals match the critical roles',
   successionCoverage(model, lastQ).total, criticalRoles(model, lastQ).length);
 checkAbove('the org is more than one layer deep', reportingDepth(model, lastQ), 1);
 
+// P213 (Vincent Chua Boon Hock) carries two live assignment records that
+// disagree on who it reports to — ingest.ts flags exactly this as a
+// "conflict" DataIssue and declines to pick a side. structure.ts must pick
+// one, on stated confidence rather than row order: P202 is recorded at
+// confidence "high", P002 at "low". Checking the resolved value alone would
+// not catch a regression to row order, because in this file P202 also
+// happens to be listed first — so this check reverses the two records'
+// order before asserting: a confidence-based choice survives that; a
+// row-order choice would flip the report from P202 to P002.
+const p213 = model.positions.get('P213');
+p213.assignmentIds.reverse();
+check('P213 reports to the high-confidence record (P202) even with its two conflicting rows reordered',
+  spans(model, lastQ).find((s) => s.positionId === 'P202')?.reports, 2);
+p213.assignmentIds.reverse();
+
 check('six cross-division transfers',
   moves(model, all).filter((mv) => mv.kind === 'transfer').length, 6);
 check('flows are drawn from transfers only',

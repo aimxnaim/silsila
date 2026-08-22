@@ -9,7 +9,7 @@
  * see the workings of is just an assertion.
  */
 
-import type { OrgModel } from './types.ts';
+import type { Assignment, OrgModel, SourceConfidence } from './types.ts';
 import { toQuarterIndex } from './dates.ts';
 import { tenureYears } from './workforce.ts';
 
@@ -25,6 +25,9 @@ const SUCCESSOR_GRADE_REACH = 2;
 const SUCCESSOR_MIN_YEARS = 2;
 /** Grade at or above which a seat is critical regardless of reports. */
 const SENIOR_GRADE = 6;
+
+/** Ranks a stated confidence so the higher one wins when two records disagree. */
+const CONFIDENCE_RANK: Record<SourceConfidence, number> = { high: 3, medium: 2, low: 1 };
 
 interface Holder {
   personId: string;
@@ -43,6 +46,15 @@ function occupancy(model: OrgModel, quarter: number) {
     const closed = pos.closedAt ? toQuarterIndex(pos.closedAt) : null;
     if (closed !== null && closed < quarter) continue;
 
+    // A seat can carry two live assignment records that disagree — ingest.ts
+    // finds exactly this and raises a "conflict" DataIssue rather than pick
+    // a side for us ("Choose which source to trust; the original records
+    // are not modified"). This function still has to settle on one record
+    // to read a holder and reporting line from, so it takes the assignment
+    // with the highest stated confidence rather than whichever the CSV
+    // happened to list first — row order is not evidence. An exact tie
+    // keeps the earlier record, so the choice stays deterministic.
+    let best: Assignment | null = null;
     for (const id of pos.assignmentIds) {
       const a = model.assignments.get(id);
       if (!a) continue;
@@ -51,10 +63,13 @@ function occupancy(model: OrgModel, quarter: number) {
       const to = a.endDate ? toQuarterIndex(a.endDate) : model.window.quarterCount - 1;
       if (to !== null && to < quarter) continue;
 
-      const person = model.people.get(a.personId);
-      if (person) holderOf.set(pos.id, { personId: person.id, name: person.name, startDate: a.startDate });
-      if (a.reportsToPositionId) reportsTo.set(pos.id, a.reportsToPositionId);
-      break;
+      if (!best || CONFIDENCE_RANK[a.confidence] > CONFIDENCE_RANK[best.confidence]) best = a;
+    }
+
+    if (best) {
+      const person = model.people.get(best.personId);
+      if (person) holderOf.set(pos.id, { personId: person.id, name: person.name, startDate: best.startDate });
+      if (best.reportsToPositionId) reportsTo.set(pos.id, best.reportsToPositionId);
     }
   }
 
