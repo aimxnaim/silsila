@@ -51,3 +51,33 @@ console.log(`needs a human       : ${m.succeededCount}`);
 console.log(`issues found        : ${m.issueCount}`);
 console.log(`headcount           : ${m.headcountStart} -> ${m.headcountEnd}`);
 console.log('');
+
+/* ------------------------------------------------------------------ *
+ * Assertions.
+ *
+ * The project has no test runner and does not need one: the domain is
+ * pure functions over one model, so the cheapest honest check is to run
+ * the pipeline and assert on what comes out. A failure exits non-zero so
+ * CI and a human see the same thing.
+ * ------------------------------------------------------------------ */
+let failures = 0;
+
+export function check(label, actual, expected) {
+  const ok = JSON.stringify(actual) === JSON.stringify(expected);
+  if (!ok) failures++;
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${ok ? '' : `\n       expected ${JSON.stringify(expected)}\n       actual   ${JSON.stringify(actual)}`}`);
+}
+
+export function checkAbove(label, actual, floor) {
+  const ok = typeof actual === 'number' && actual > floor;
+  if (!ok) failures++;
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${label} (${actual} > ${floor})`);
+}
+
+console.log('\n=== CHECKS ===');
+check('headcount ends at 64', m.headcountEnd, 64);
+check('people ingested', model.people.size, 67);
+check('data issues found', model.issues.length, 4);
+
+console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
+if (failures > 0) process.exitCode = 1;
