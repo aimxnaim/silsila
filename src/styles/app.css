@@ -94,8 +94,11 @@
   white-space: nowrap;
   transition: color 140ms ease, border-color 140ms ease;
 }
-.tab:hover { color: var(--ink); }
-.tab[aria-selected='true'] { color: var(--ink); border-bottom-color: var(--brand); }
+.tab:hover { color: var(--ink); background: var(--surface-2); }
+.tab[aria-selected='true'] {
+  color: var(--brand-deep); border-bottom-color: var(--brand); background: var(--brand-tint);
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+}
 
 /* Filter chips inside a page reuse .tab but sit in a bordered row. */
 .chiprow {
@@ -502,6 +505,9 @@
   gap: var(--s4);
 }
 .kpi {
+  --tone: var(--nu-bar);
+  --tone-bg: var(--nu-bg);
+  position: relative; overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
@@ -509,6 +515,9 @@
   display: flex; flex-direction: column; gap: var(--s2);
   transition: box-shadow 140ms ease;
 }
+/* A 4px rule along the top rather than a tinted card: four tinted cards in a
+   row start competing with the figures inside them. */
+.kpi::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--tone); }
 .kpi:hover { box-shadow: var(--lift); }
 .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s3); min-height: 34px; }
 .kpi-label {
@@ -520,11 +529,8 @@
   border-radius: var(--r-sm);
   display: grid; place-items: center;
   font-size: 12px; font-weight: 700;
+  background: var(--tone-bg); color: var(--tone);
 }
-.kpi-tag--stone { background: var(--nu-bg);      color: var(--nu-fg); }
-.kpi-tag--verm  { background: var(--brand-tint); color: var(--brand-deep); }
-.kpi-tag--saff  { background: var(--wr-bg);      color: var(--wr-fg); }
-.kpi-tag--ink   { background: var(--ok-bg);      color: var(--ok-fg); }
 .kpi-value { font-size: 34px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .kpi-note { font-size: 12.5px; color: var(--ink-3); line-height: 1.4; }
 
@@ -537,15 +543,24 @@
   gap: var(--s4);
 }
 .dept {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  --tone: var(--nu-bar);
+  --tone-bg: var(--nu-bg);
+  --tone-line: var(--line);
+  position: relative; overflow: hidden;
+  background: var(--tone-bg);
+  border: 1px solid var(--tone-line);
   border-radius: var(--r-lg);
-  padding: 18px 20px;
+  padding: 18px 20px 18px 22px;
   text-align: left;
   display: flex; flex-direction: column; gap: 3px;
   transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
 }
-.dept:hover { box-shadow: var(--lift); transform: translateY(-2px); border-color: #D5DBE4; }
+/* The left edge is what makes a wall of department cards scannable: at a
+   glance the reader sees eight colours, not eight rectangles. */
+.dept::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--tone); }
+.dept:hover { box-shadow: var(--lift); transform: translateY(-2px); border-color: var(--tone); }
+.dept-name { color: var(--tone); }
+.dept-bar { background: rgba(255, 255, 255, 0.72); }
 .dept[aria-pressed='true'] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
 /* A fixed height so a department whose name wraps to two lines still puts its
    headcount on the same line as its neighbours'. */
@@ -594,7 +609,7 @@
 /* ---- The small "work through the year" chart -------------------------- */
 .minichart { display: flex; align-items: flex-end; gap: 14px; height: 120px; margin-top: 22px; }
 .minicol { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
-.minicol i { width: 100%; max-width: 46px; border-radius: 5px 5px 0 0; background: var(--ok-bar); }
+.minicol i { width: 100%; max-width: 46px; border-radius: 5px 5px 0 0; background: var(--nu-bar); }
 .minicol span { font-size: 12px; color: var(--ink-3); }
 
 /* ---- The stacked column chart ------------------------------------------
@@ -710,6 +725,8 @@
 .avatar--c4 { background: var(--cat-4); }
 .avatar--c5 { background: var(--cat-5); }
 .avatar--c6 { background: var(--cat-6); }
+.avatar--c7 { background: var(--cat-7); }
+.avatar--c8 { background: var(--cat-8); }
 
 .avatar--lg {
   width: 132px; height: 132px;
@@ -813,10 +830,15 @@
 /* ---- Snapshot ---------------------------------------------------- */
 .wi-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s4); }
 .wi-kpi {
+  --tone: var(--nu-bar);
+  --tone-bg: var(--nu-bg);
+  position: relative; overflow: hidden;
   text-align: left; border: 1px solid var(--line); border-radius: var(--r-lg);
   background: var(--surface); padding: 18px 20px; cursor: pointer; transition: box-shadow .15s, border-color .15s;
 }
-.wi-kpi:hover { box-shadow: var(--lift); border-color: var(--ink-4); }
+.wi-kpi::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--tone); }
+.wi-kpi:hover { box-shadow: var(--lift); border-color: var(--tone); }
+.wi-kpi-value { color: var(--tone); }
 .wi-kpi-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); }
 .wi-kpi-value { display: block; font-size: 32px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-top: 8px; }
 .wi-kpi-note { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 6px; }
@@ -827,10 +849,19 @@
   position: relative; text-align: left; border: 1px solid var(--line); border-radius: var(--r-lg);
   background: var(--surface); padding: 18px 20px 16px 22px; overflow: hidden; cursor: pointer;
 }
-.wi-signal::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--nu-bar); }
+.wi-signal::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--nu-bar); }
 .wi-signal--attention::before { background: var(--brand); }
 .wi-signal--review::before    { background: var(--wr-bar); }
 .wi-signal--positive::before  { background: var(--ok-bar); }
+/* Severity now tints the whole card. Three findings side by side used to be
+   three white rectangles distinguished by a sliver of colour and a word; the
+   reader had to read to sort them. Now they sort by eye. */
+.wi-signal--attention { background: linear-gradient(180deg, var(--brand-tint), var(--surface) 78%); border-color: var(--brand-line); }
+.wi-signal--review    { background: linear-gradient(180deg, var(--wr-bg), var(--surface) 78%); border-color: #EDD5AC; }
+.wi-signal--positive  { background: linear-gradient(180deg, var(--ok-bg), var(--surface) 78%); border-color: #BFE3CE; }
+.wi-signal--attention h4 { color: var(--brand-deep); }
+.wi-signal--review h4    { color: var(--wr-fg); }
+.wi-signal--positive h4  { color: var(--ok-fg); }
 .wi-sev { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-pill); }
 .wi-signal--attention .wi-sev { color: var(--brand-deep); background: var(--brand-tint); }
 .wi-signal--review .wi-sev    { color: var(--wr-fg);     background: var(--wr-bg); }
@@ -1031,3 +1062,57 @@
 @media (max-width: 620px) {
   .ch-row { grid-template-columns: minmax(0, 72px) 1fr 30px; }
 }
+
+/* ==================================================================== *
+ * IDENTITY COLOUR
+ *
+ * Everything below reads a `--tone` triple set by the component, which
+ * comes from `toneOf()` — one hash, one hue per department, the same in
+ * every view. Nothing here picks a colour of its own.
+ * ==================================================================== */
+
+/* ---- The department chip ------------------------------------------- */
+.dept-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px; border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+.dept-chip--dot { padding: 0; border: 0; background: none; color: inherit; font-weight: 500; }
+.dept-chip--dot i { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+/* Inside a dense table the chip must not out-weigh the name beside it. */
+td .dept-chip { font-size: 11.5px; padding: 2px 8px; }
+
+/* ---- Person analysis ------------------------------------------------ */
+.pa-head {
+  --tone: var(--nu-bar);
+  --tone-bg: var(--nu-bg);
+  background: linear-gradient(180deg, var(--tone-bg), var(--surface) 90%);
+  border-left: 5px solid var(--tone);
+}
+.pa-name { color: var(--tone); }
+.pa-role { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.pa-stat {
+  --tone: var(--nu-bar);
+  --tone-bg: var(--nu-bg);
+  position: relative; overflow: hidden;
+}
+.pa-stat::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--tone); }
+.pa-stat-value { color: var(--tone); }
+
+/* ---- Charts: the subject bar sits in a tinted row ------------------- */
+.ch-row.is-subject { background: var(--surface-2); border-radius: 4px; }
+.ch-row.is-subject .ch-label { color: var(--ink); font-weight: 700; }
+.ch-row.is-subject .ch-value { color: var(--ink); font-weight: 700; }
+
+/* ---- Tables: a coloured left edge on hover, matching the row's dept - */
+.table tbody tr.clickable:hover { background: var(--surface-2); }
+
+/* ---- The scope switch takes the brand rather than plain white ------- */
+.seg button[aria-selected='true'] { color: var(--brand-deep); background: var(--brand-tint); }
+
+/* ---- Progression checks read as status, so they keep status colour -- */
+.pa-checks .is-met b   { color: var(--ok-fg); }
+.pa-checks .is-unmet b { color: var(--wr-fg); }

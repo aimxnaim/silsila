@@ -38,11 +38,14 @@ import { RoleDetail } from '${root}src/components/views/RoleDetail.tsx';
 import { PersonDetail } from '${root}src/components/views/PersonDetail.tsx';
 import { DeptView } from '${root}src/components/views/DeptView.tsx';
 import { analysablePeople } from '${root}src/domain/personAnalysis.ts';
+import { registerDivisions } from '${root}src/components/ui/vocabulary.tsx';
 
 const model = ingest(parseCSV(DEMO_DATASET_CSV), DEMO_DATASET_LABEL);
 model.lineage = classifyLineage(model);
 const m = metrics(model);
 const noop = () => {};
+
+registerDivisions([...model.positions.values()].map((p) => p.division));
 
 const analysis = { model, metrics: m, preset: 'all', onPresetChange: noop, onSelectPerson: noop,
   onBack: noop, onOpenDept: noop, onOpenPerson: noop, onOpenPosition: noop, onOpenArea: noop };

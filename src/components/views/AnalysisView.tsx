@@ -23,6 +23,7 @@ import { mobilityRate } from '../../domain/mobility.ts';
 import { criticalRoles, successionCoverage } from '../../domain/structure.ts';
 import { analysablePeople } from '../../domain/personAnalysis.ts';
 import { formatDate } from '../../domain/dates.ts';
+import { toneAt } from '../ui/vocabulary.tsx';
 import { InsightCard } from './wi/InsightCard.tsx';
 import { PersonAnalysisPanel } from './wi/PersonAnalysis.tsx';
 
@@ -132,7 +133,11 @@ export function AnalysisView({
         <>
           {/* ---- Snapshot ---------------------------------------------- */}
           <div className="wi-kpis">
-            <button className="wi-kpi" onClick={() => onOpenArea('structure')}>
+            <button
+              className="wi-kpi"
+              style={{ '--tone': toneAt(0).ink, '--tone-bg': toneAt(0).bg } as React.CSSProperties}
+              onClick={() => onOpenArea('structure')}
+            >
               <span className="wi-kpi-label">Total employees</span>
               <span className="wi-kpi-value tnum">{now}</span>
               <span className="wi-kpi-note">
@@ -141,7 +146,11 @@ export function AnalysisView({
               </span>
             </button>
 
-            <button className="wi-kpi" onClick={() => onOpenArea('retention')}>
+            <button
+              className="wi-kpi"
+              style={{ '--tone': toneAt(1).ink, '--tone-bg': toneAt(1).bg } as React.CSSProperties}
+              onClick={() => onOpenArea('retention')}
+            >
               <span className="wi-kpi-label">Turnover</span>
               <span className="wi-kpi-value tnum">{churn.departures.length}</span>
               <span className="wi-kpi-note">
@@ -151,7 +160,11 @@ export function AnalysisView({
               </span>
             </button>
 
-            <button className="wi-kpi" onClick={() => onOpenArea('mobility')}>
+            <button
+              className="wi-kpi"
+              style={{ '--tone': toneAt(2).ink, '--tone-bg': toneAt(2).bg } as React.CSSProperties}
+              onClick={() => onOpenArea('mobility')}
+            >
               <span className="wi-kpi-label">Internal mobility</span>
               <span className="wi-kpi-value tnum">
                 {mobility.rate === null ? '—' : `${mobility.rate.toFixed(1)}%`}
@@ -161,7 +174,11 @@ export function AnalysisView({
               </span>
             </button>
 
-            <button className="wi-kpi" onClick={() => onOpenArea('succession')}>
+            <button
+              className="wi-kpi"
+              style={{ '--tone': toneAt(3).ink, '--tone-bg': toneAt(3).bg } as React.CSSProperties}
+              onClick={() => onOpenArea('succession')}
+            >
               <span className="wi-kpi-label">Critical roles</span>
               <span className="wi-kpi-value tnum">{critical.length}</span>
               <span className="wi-kpi-note">

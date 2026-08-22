@@ -5,11 +5,11 @@
  * The colour is a hash of the name, so it is stable across every view a person
  * appears in. That is the whole value of it: the eye follows the same coloured
  * disc down a 67-row table and across into a drawer without re-reading a name
- * each time. Six hues, all desaturated, none of them the brand red at full
- * strength — an avatar identifies, it does not rank.
+ * each time. It draws from the same eight identity hues as departments and
+ * charts, through the same hash — an avatar identifies, it does not rank.
  */
 
-const PALETTE_SIZE = 6;
+import { catIndex } from './vocabulary.tsx';
 
 function initials(name: string): string {
   const parts = name
@@ -21,17 +21,10 @@ function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-/** Cheap, deterministic, and stable across reloads — which is all it needs. */
-function hue(name: string): number {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 997;
-  return (h % PALETTE_SIZE) + 1;
-}
-
 export function Avatar({ name, large = false }: { name: string; large?: boolean }) {
   return (
     <span
-      className={`avatar avatar--c${hue(name)} ${large ? 'avatar--lg' : ''}`.trim()}
+      className={`avatar avatar--c${catIndex(name)} ${large ? 'avatar--lg' : ''}`.trim()}
       aria-hidden="true"
       title={name}
     >

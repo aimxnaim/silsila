@@ -19,6 +19,7 @@ import type { PersonOption } from '../../../domain/personAnalysis.ts';
 import { personAnalysis } from '../../../domain/personAnalysis.ts';
 import { formatDate } from '../../../domain/dates.ts';
 import { Avatar } from '../../ui/Avatar.tsx';
+import { DeptChip, toneAt, toneOf } from '../../ui/vocabulary.tsx';
 import { InsightCard } from './InsightCard.tsx';
 
 const MOVE_LABEL = {
@@ -27,9 +28,14 @@ const MOVE_LABEL = {
   lateral: 'Lateral',
 } as const;
 
-function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
+function Stat({ label, value, note, tone }: {
+  label: string; value: string; note?: string; tone: number;
+}) {
   return (
-    <div className="pa-stat">
+    <div
+      className="pa-stat"
+      style={{ '--tone': toneAt(tone).ink, '--tone-bg': toneAt(tone).bg } as React.CSSProperties}
+    >
       <span className="pa-stat-label">{label}</span>
       <span className="pa-stat-value tnum">{value}</span>
       {note ? <span className="pa-stat-note">{note}</span> : null}
@@ -91,12 +97,18 @@ export function PersonAnalysisPanel({
       ) : (
         <>
           {/* ---- Identity and service ------------------------------------ */}
-          <div className="pa-head">
+          <div
+            className="pa-head"
+            style={{
+              '--tone': toneOf(analysis.division).ink,
+              '--tone-bg': toneOf(analysis.division).bg,
+            } as React.CSSProperties}
+          >
             <Avatar name={analysis.name} large />
             <div className="pa-id">
               <div className="pa-name">{analysis.name}</div>
               <div className="pa-role">
-                {analysis.title} &middot; {analysis.division}
+                {analysis.title} <DeptChip name={analysis.division} />
               </div>
               <div className="pa-status">
                 {analysis.inSeat
@@ -111,11 +123,13 @@ export function PersonAnalysisPanel({
 
           <div className="pa-stats">
             <Stat
+              tone={0}
               label="Years of service"
               value={analysis.yearsService === null ? '—' : analysis.yearsService.toFixed(1)}
               note={analysis.inSeat ? 'to the end of the records' : 'at departure'}
             />
             <Stat
+              tone={1}
               label="Years in current seat"
               value={analysis.yearsInRole === null ? '—' : analysis.yearsInRole.toFixed(1)}
               note={
@@ -125,11 +139,13 @@ export function PersonAnalysisPanel({
               }
             />
             <Stat
+              tone={2}
               label="Recorded moves"
               value={`${analysis.moves.length}`}
               note={analysis.moves.length === 0 ? 'one seat throughout' : 'across their whole history'}
             />
             <Stat
+              tone={3}
               label="Direct reports"
               value={analysis.seat ? `${analysis.seat.reports}` : '—'}
               note={

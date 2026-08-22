@@ -7,10 +7,19 @@
  * the question they ask about vacancies and job titles, where a single number
  * has no meaning without the period around it.
  *
- * Colour does exactly one job here, the same job it does everywhere else in
- * this interface: the bar the finding is ABOUT is drawn in the severity
- * colour, and every other bar is neutral grey. A chart where all the bars are
- * coloured has told the reader nothing about which one to look at.
+ * Colour follows the rule the rest of the interface follows: hue identifies,
+ * weight emphasises. Every bar takes the hue of the thing it names — so the
+ * bar for Group Human Capital is the same colour here as that department's
+ * card, its avatar and its row in the people table — and the bar the finding
+ * is ABOUT is the one at full strength, with the rest stepped back.
+ *
+ * The step-back only happens when there is something to step back FROM. A
+ * chart with no emphasised bar draws every bar at full strength, because
+ * dimming all of them would imply a subject that is not there.
+ *
+ * Lines keep the severity colour instead: a series over time is one thing
+ * changing, not several things being compared, so there is no identity for a
+ * hue to carry.
  *
  * There is no charting library because there is no charting problem: bars are
  * divs with a width, and a line is one polyline. A dependency here would cost
@@ -18,6 +27,7 @@
  */
 
 import type { Severity, SignalChart as Spec } from '../../../domain/insights.ts';
+import { toneOf } from '../../ui/vocabulary.tsx';
 
 /** Series beyond the first are comparisons, and read as context, not subject. */
 const COMPARISON = 'var(--nu-bar)';
@@ -31,21 +41,26 @@ const SEVERITY_INK: Record<Severity, string> = {
 /** The plot box a line is drawn into. Stroke width is kept true by CSS. */
 const VIEW = { w: 320, h: 96, pad: 4 };
 
-function Bars({ spec, ink }: { spec: Spec; ink: string }) {
+function Bars({ spec }: { spec: Spec }) {
   const points = spec.series[0]?.points ?? [];
   const ceiling = Math.max(...points.map((p) => p.value), spec.reference?.value ?? 0, 1);
+  const hasSubject = points.some((p) => p.emphasis);
 
   return (
     <div className="ch-bars">
       {points.map((p, i) => (
-        <div className="ch-row" key={`${p.label}-${i}`}>
+        <div
+          className={`ch-row ${p.emphasis ? 'is-subject' : ''}`.trim()}
+          key={`${p.label}-${i}`}
+        >
           <span className="ch-label" title={p.label}>{p.label}</span>
           <span className="ch-track">
             <i
               className="ch-fill"
               style={{
                 width: `${Math.max((p.value / ceiling) * 100, p.value > 0 ? 1.5 : 0)}%`,
-                background: p.emphasis ? ink : COMPARISON,
+                background: toneOf(p.label).ink,
+                opacity: hasSubject && !p.emphasis ? 0.55 : 1,
               }}
             />
             {spec.reference ? (
@@ -158,7 +173,7 @@ export function SignalChart({ spec, severity }: { spec: Spec; severity: Severity
 
   return (
     <figure className="ch">
-      {spec.kind === 'bar' ? <Bars spec={spec} ink={ink} /> : <Line spec={spec} ink={ink} />}
+      {spec.kind === 'bar' ? <Bars spec={spec} /> : <Line spec={spec} ink={ink} />}
       <figcaption className="ch-caption">
         {spec.caption}
         {spec.reference ? (

@@ -1,28 +1,39 @@
 /**
  * SILSILAH — design tokens
  *
- * Enterprise HR console. Grey canvas, white cards, one red accent, dense type.
+ * Enterprise HR console. Grey canvas, white cards, dense type, and a working
+ * palette of eight identity hues over three status colours.
  *
  * The reference is the system this tool is meant to sit beside: a professional
  * services HR portal — left icon rail, breadcrumb, tab strip, white cards
  * floating on a cool grey page. A reader who uses that system every day should
  * be able to enter this one without being taught where anything is.
  *
- * The rule that survived the redesign, because it is the reason the interface
- * is readable at all: COLOUR ALWAYS DOES A JOB.
+ * The governing rule, revised: HUE IDENTIFIES, WEIGHT EMPHASISES.
  *
- *   brand red   the present moment, the active thing, the one primary action
- *   ink         a person, and every heading
- *   green       settled — a change we are confident about
- *   amber       unsettled — needs a human
- *   grey        structure, and everything neutral
- *   hatch       we do not know
+ * The first version of this file said colour always does a job, and it kept
+ * that promise so strictly that almost nothing was coloured — every section
+ * arrived as another white card on grey, and a reader had nothing to navigate
+ * by but headings. Restraint stopped being legibility and started being
+ * uniformity.
  *
- * That last one is what lets the rest stay calm. Uncertainty is drawn as a
- * diagonal hatch with a dashed border and no hue at all, which frees every
- * colour above for category use. It also reads as "no data" more immediately
- * than any colour can, and it survives greyscale printing and colour-blindness
- * alike — both of which matter, because this output gets printed for committees.
+ * So the palette now runs much wider, under a rule that still disciplines it:
+ *
+ *   hue          IDENTITY — which department, which category, which person.
+ *                A department owns its hue in every view it appears in.
+ *   status       STATE — green settled, amber needs a human, red attention.
+ *                Three colours, reserved, never used decoratively.
+ *   weight       EMPHASIS — a solid fill against a tint, a 3px edge against a
+ *                hairline. This is how one thing outranks another now, which
+ *                is what frees hue to identify rather than rank.
+ *   hatch        WE DO NOT KNOW.
+ *
+ * That last one is why the rest can be colourful. Uncertainty is drawn as a
+ * diagonal hatch with a dashed border and no hue at all, so no colour has to
+ * be held in reserve to mean "missing". It also reads as "no data" more
+ * immediately than any colour can, and it survives greyscale printing and
+ * colour-blindness alike — both of which matter, because this output gets
+ * printed for committees.
  */
 
 :root {
@@ -59,16 +70,28 @@
   --wr-fg:  #8A5C07;  --wr-bg:  #FDF1DE;  --wr-bar:  #D99A2B;
   --nu-fg:  #454E5B;  --nu-bg:  #F0F2F5;  --nu-bar:  #98A1AD;
 
-  /* --- Categories -----------------------------------------------------
-   * Assigned by hash to avatars and departments. Deliberately desaturated:
-   * these identify, they do not rank, so none may out-shout the brand red.
+  /* --- Categories ------------------------------------------------------
+   *
+   * Eight identity hues, each a triple: a fill for bars and tiles, a tint for
+   * a panel behind text, and a line for its border. Assigned by hash, so a
+   * department keeps the same hue in every view it appears in — the card, the
+   * avatar, the chart bar, the timeline lane.
+   *
+   * These are the workhorses of the interface now, not accents. They are
+   * levelled to a similar lightness on purpose: they identify one thing from
+   * another and must never imply a ranking between them. Weight, not hue,
+   * says which one matters.
    */
-  --cat-1: #2C3E50;
-  --cat-2: #C8202F;
-  --cat-3: #2C5F8A;
-  --cat-4: #6B4D9E;
-  --cat-5: #1F8A70;
-  --cat-6: #B5762A;
+  --cat-1: #3B4FA8;  --cat-1-bg: #EEF0FB;  --cat-1-line: #C9D0F0;  /* indigo */
+  --cat-2: #C8202F;  --cat-2-bg: #FDEAEC;  --cat-2-line: #F3C2C7;  /* vermillion */
+  --cat-3: #0F7B8A;  --cat-3-bg: #E2F4F6;  --cat-3-line: #B6E0E6;  /* teal */
+  --cat-4: #7A3E9D;  --cat-4-bg: #F4ECFA;  --cat-4-line: #DFC8EE;  /* violet */
+  --cat-5: #1F7A4D;  --cat-5-bg: #E4F4EB;  --cat-5-line: #BFE3CE;  /* green */
+  --cat-6: #B5762A;  --cat-6-bg: #FBF0DF;  --cat-6-line: #EDD5AC;  /* amber */
+  --cat-7: #2C6FB5;  --cat-7-bg: #E8F1FA;  --cat-7-line: #C1DAF0;  /* blue */
+  --cat-8: #B03A6E;  --cat-8-bg: #FBEAF2;  --cat-8-line: #F0C5D9;  /* rose */
+  --cat-9: #4A6572;  --cat-9-bg: #EDF1F3;  --cat-9-line: #CBD6DC;  /* slate */
+  --cat-10:#A14A20;  --cat-10-bg:#FBEDE6;  --cat-10-line:#EFCDBA;  /* rust */
 
   /* --- Type ------------------------------------------------------------ */
   --sans:   'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;

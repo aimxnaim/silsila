@@ -28,7 +28,7 @@
  * show one before it asks for anything.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOrgModel } from './hooks/useOrgModel.ts';
 import { OverviewView } from './components/views/OverviewView.tsx';
 import { AnalysisView } from './components/views/AnalysisView.tsx';
@@ -43,6 +43,7 @@ import { RoleDetail } from './components/views/RoleDetail.tsx';
 import { PersonDetail } from './components/views/PersonDetail.tsx';
 import { DeptView } from './components/views/DeptView.tsx';
 import { Button, Empty } from './components/ui/primitives.tsx';
+import { registerDivisions } from './components/ui/vocabulary.tsx';
 
 type Tab = 'overview' | 'analysis' | 'orgchart' | 'people' | 'timeline' | 'load';
 
@@ -157,6 +158,17 @@ export function App() {
   // the one a reader is arriving to ask about.
   useEffect(() => {
     if (model) setQuarter(model.window.quarterCount - 1);
+  }, [model]);
+
+  /**
+   * Deal each department its hue as soon as a model exists, and before any
+   * view renders — during render rather than in an effect, because assigning
+   * afterwards would repaint every card, chip and chart bar one frame later.
+   * The call is idempotent and cheap: it no-ops unless the divisions changed.
+   */
+  useMemo(() => {
+    if (!model) return;
+    registerDivisions([...model.positions.values()].map((p) => p.division));
   }, [model]);
 
   const openPosition = useCallback((id: string) => setPosition(id), []);
