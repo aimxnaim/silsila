@@ -16,7 +16,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useOrgModel } from './hooks/useOrgModel.ts';
 import { Landing } from './components/Landing.tsx';
-import { TimelineView } from './components/views/TimelineView.tsx';
+import { OverviewView } from './components/views/OverviewView.tsx';
+import { TimeChart } from './components/views/TimeChart.tsx';
 import { RolesView } from './components/views/RolesView.tsx';
 import { PeopleView } from './components/views/PeopleView.tsx';
 import { QualityView } from './components/views/QualityView.tsx';
@@ -25,12 +26,13 @@ import { RoleDetail } from './components/views/RoleDetail.tsx';
 import { PersonDetail } from './components/views/PersonDetail.tsx';
 import { Button, Empty } from './components/ui/primitives.tsx';
 
-type Tab = 'timeline' | 'roles' | 'people' | 'quality' | 'load';
+type Tab = 'overview' | 'orgchart' | 'people' | 'timeline' | 'quality' | 'load';
 
 const TABS: Array<{ id: Tab; label: string }> = [
-  { id: 'timeline', label: 'Timeline' },
-  { id: 'roles', label: 'Roles' },
+  { id: 'overview', label: 'Overview' },
+  { id: 'orgchart', label: 'Org chart' },
   { id: 'people', label: 'People' },
+  { id: 'timeline', label: 'Timeline' },
   { id: 'quality', label: 'Data quality' },
   { id: 'load', label: 'Load data' },
 ];
@@ -38,7 +40,7 @@ const TABS: Array<{ id: Tab; label: string }> = [
 export function App() {
   const { model, metrics, error, load, loadDemo, resolveIssue, clearError } = useOrgModel();
   const [entered, setEntered] = useState(false);
-  const [tab, setTab] = useState<Tab>('timeline');
+  const [tab, setTab] = useState<Tab>('overview');
   const [quarter, setQuarter] = useState(0);
 
   // Exactly one thing can be open in the detail panel at a time.
@@ -119,8 +121,16 @@ export function App() {
               <Button onClick={() => setTab('load')}>Load a file</Button>
             </div>
           </div>
+        ) : tab === 'overview' ? (
+          <OverviewView
+            model={model}
+            metrics={metrics!}
+            onOpenPosition={openPosition}
+            onOpenPerson={openPerson}
+            onGoToOrgChart={() => setTab('orgchart')}
+          />
         ) : tab === 'timeline' ? (
-          <TimelineView
+          <TimeChart
             model={model}
             metrics={metrics!}
             quarter={quarter}
@@ -128,7 +138,7 @@ export function App() {
             onOpenPosition={openPosition}
             onOpenPerson={openPerson}
           />
-        ) : tab === 'roles' ? (
+        ) : tab === 'orgchart' ? (
           <RolesView model={model} onOpenPosition={openPosition} />
         ) : tab === 'people' ? (
           <PeopleView model={model} onOpenPerson={openPerson} />

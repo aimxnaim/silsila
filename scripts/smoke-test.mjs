@@ -29,7 +29,8 @@ import { classifyLineage } from '${root}src/domain/lineage.ts';
 import { metrics } from '${root}src/domain/metrics.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '${root}src/data/demoDataset.ts';
 import { Landing } from '${root}src/components/Landing.tsx';
-import { TimelineView } from '${root}src/components/views/TimelineView.tsx';
+import { OverviewView } from '${root}src/components/views/OverviewView.tsx';
+import { TimeChart } from '${root}src/components/views/TimeChart.tsx';
 import { RolesView } from '${root}src/components/views/RolesView.tsx';
 import { PeopleView } from '${root}src/components/views/PeopleView.tsx';
 import { QualityView } from '${root}src/components/views/QualityView.tsx';
@@ -44,7 +45,8 @@ const noop = () => {};
 
 const cases = [
   ['Landing',      <Landing onEnter={noop} />],
-  ['Timeline',     <TimelineView model={model} metrics={m} quarter={12} onQuarterChange={noop} onOpenPosition={noop} onOpenPerson={noop} />],
+  ['Overview',     <OverviewView model={model} metrics={m} onOpenPosition={noop} onOpenPerson={noop} onGoToOrgChart={noop} />],
+  ['TimeChart',    <TimeChart model={model} metrics={m} quarter={12} onQuarterChange={noop} onOpenPosition={noop} onOpenPerson={noop} />],
   ['Roles',        <RolesView model={model} onOpenPosition={noop} />],
   ['People',       <PeopleView model={model} onOpenPerson={noop} />],
   ['Data quality', <QualityView model={model} onResolve={noop} onOpenPosition={noop} onOpenPerson={noop} />],

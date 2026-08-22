@@ -1,21 +1,55 @@
 /**
- * One person, in full.
+ * One person, as a profile page.
+ *
+ * Laid out the way an HR system lays out an employee record — portrait, name,
+ * current title, then a grid of fields — because that is the format the reader
+ * already knows, and the argument this panel makes only lands if the reader
+ * recognises what they are looking at.
  *
  * The section that justifies the whole product is "What moved around them".
- * A conventional HR record shows this person holding three different job
- * titles and invites the reader to conclude they are restless. This panel puts
- * the structural events next to the trajectory, so the reader can see that the
- * titles changed because the organisation was reorganised — not because the
- * person went anywhere.
+ * A conventional HR record shows this person under three different job titles
+ * and invites the reader to conclude they are restless. This panel puts the
+ * structural events beside the trajectory, so it is visible that the titles
+ * changed because the organisation was reorganised — not because the person
+ * went anywhere.
  */
 
 import type { OrgModel } from '../../domain/types.ts';
-import { formatDate, toQuarterIndex } from '../../domain/dates.ts';
+import { formatDate, formatMonthYear, toQuarterIndex } from '../../domain/dates.ts';
 import { structuralChangesFor } from '../../domain/metrics.ts';
 import { Badge, Button, Card, Eyebrow } from '../ui/primitives.tsx';
+import { Avatar } from '../ui/Avatar.tsx';
 import { Drawer } from '../ui/Drawer.tsx';
 import { RELATION_LABEL } from '../ui/vocabulary.tsx';
 import type { LineageRelation } from '../../domain/types.ts';
+
+function tenure(from: string | null | undefined, to: string | null): string {
+  if (!from) return 'unknown';
+  const start = new Date(from);
+  const end = to ? new Date(to) : new Date('2026-06-30');
+  if (Number.isNaN(start.getTime())) return 'unknown';
+  const months = Math.max(
+    0,
+    (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()),
+  );
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  if (years === 0) return `${rest} month${rest === 1 ? '' : 's'}`;
+  if (rest === 0) return `${years} year${years === 1 ? '' : 's'}`;
+  return `${years}y ${rest}m`;
+}
+
+function Field({ label, value }: { label: string; value: React.ReactNode }) {
+  const empty = value === null || value === undefined || value === '';
+  return (
+    <div>
+      <span className="field-label">{label}</span>
+      <span className={`field-value ${empty ? 'is-empty' : ''}`}>
+        {empty ? 'not recorded' : value}
+      </span>
+    </div>
+  );
+}
 
 export function PersonDetail({
   model, personId, onClose, onOpenPosition, onShowOnTimeline,
@@ -30,30 +64,65 @@ export function PersonDetail({
   if (!person) return null;
 
   const assignments = person.assignmentIds.map((id) => model.assignments.get(id)!);
+  const first = assignments[0];
+  const latest = assignments[assignments.length - 1];
+  const currentPosition = latest ? model.positions.get(latest.positionId) : null;
+  const manager = latest?.reportsToPositionId
+    ? model.positions.get(latest.reportsToPositionId)
+    : null;
+
   const structural = structuralChangesFor(model, personId);
   const distinctTitles = new Set(
     assignments.map((a) => model.positions.get(a.positionId)?.title).filter(Boolean),
   );
+  const stillHere = latest && !latest.endDate;
 
-  // The claim worth making out loud, when the records support it.
+  // Worth saying out loud, but only when the records actually support it.
   const sameJobManyTitles =
     distinctTitles.size > 1 &&
-    structural.filter((s) => s.relation === 'rename' || s.relation === 'redesignated').length > 0;
+    structural.some((s) => s.relation === 'rename' || s.relation === 'redesignated');
 
   return (
     <Drawer
       title={person.name}
-      subtitle={<span className="mono">{person.id}</span>}
+      subtitle={currentPosition?.title ?? 'No current position recorded'}
       onClose={onClose}
     >
-      <div className="row gap-2 wrap">
-        <Badge>{assignments.length} {assignments.length === 1 ? 'seat' : 'seats'} held</Badge>
-        <Badge>{distinctTitles.size} distinct {distinctTitles.size === 1 ? 'title' : 'titles'}</Badge>
-        {structural.length > 0 ? (
-          <Badge tone="accent">{structural.length} structural {structural.length === 1 ? 'change' : 'changes'}</Badge>
-        ) : null}
+      {/* ---- Profile header --------------------------------------------- */}
+      <div className="profile-head">
+        <Avatar name={person.name} large />
+        <div className="profile-id">
+          <div className="profile-name">{person.name}</div>
+          <div className="profile-role">{currentPosition?.title ?? '—'}</div>
+          <div className="row gap-2 wrap" style={{ marginTop: 'var(--s3)' }}>
+            {stillHere
+              ? <Badge tone="ink">Currently employed</Badge>
+              : <Badge>Left {formatMonthYear(latest?.endDate ?? null)}</Badge>}
+            {structural.length > 0 ? (
+              <Badge tone="accent">
+                {structural.length} structural change{structural.length === 1 ? '' : 's'}
+              </Badge>
+            ) : null}
+          </div>
+        </div>
       </div>
 
+      <div className="field-grid">
+        <Field label="Employee code" value={<span className="mono">{person.id}</span>} />
+        <Field label="Department" value={currentPosition?.division} />
+        <Field label="Team" value={currentPosition?.orgUnit} />
+        <Field label="Grade" value={currentPosition?.level !== null && currentPosition?.level !== undefined ? currentPosition.level : null} />
+        <Field label="Employment status" value={latest?.employmentType} />
+        <Field label="Location" value={currentPosition?.location} />
+        <Field label="Time on record" value={tenure(first?.startDate, latest?.endDate ?? null)} />
+        <Field label="Joined" value={formatMonthYear(first?.startDate)} />
+        <Field label="Reports to" value={manager?.title} />
+        <Field label="Jobs held" value={assignments.length} />
+        <Field label="Distinct job titles" value={distinctTitles.size} />
+        <Field label="Record source" value={<span className="small">{latest?.source}</span>} />
+      </div>
+
+      {/* ---- The argument ------------------------------------------------ */}
       {sameJobManyTitles ? (
         <Card tight>
           <Eyebrow>What the raw record would suggest</Eyebrow>
@@ -63,15 +132,15 @@ export function PersonDetail({
             reads as someone who has moved around.
           </p>
           <p style={{ marginTop: 'var(--s3)' }} className="accent">
-            The lineage says otherwise: at least one of those changes was the same
-            seat being relabelled. The organisation moved; the person did not.
+            The lineage says otherwise: at least one of those changes was the same seat
+            being relabelled. The organisation moved; the person did not.
           </p>
         </Card>
       ) : null}
 
-      {/* ---- Trajectory --------------------------------------------------- */}
+      {/* ---- Career history ---------------------------------------------- */}
       <div>
-        <Eyebrow>Trajectory</Eyebrow>
+        <Eyebrow>Career history</Eyebrow>
         <div className="stack gap-2" style={{ marginTop: 'var(--s3)' }}>
           {assignments.map((a) => {
             const pos = model.positions.get(a.positionId);
@@ -91,9 +160,11 @@ export function PersonDetail({
                 </div>
                 <div className="micro muted" style={{ marginTop: 4 }}>
                   {pos?.orgUnit}
-                  {pos?.level !== null && pos?.level !== undefined ? ` · Grade ${pos.level}` : ''}
-                  {' · Reported to '}
+                  {pos?.level !== null && pos?.level !== undefined ? ` · grade ${pos.level}` : ''}
+                  {' · reported to '}
                   {mgr ? mgr.title : <em>not recorded</em>}
+                  {' · '}
+                  {tenure(a.startDate, a.endDate)}
                 </div>
                 {a.changeReason ? (
                   <div className="micro" style={{ marginTop: 2 }}>{a.changeReason}</div>
@@ -112,8 +183,8 @@ export function PersonDetail({
       <div>
         <Eyebrow>What moved around them</Eyebrow>
         <p className="small muted" style={{ marginTop: 'var(--s2)' }}>
-          Structural changes to the seats this person occupied. This is where the
-          person's history and the organisation's history are the same history.
+          Structural changes to the seats this person occupied. This is where their
+          history and the organisation&rsquo;s history turn out to be the same history.
         </p>
         <div className="stack gap-2" style={{ marginTop: 'var(--s3)' }}>
           {structural.map((event) => (
@@ -141,7 +212,7 @@ export function PersonDetail({
       </div>
 
       <div className="no-print">
-        <Button onClick={() => onShowOnTimeline(toQuarterIndex(assignments[0]?.startDate) ?? 0)}>
+        <Button onClick={() => onShowOnTimeline(toQuarterIndex(first?.startDate) ?? 0)}>
           Show this on the timeline
         </Button>
       </div>
