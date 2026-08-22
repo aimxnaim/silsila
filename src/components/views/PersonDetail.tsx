@@ -11,8 +11,10 @@
 import type { LineageRelation, OrgModel } from '../../domain/types.ts';
 import { formatMonthYear, tenure, toQuarterIndex } from '../../domain/dates.ts';
 import { structuralChangesFor } from '../../domain/metrics.ts';
+import { personGlance } from '../../domain/glance.ts';
 import { Badge, Button } from '../ui/primitives.tsx';
 import { Avatar } from '../ui/Avatar.tsx';
+import { GlanceBlock } from '../ui/Glance.tsx';
 import { RELATION_LABEL, STATE, stateOf } from '../ui/vocabulary.tsx';
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -109,6 +111,19 @@ export function PersonDetail({
             </div>
           </div>
         </div>
+      </div>
+
+      {/*
+        * Who was doing the moving.
+        *
+        * This panel has always argued that the titles changed because the
+        * organisation was reorganised around this person, not because they
+        * kept moving — see the note at the top of the file. That claim was
+        * made in a source comment and nowhere a reader could see it. Counted
+        * and put on screen, it is the first thing the page says.
+        */}
+      <div className="card">
+        <GlanceBlock glance={personGlance(model, personId)} />
       </div>
 
       {/* ---- Career history --------------------------------------------- */}

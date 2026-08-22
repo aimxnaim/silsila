@@ -11,8 +11,10 @@
 import type { OrgModel } from '../../domain/types.ts';
 import { formatDate, toQuarterIndex } from '../../domain/dates.ts';
 import { lineageChain } from '../../domain/metrics.ts';
+import { positionGlance } from '../../domain/glance.ts';
 import { Badge, Button, Card, Eyebrow, SignalBar } from '../ui/primitives.tsx';
 import { Drawer } from '../ui/Drawer.tsx';
+import { GlanceBlock } from '../ui/Glance.tsx';
 import { RELATION_MEANING, RelationBadge } from '../ui/vocabulary.tsx';
 
 export function RoleDetail({
@@ -43,6 +45,14 @@ export function RoleDetail({
       }
       onClose={onClose}
     >
+      {/*
+        * What happened to this seat, before the classifier's reasoning about
+        * how it knows. The drawer used to open on a confidence score and four
+        * signal bars — an argument, which is right for an audit committee and
+        * wrong for the first ten seconds.
+        */}
+      <GlanceBlock glance={positionGlance(model, positionId)} />
+
       <div className="row gap-2 wrap">
         {verdict ? <RelationBadge relation={verdict.relation} /> : null}
         <Badge>{formatDate(pos.createdAt)} → {pos.closedAt ? formatDate(pos.closedAt) : 'present'}</Badge>
@@ -58,9 +68,24 @@ export function RoleDetail({
             {RELATION_MEANING[verdict.relation]}
           </p>
 
+          {/*
+            * The measurements stay — a confidence score with its inputs beside
+            * it is an argument, and an argument can be disagreed with, which is
+            * the whole reason this is presentable to an audit committee. They
+            * are just no longer the first thing in the drawer. Anyone who wants
+            * to disagree opens this; anyone who wanted the answer already has it.
+            *
+            * A seat needing review opens it by default: that is the one case
+            * where the machine is explicitly asking for a human, and hiding
+            * the request behind a click would be the wrong default.
+            */}
           {verdict.relation !== 'created' ? (
-            <>
-              <hr className="divider" style={{ margin: 'var(--s4) 0' }} />
+            <details className="disclose" open={verdict.needsReview}>
+              <summary>
+                How we worked this out
+                <span className="tnum">{Math.round(verdict.confidence * 100)}% confident</span>
+              </summary>
+
               <Eyebrow>What was measured</Eyebrow>
               <div className="stack gap-2" style={{ marginTop: 'var(--s3)' }}>
                 <SignalBar label="Title similarity" value={verdict.signals.titleSimilarity} />
@@ -68,22 +93,16 @@ export function RoleDetail({
                 <SignalBar label="Reporting continuity" value={verdict.signals.reportingContinuity} />
                 <SignalBar label="Structural certainty" value={verdict.signals.structuralCertainty} />
               </div>
-              <div
-                className="row spread"
-                style={{ marginTop: 'var(--s4)', paddingTop: 'var(--s3)', borderTop: '1px solid var(--line)' }}
-              >
-                <span className="small muted">
-                  Weighted 0.45 / 0.30 / 0.15 / 0.10
-                </span>
-                <strong className="tnum">{Math.round(verdict.confidence * 100)}% confident</strong>
-              </div>
+              <p className="small muted" style={{ marginTop: 'var(--s3)' }}>
+                Weighted 0.45 / 0.30 / 0.15 / 0.10
+              </p>
               {verdict.needsReview ? (
                 <p className="small" style={{ color: 'var(--wr-fg)', marginTop: 'var(--s3)' }}>
                   Below the threshold at which we are willing to let the machine's
                   answer stand alone. A person should look at this one.
                 </p>
               ) : null}
-            </>
+            </details>
           ) : null}
         </Card>
       ) : null}

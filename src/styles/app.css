@@ -924,6 +924,8 @@
 .tl2-svg { display: block; width: 100%; height: auto; cursor: crosshair; touch-action: pan-y; }
 
 .tl2-tick { font-size: 10.5px; fill: var(--ink-4); font-variant-numeric: tabular-nums; }
+/* Names one panel and states the scale it is drawn against. See the geometry note. */
+.tl2-panel { font-size: 11px; font-weight: 600; fill: var(--ink-3); }
 .tl2-year { font-size: 12px; font-weight: 600; fill: var(--ink-4); }
 .tl2-year[data-on='true'] { fill: var(--ink); }
 .tl2-basenum { font-size: 11px; font-weight: 700; fill: var(--ink-4); font-variant-numeric: tabular-nums; }

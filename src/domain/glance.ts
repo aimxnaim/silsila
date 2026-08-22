@@ -196,19 +196,9 @@ export function positionGlance(model: OrgModel, positionId: string): Glance {
     counts[bucketOf(relation)]++;
   }
 
-  const splits = memberIds.filter((id) => model.lineage.get(id)?.relation === 'split').length;
-  const merges = memberIds.filter((id) => model.lineage.get(id)?.relation === 'merge').length;
-
   const lifespan = pos.closedAt
     ? `${formatMonthYear(pos.createdAt)} — ${formatMonthYear(pos.closedAt)}`
     : `${formatMonthYear(pos.createdAt)} — still open`;
-
-  // The headcount effect of the whole chain, which is the audit question.
-  const footnote =
-    splits > 0 ? `The team grew by ${plural(splits, 'seat')} out of this chain.`
-    : merges > 0 ? `Headcount fell by ${plural(merges, 'seat')}, even though the work stayed.`
-    : versions > 1 ? 'Nobody was hired anywhere along this chain.'
-    : null;
 
   return {
     hero: {
@@ -222,8 +212,28 @@ export function positionGlance(model: OrgModel, positionId: string): Glance {
       step,
     }))),
     whole: versions > 1 ? `${plural(versions, 'seat')} in this lineage` : null,
-    footnote,
+    footnote: headcountEffect(model, memberIds),
   };
+}
+
+/**
+ * What a lineage chain did to headcount, in one sentence.
+ *
+ * Exported because two surfaces make this exact claim — the job drawer's
+ * glance and the story strip in RolesView — and they were computing it
+ * separately. Two copies of a sentence about headcount is how a product ends
+ * up telling a committee two different things about the same chain.
+ */
+export function headcountEffect(model: OrgModel, positionIds: string[]): string | null {
+  if (positionIds.length <= 1) return null;
+
+  const relations = positionIds.map((id) => model.lineage.get(id)?.relation);
+  const splits = relations.filter((r) => r === 'split').length;
+  const merges = relations.filter((r) => r === 'merge').length;
+
+  if (splits > 0) return `The team grew by ${plural(splits, 'seat')} out of this chain.`;
+  if (merges > 0) return `Headcount fell by ${plural(merges, 'seat')}, even though the work stayed.`;
+  return 'Nobody was hired anywhere along this chain.';
 }
 
 /* --------------------------------------------------------------- One person */

@@ -19,6 +19,7 @@ import type { Chain } from '../../domain/chains.ts';
 import { lastHolder } from '../../domain/chains.ts';
 import type { OrgModel, Position } from '../../domain/types.ts';
 import { formatMonthYear } from '../../domain/dates.ts';
+import { headcountEffect } from '../../domain/glance.ts';
 import { PLAIN_LABEL, PLAIN_MEANING } from '../../domain/narrate.ts';
 
 function cardTone(model: OrgModel, pos: Position, isFirstColumn: boolean): string {
@@ -46,10 +47,8 @@ function chainSummary(model: OrgModel, chain: Chain): { title: string; detail: s
   if (splits) parts.push('a split');
   if (merges) parts.push('a merge');
 
-  const headcount =
-    splits > 0 ? `The team grew by ${splits} seat${splits > 1 ? 's' : ''} out of this.`
-    : merges > 0 ? 'The team shrank by one seat, even though the work stayed.'
-    : 'Nobody was hired anywhere along this chain — the headcount never changed.';
+  // One source of truth for this sentence — see headcountEffect in glance.ts.
+  const headcount = headcountEffect(model, chain.members.map((p) => p.id)) ?? '';
 
   return {
     title: `${first?.title ?? 'This job'} → ${last?.map((p) => p.title).join(' + ') ?? ''}`,
