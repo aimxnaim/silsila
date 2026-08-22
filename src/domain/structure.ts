@@ -206,6 +206,66 @@ export function criticalRoles(model: OrgModel, quarter: number): CriticalRole[] 
   return out.sort((a, b) => (b.level ?? 0) - (a.level ?? 0) || b.reports - a.reports);
 }
 
+export interface DirectReport {
+  personId: string;
+  name: string;
+  positionId: string;
+  title: string;
+  level: number | null;
+  tenureYears: number;
+  /** Grades between this report and the seat above them. */
+  gradeGap: number;
+  /** True when this report satisfies the successor rule in full. */
+  qualifies: boolean;
+}
+
+/**
+ * Everyone reporting into one seat, whether or not they qualify as a successor.
+ *
+ * `criticalRoles` deliberately returns only the reports that pass the rule,
+ * which answers "is this seat covered?" but not the question a reader actually
+ * asks next — "then who IS under there, and what disqualified them?". This
+ * returns the whole bench with the two measurements the rule turns on, so a
+ * near miss is visible as a near miss rather than as an absence.
+ */
+export function directReports(
+  model: OrgModel,
+  positionId: string,
+  quarter: number,
+): DirectReport[] {
+  const { holderOf, reportsTo } = occupancy(model, quarter);
+  const seat = model.positions.get(positionId);
+  if (!seat) return [];
+
+  const out: DirectReport[] = [];
+
+  for (const [childId, parentId] of reportsTo) {
+    if (parentId !== positionId) continue;
+    const childPos = model.positions.get(childId);
+    const holder = holderOf.get(childId);
+    if (!childPos || !holder) continue;
+
+    const gradeGap = (seat.level ?? 0) - (childPos.level ?? 0);
+    const years = tenureYears(model, holder.personId) ?? 0;
+
+    out.push({
+      personId: holder.personId,
+      name: holder.name,
+      positionId: childId,
+      title: childPos.title,
+      level: childPos.level,
+      tenureYears: years,
+      gradeGap,
+      qualifies: gradeGap >= 0 && gradeGap <= SUCCESSOR_GRADE_REACH && years >= SUCCESSOR_MIN_YEARS,
+    });
+  }
+
+  return out.sort((a, b) => b.tenureYears - a.tenureYears);
+}
+
+/** The service a direct report needs before a seat counts as covered. */
+export const SUCCESSOR_YEARS = SUCCESSOR_MIN_YEARS;
+
 export interface Coverage {
   total: number;
   covered: number;

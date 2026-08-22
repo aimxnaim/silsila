@@ -822,7 +822,7 @@
 .wi-kpi-note { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 6px; }
 
 /* ---- Insight cards ----------------------------------------------- */
-.wi-signals { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s4); }
+.wi-signals { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s4); }
 .wi-signal {
   position: relative; text-align: left; border: 1px solid var(--line); border-radius: var(--r-lg);
   background: var(--surface); padding: 18px 20px 16px 22px; overflow: hidden; cursor: pointer;
@@ -885,8 +885,8 @@
 .wi-log-what { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
 
 @media (max-width: 1100px) {
-  .wi-kpis, .wi-signals { grid-template-columns: repeat(2, 1fr); }
-  .wi-areas { grid-template-columns: 1fr; }
+  .wi-kpis { grid-template-columns: repeat(2, 1fr); }
+  .wi-signals, .wi-areas { grid-template-columns: 1fr; }
 }
 
 /* ==================================================================== *
@@ -981,4 +981,53 @@
 @media (max-width: 1100px) {
   .pa-stats { grid-template-columns: repeat(2, 1fr); }
   .pa-picker select { min-width: 0; width: 100%; }
+}
+
+/* ==================================================================== *
+ * SIGNAL CHARTS
+ *
+ * Every plot obeys the rule the rest of the interface obeys: the bar the
+ * finding is about carries the severity colour, everything around it is
+ * neutral. Colour here is not category encoding — it is emphasis, and if
+ * two things were emphasised nothing would be.
+ * ==================================================================== */
+
+.ch { margin: 14px 0 0; }
+
+/* ---- Bars ---------------------------------------------------------- */
+.ch-bars { display: grid; gap: 6px; }
+.ch-row { display: grid; grid-template-columns: minmax(0, 96px) 1fr 34px; gap: 10px; align-items: center; }
+.ch-label {
+  font-size: 11.5px; color: var(--ink-3); text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ch-track { position: relative; height: 15px; border-radius: 3px; background: var(--surface-3); overflow: visible; }
+.ch-fill { display: block; height: 100%; border-radius: 3px; transition: width .2s ease; }
+/* The reference repeats in every row, which is what draws the eye down it
+   as a single rule without needing an overlay that knows the grid widths. */
+.ch-ref { position: absolute; top: -2px; bottom: -2px; width: 0; border-left: 1.5px dashed var(--ink-4); }
+.ch-value { font-size: 12px; font-weight: 600; color: var(--ink-2); text-align: right; }
+
+/* ---- Line ---------------------------------------------------------- */
+.ch-line svg { display: block; width: 100%; height: 88px; }
+.ch-legend { display: flex; gap: var(--s4); flex-wrap: wrap; margin-bottom: 7px; }
+.ch-legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-3); }
+.ch-legend i { width: 13px; height: 2.5px; border-radius: 2px; }
+.ch-axis { display: flex; justify-content: space-between; gap: var(--s3); margin-top: 5px; font-size: 11px; color: var(--ink-4); }
+.ch-axis-peak { font-weight: 600; }
+
+/* ---- Caption ------------------------------------------------------- */
+.ch-caption { font-size: 11.5px; color: var(--ink-3); margin-top: 9px; line-height: 1.45; }
+.ch-ref-key { white-space: nowrap; color: var(--ink-4); }
+.ch-ref-key i { display: inline-block; width: 11px; border-top: 1.5px dashed var(--ink-4); vertical-align: middle; margin-right: 3px; }
+
+/* ---- Card head: the severity pill now says what it means ----------- */
+.wi-signal-top { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.wi-sev-meaning { font-size: 11px; color: var(--ink-4); }
+.wi-signal h4 { font-size: 16px; }
+.wi-statement { font-size: 13.5px; color: var(--ink-2); }
+.wi-basis b { color: var(--ink-3); font-style: normal; font-weight: 600; }
+
+@media (max-width: 620px) {
+  .ch-row { grid-template-columns: minmax(0, 72px) 1fr 30px; }
 }

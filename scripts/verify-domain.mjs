@@ -227,5 +227,66 @@ for (const a of withSignals.slice(0, 3)) {
   for (const s of a.signals) console.log(`   [${s.severity.toUpperCase()}] ${s.title}`);
 }
 
+
+console.log('\n=== CHARTS ===');
+
+const charted = sig.filter((s) => s.chart);
+checkAbove('detectors produce charts', charted.length, 0);
+check('every chart carries a caption and a unit',
+  charted.every((s) => s.chart.caption.length > 0 && s.chart.unit.length > 0), true);
+check('every chart carries at least one point',
+  charted.every((s) => s.chart.series.length > 0 && s.chart.series.every((se) => se.points.length > 0)), true);
+check('bar charts carry exactly one series',
+  charted.filter((s) => s.chart.kind === 'bar').every((s) => s.chart.series.length === 1), true);
+// Two lines on one axis only mean anything if they are sampled at the same
+// points. An unequal pair would draw a divergence that is not in the data.
+check('every series on a line chart is sampled at the same points',
+  charted.filter((s) => s.chart.kind === 'line')
+    .every((s) => new Set(s.chart.series.map((se) => se.points.length)).size === 1), true);
+check('no chart value is missing or infinite',
+  charted.every((s) => s.chart.series.every((se) => se.points.every((pt) => Number.isFinite(pt.value)))), true);
+check('a reference line is always a real number',
+  charted.every((s) => !s.chart.reference || Number.isFinite(s.chart.reference.value)), true);
+// Emphasis is the only thing colour does on these plots, so two emphasised
+// bars would be two subjects and therefore no subject.
+check('exactly one bar per organisational chart is emphasised, or none',
+  charted.every((s) => s.chart.series.every((se) => se.points.filter((pt) => pt.emphasis).length <= 1)), true);
+
+// The chart has to plot what the sentence claims. This checks the two against
+// each other rather than trusting that they were written from the same source.
+const retentionSignal = sig.find((s) => s.id === 'retention');
+if (retentionSignal) {
+  const worstBar = retentionSignal.chart.series[0].points.find((pt) => pt.emphasis);
+  check('the emphasised bar is the department the statement names',
+    retentionSignal.statement.startsWith(worstBar.label), true);
+  check('the emphasised bar is the tallest one',
+    retentionSignal.chart.series[0].points.every((pt) => pt.value <= worstBar.value), true);
+}
+
+const spanSignal = sig.find((s) => s.id === 'span');
+if (spanSignal) {
+  check('the span chart is drawn against the organisational average',
+    spanSignal.chart.reference.label, 'organisational average');
+  check('the emphasised manager carries the most reports',
+    spanSignal.chart.series[0].points.every((pt) => pt.value <= spanSignal.chart.series[0].points.find((q) => q.emphasis).value),
+    true);
+}
+
+// Person-level peer charts must contain the person they are about, however
+// long their department is — the cut keeps them in by construction.
+const peerCharted = everyone.flatMap((a) =>
+  a.signals.filter((s) => ['person-progression', 'person-stagnation'].includes(s.id) && s.chart)
+    .map((s) => ({ person: a.personId, chart: s.chart })));
+check('a peer chart always contains the person it is about',
+  peerCharted.every((c) => c.chart.series[0].points.some((pt) => pt.emphasis)), true);
+check('every person-level chart carries a caption',
+  everyone.every((a) => a.signals.every((s) => !s.chart || s.chart.caption.length > 0)), true);
+
+for (const s of charted) {
+  const pts = s.chart.series[0].points;
+  const peak = Math.max(...s.chart.series.flatMap((se) => se.points.map((pt) => pt.value)));
+  console.log(`${s.chart.kind.padEnd(4)} ${String(pts.length).padStart(2)} pts, peak ${String(peak).padStart(3)} ${s.chart.unit.padEnd(15)} ${s.title}`);
+}
+
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
 if (failures > 0) process.exitCode = 1;

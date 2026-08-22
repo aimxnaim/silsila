@@ -96,19 +96,26 @@ warm white, and what separates one thing from another is weight, size and space.
 
 ### 6. Handle incomplete or inconsistent records gracefully
 
-**Where:** `ingest()` in `src/domain/ingest.ts`,
-`src/components/views/QualityView.tsx`
+**Where:** `ingest()` in `src/domain/ingest.ts`, and the empty states of every
+view
 
 "Gracefully" is usually read as "do not crash". This build reads it as **"do not
 lie"**.
 
-Four defect classes are detected — `conflict`, `missing`, `inferred`,
-`inconsistent` — and none is filled in. Unknown periods render as a diagonal
-hatch, never as a colour, because a gap is not a category.
+Four defect classes are still detected during ingest — `conflict`, `missing`,
+`inferred`, `inconsistent` — and none is filled in. Unknown periods render as a
+diagonal hatch, never as a colour, because a gap is not a category, and an
+unrecorded field reads "not recorded" rather than blank.
 
-A conflict can only be settled by a human choosing which source to trust, and
-that choice is recorded *alongside* the records with a timestamp, never written
-over them.
+Where two records disagree, nothing is written over either of them:
+`occupancy()` in `structure.ts` reads the one with the higher stated confidence
+and leaves both in the model, because row order is not evidence.
+
+**Reduced in scope.** The dedicated Data quality tab, which listed every defect
+and let a reader settle a conflict by hand, was removed at the client's request
+in favour of the analysis page. Detection and honest empty states remain; the
+surface for *resolving* a conflict does not. This requirement is now met in the
+record views rather than in a view of its own.
 
 ---
 
