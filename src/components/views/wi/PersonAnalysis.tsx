@@ -20,7 +20,7 @@ import { personAnalysis } from '../../../domain/personAnalysis.ts';
 import { formatDate } from '../../../domain/dates.ts';
 import { Avatar } from '../../ui/Avatar.tsx';
 import { DeptChip, toneAt, toneOf } from '../../ui/vocabulary.tsx';
-import { InsightCard } from './InsightCard.tsx';
+import { InsightStream } from './InsightStream.tsx';
 
 const MOVE_LABEL = {
   transfer: 'Transfer',
@@ -201,29 +201,25 @@ export function PersonAnalysisPanel({
           </div>
 
           {/* ---- Findings ------------------------------------------------ */}
-          <div>
-            <div style={{ marginBottom: 'var(--s4)' }}>
-              <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-.02em' }}>
-                What should HR know about {analysis.name.split(' ')[0]}?
-              </div>
-              <div className="small muted" style={{ marginTop: 3 }}>
-                The same detectors used across the organisation, narrowed to this record.
-              </div>
-            </div>
-
-            {analysis.signals.length === 0 ? (
-              <div className="wi-unknown">
+          <InsightStream
+            title={`What should HR know about ${analysis.name.split(' ')[0]}?`}
+            note="The same detectors used across the organisation, narrowed to this record."
+            steps={[
+              `Reading ${analysis.name}’s record`,
+              `Checking ${analysis.moves.length} recorded move${analysis.moves.length === 1 ? '' : 's'} against the organisational rules`,
+              `Ranking ${analysis.signals.length} finding${analysis.signals.length === 1 ? '' : 's'}`,
+            ]}
+            signals={analysis.signals}
+            runKey={`person:${analysis.personId}:${range.from}:${range.to}`}
+            empty={
+              <>
                 No signals were raised for this record. Nothing in their history matches
                 a detector &mdash; which is itself worth knowing.
-              </div>
-            ) : (
-              <div className="wi-signals">
-                {analysis.signals.map((s) => (
-                  <InsightCard key={s.id} signal={s} onOpenRecord={openRecord} onAct={act} />
-                ))}
-              </div>
-            )}
-          </div>
+              </>
+            }
+            onOpenRecord={openRecord}
+            onAct={act}
+          />
 
           {/* ---- Movement history ---------------------------------------- */}
           {analysis.moves.length > 0 ? (

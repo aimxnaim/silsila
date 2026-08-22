@@ -116,9 +116,18 @@ function Line({ spec, ink }: { spec: Spec; ink: string }) {
         aria-label={`${spec.caption} Peaking at ${ceiling} ${spec.unit}.`}
       >
         {spec.series.map((s, i) => (
+          /*
+           * The subject line is drawn on when the card lands: pathLength
+           * normalises it to 1 so one dash rule covers every series length,
+           * and CSS walks the offset from 1 to 0. The comparison keeps its
+           * real dash pattern — it cannot be normalised without becoming
+           * solid — so it fades in instead.
+           */
           <polyline
             key={s.label}
+            className={i === 0 ? 'ch-path' : 'ch-path ch-path--compare'}
             points={path(s.points.map((p) => p.value))}
+            pathLength={i === 0 ? 1 : undefined}
             fill="none"
             stroke={i === 0 ? ink : COMPARISON}
             strokeWidth="2"

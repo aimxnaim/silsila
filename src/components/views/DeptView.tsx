@@ -1,35 +1,67 @@
 /**
  * One department, as a page.
  *
- * The drill-down target from the overview. Header, the roles inside it, then
- * everyone who has worked here — the same three-part shape the person page
- * uses, so moving between them costs the reader nothing.
+ * The drill-down target from the departments index, and — now that the
+ * all-people list has gone — the only route to a person. So it has to answer
+ * both questions a reader arrives with: what jobs exist here, and who is in
+ * them. Roles first, because a role outlives whoever is sitting in it, and the
+ * seat is the thing this product models.
+ *
+ * Both lists are the same data in two dresses. Cards are for reading a
+ * department you do not know: faces and titles, scannable at arm's length.
+ * The table is for a reader who has stopped browsing and started counting —
+ * sortable columns of the sort you would export. Neither is a subset of the
+ * other, so the switch sits above both and moves them together; splitting it
+ * into two controls would only ask the reader to make the same choice twice.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { OrgModel } from '../../domain/types.ts';
-import { tenure } from '../../domain/dates.ts';
-import { departments, peopleIn } from '../../domain/overview.ts';
+import { formatMonthYear, tenure } from '../../domain/dates.ts';
+import { structuralChangesFor } from '../../domain/metrics.ts';
+import { departments, peopleIn, rolesIn, type DepartmentRole } from '../../domain/overview.ts';
 import { Avatar } from '../ui/Avatar.tsx';
 import { Badge } from '../ui/primitives.tsx';
 import { deptAbbr, deptColor } from '../ui/vocabulary.tsx';
 
+type Layout = 'cards' | 'table';
+
+/** Grade, team and dates, in the one order they read well in. */
+function roleMeta(role: DepartmentRole): string {
+  return [
+    role.level === null ? null : `Grade ${role.level}`,
+    role.orgUnit,
+  ].filter(Boolean).join(' · ');
+}
+
+function roleStatus(role: DepartmentRole) {
+  if (role.closed) return <Badge>Closed</Badge>;
+  if (!role.filled) return <Badge tone="warn">Vacant</Badge>;
+  return <Badge tone="ok">Filled</Badge>;
+}
+
 export function DeptView({
-  model, division, onBack, onOpenPerson,
+  model, division, onBack, onOpenPerson, onOpenPosition, defaultLayout = 'cards',
 }: {
   model: OrgModel;
   division: string;
   onBack: () => void;
   onOpenPerson: (id: string) => void;
+  onOpenPosition: (id: string) => void;
+  /** Which dress the two lists open in. Exists so the smoke test can render both. */
+  defaultLayout?: Layout;
 }) {
+  const [layout, setLayout] = useState<Layout>(defaultLayout);
+
   const summary = useMemo(
     () => departments(model).find((d) => d.division === division),
     [model, division],
   );
   const staff = useMemo(() => peopleIn(model, division), [model, division]);
+  const roles = useMemo(() => rolesIn(model, division), [model, division]);
 
-  /** Grade bands, counted. The nearest honest equivalent of a role ladder. */
-  const roles = useMemo(() => {
+  /** Grade bands, counted. The ladder behind the roles listed beneath it. */
+  const grades = useMemo(() => {
     const counts = new Map<string, number>();
     for (const pos of model.positions.values()) {
       if (pos.division !== division) continue;
@@ -58,6 +90,7 @@ export function DeptView({
 
   const firmHeadcount = departments(model).reduce((n, d) => n + d.headcount, 0);
   const share = Math.round((summary.headcount / Math.max(firmHeadcount, 1)) * 100);
+  const vacant = roles.filter((r) => !r.closed && !r.filled).length;
 
   const tenureOf = (personId: string) => {
     const person = model.people.get(personId);
@@ -100,43 +133,179 @@ export function DeptView({
         ))}
       </div>
 
-      <div className="card">
-        <div style={{ fontSize: 15, fontWeight: 700 }}>Grades in this department</div>
-        <div className="row gap-3 wrap" style={{ marginTop: 'var(--s4)' }}>
-          {roles.map(([label, n]) => (
-            <div className="rolebox" key={label}>
-              <b className="tnum">{n}</b>
-              <span>{label}</span>
-            </div>
+      {/* ---- How the two lists below are drawn --------------------------- */}
+      <div className="row gap-4 wrap spread no-print">
+        <div className="segmented" role="group" aria-label="How to show roles and people">
+          <button aria-pressed={layout === 'cards'} onClick={() => setLayout('cards')}>Cards</button>
+          <button aria-pressed={layout === 'table'} onClick={() => setLayout('table')}>Table</button>
+        </div>
+        <div className="row gap-3 wrap">
+          {grades.map(([label, n]) => (
+            <span className="gradepill" key={label}>
+              <b className="tnum">{n}</b> {label}
+            </span>
           ))}
         </div>
       </div>
 
+      {/* ---- Roles ------------------------------------------------------- */}
       <div className="card card-flush">
-        <div style={{ padding: '18px 22px 14px', fontSize: 15, fontWeight: 700 }}>
-          People &mdash; click for the full record
+        <div className="card-head">
+          <h3>Roles in this department</h3>
+          <span className="micro faint">
+            {roles.length} seat{roles.length === 1 ? '' : 's'} tracked
+            {vacant > 0 ? ` · ${vacant} vacant` : ''} · click one for its full history
+          </span>
         </div>
-        <table>
-          <thead>
-            <tr><th>Name</th><th>Job</th><th>Team</th><th>Years of service</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            {staff.map((p) => (
-              <tr key={p.personId} className="clickable" onClick={() => onOpenPerson(p.personId)}>
-                <td>
-                  <div className="row gap-3" style={{ minWidth: 0 }}>
-                    <Avatar name={p.name} />
-                    <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
-                  </div>
-                </td>
-                <td>{p.title}</td>
-                <td>{p.orgUnit}</td>
-                <td className="tnum">{tenureOf(p.personId)}</td>
-                <td>{p.current ? <Badge tone="ok">Current</Badge> : <Badge>Moved on</Badge>}</td>
-              </tr>
+
+        {roles.length === 0 ? (
+          <p className="small faint" style={{ padding: 'var(--s5)' }}>
+            No seats are recorded against this department.
+          </p>
+        ) : layout === 'cards' ? (
+          <div className="rolecard-grid">
+            {roles.map((r) => (
+              <button
+                key={r.positionId}
+                className={`rolecard ${r.closed ? 'rolecard--closed' : ''}`.trim()}
+                onClick={() => onOpenPosition(r.positionId)}
+              >
+                <span className="rolecard-top">
+                  {r.holder ? (
+                    <Avatar name={r.holder.name} />
+                  ) : (
+                    <span className="rolecard-empty" aria-hidden="true">—</span>
+                  )}
+                  <span className="rolecard-who">
+                    <span className="rolecard-name">
+                      {r.holder?.name ?? 'Vacant'}
+                    </span>
+                    <span className="rolecard-title">{r.title}</span>
+                  </span>
+                </span>
+
+                <span className="rolecard-foot">
+                  <span className="rolecard-meta">{roleMeta(r)}</span>
+                  <span className="rolecard-since">
+                    {r.holder && r.since
+                      ? `${r.filled ? 'since' : 'last held'} ${formatMonthYear(r.since)}`
+                      : r.createdAt ? `open since ${formatMonthYear(r.createdAt)}` : ''}
+                  </span>
+                </span>
+
+                <span className="rolecard-badge">{roleStatus(r)}</span>
+              </button>
             ))}
-          </tbody>
-        </table>
+          </div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th style={{ width: 200 }}>Held by</th>
+                <th style={{ width: 90 }}>Grade</th>
+                <th style={{ width: 170 }}>Team</th>
+                <th style={{ width: 180 }}>Existed from — to</th>
+                <th style={{ width: 100 }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {roles.map((r) => (
+                <tr key={r.positionId} className="clickable" onClick={() => onOpenPosition(r.positionId)}>
+                  <td style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.title}</td>
+                  <td>
+                    {r.holder ? (
+                      <span className={r.filled ? '' : 'muted'}>{r.holder.name}</span>
+                    ) : (
+                      <span className="faint">&mdash;</span>
+                    )}
+                  </td>
+                  <td className="tnum">{r.level === null ? <span className="faint">&mdash;</span> : r.level}</td>
+                  <td className="small muted">{r.orgUnit}</td>
+                  <td className="small muted tnum">
+                    {r.createdAt ? formatMonthYear(r.createdAt) : '—'} —{' '}
+                    {r.closedAt ? formatMonthYear(r.closedAt) : 'now'}
+                  </td>
+                  <td>{roleStatus(r)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* ---- People ------------------------------------------------------ */}
+      <div className="card card-flush">
+        <div className="card-head">
+          <h3>People</h3>
+          <span className="micro faint">
+            {staff.length} {staff.length === 1 ? 'person has' : 'people have'} worked here ·
+            click one for the full record
+          </span>
+        </div>
+
+        {staff.length === 0 ? (
+          <p className="small faint" style={{ padding: 'var(--s5)' }}>
+            Nobody is recorded against this department.
+          </p>
+        ) : layout === 'cards' ? (
+          <div className="personcard-grid">
+            {staff.map((p) => (
+              <button
+                key={p.personId}
+                className="personcard"
+                onClick={() => onOpenPerson(p.personId)}
+              >
+                <Avatar name={p.name} />
+                <span className="personcard-body">
+                  <span className="personcard-name">{p.name}</span>
+                  <span className="personcard-title">{p.title}</span>
+                  <span className="personcard-meta">
+                    {p.orgUnit} · {tenureOf(p.personId)}
+                  </span>
+                </span>
+                {p.current ? <Badge tone="ok">Current</Badge> : <Badge>Moved on</Badge>}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Job</th>
+                <th>Team</th>
+                <th style={{ width: 140 }}>Years of service</th>
+                <th style={{ width: 120 }}>Status</th>
+                <th style={{ width: 150 }}>Job changed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {staff.map((p) => {
+                const structural = structuralChangesFor(model, p.personId).length;
+                return (
+                  <tr key={p.personId} className="clickable" onClick={() => onOpenPerson(p.personId)}>
+                    <td>
+                      <div className="row gap-3" style={{ minWidth: 0 }}>
+                        <Avatar name={p.name} />
+                        <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
+                      </div>
+                    </td>
+                    <td>{p.title}</td>
+                    <td>{p.orgUnit}</td>
+                    <td className="tnum">{tenureOf(p.personId)}</td>
+                    <td>{p.current ? <Badge tone="ok">Current</Badge> : <Badge>Moved on</Badge>}</td>
+                    <td>
+                      {structural > 0
+                        ? <Badge tone="accent">{structural}&times; around them</Badge>
+                        : <span className="faint">&mdash;</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

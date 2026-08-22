@@ -17,6 +17,7 @@ import type { Metrics, OrgModel } from '../../domain/types.ts';
 import { departments } from '../../domain/overview.ts';
 import { toneAt } from '../ui/vocabulary.tsx';
 import { ChangeSection } from './ChangeSection.tsx';
+import { AnalyseCta } from './wi/AnalyseCta.tsx';
 
 export function OverviewView({
   model, metrics, quarter, onQuarterChange, onGoToDepartments, onAnalyse,
@@ -46,23 +47,7 @@ export function OverviewView({
       </div>
 
       {/* ---- The one thing this page asks the reader to do -------------- */}
-      <button className="analyse" onClick={onAnalyse}>
-        <span className="analyse-mark" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
-            <circle cx="8.6" cy="8.6" r="5.4" />
-            <path d="M12.6 12.6L17 17" />
-            <path d="M6.4 9.6v1.8M8.6 7.2v4.2M10.8 8.8v2.6" />
-          </svg>
-        </span>
-        <span className="analyse-text">
-          <span className="analyse-title">Feature Analysis</span>
-          <span className="analyse-sub">
-            Read these records for patterns worth an HR conversation &mdash; across the
-            organisation, or for one person. Every finding shows the rule behind it.
-          </span>
-        </span>
-        <span className="analyse-go" aria-hidden="true">&rarr;</span>
-      </button>
+      <AnalyseCta onAnalyse={onAnalyse} records={metrics.peopleCount} />
 
       <div className="kpi-row">
         <div className="kpi" style={{ '--tone': toneAt(0).ink, '--tone-bg': toneAt(0).bg } as React.CSSProperties}>

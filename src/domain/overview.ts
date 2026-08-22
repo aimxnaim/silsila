@@ -6,7 +6,7 @@
  * and the change feed is a list of things a reader can open and interrogate.
  */
 
-import type { OrgModel } from './types.ts';
+import type { ISODate, OrgModel } from './types.ts';
 import type { LineageRelation } from './types.ts';
 import { toQuarterIndex } from './dates.ts';
 
@@ -110,6 +110,88 @@ export function changeFeed(model: OrgModel): ChangeEvent[] {
   }
 
   return out.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export interface DepartmentRole {
+  positionId: string;
+  title: string;
+  orgUnit: string;
+  /** Job grade. Null when the record never stated one. */
+  level: number | null;
+  /** Whoever sits in the seat now — or the last person to, once it is empty. */
+  holder: { id: string; name: string } | null;
+  /** True when the holder above is sitting in it at the latest quarter. */
+  filled: boolean;
+  /** True when the seat itself has been closed, not merely vacated. */
+  closed: boolean;
+  /** When the holder took the seat. */
+  since: ISODate | null;
+  createdAt: ISODate | null;
+  closedAt: ISODate | null;
+}
+
+/**
+ * Every seat in a division, with whoever is in it.
+ *
+ * A department's roles are not its grade bands. "Three people at grade 4" says
+ * nothing about what any of them does; "Operations Executive, held by X since
+ * 2021" does. Both are shown, but this is the one a reader came for.
+ *
+ * A vacant seat is still a role, so an empty one is kept and marked rather than
+ * dropped — a department with four open seats is the interesting case, and
+ * filtering them out is what hides it.
+ */
+export function rolesIn(model: OrgModel, division: string): DepartmentRole[] {
+  const lastQuarter = model.window.quarterCount - 1;
+  const out: DepartmentRole[] = [];
+
+  for (const pos of model.positions.values()) {
+    if (pos.division !== division) continue;
+
+    let holder: { id: string; name: string } | null = null;
+    let filled = false;
+    let since: ISODate | null = null;
+
+    for (const id of pos.assignmentIds) {
+      const a = model.assignments.get(id)!;
+      const person = model.people.get(a.personId);
+      if (!person) continue;
+
+      const from = toQuarterIndex(a.startDate);
+      const to = a.endDate ? toQuarterIndex(a.endDate) : lastQuarter;
+      const current = from !== null && from <= lastQuarter && lastQuarter <= (to ?? lastQuarter);
+
+      // A sitting holder always wins; otherwise the latest one stands in, since
+      // assignmentIds are already ordered by start date.
+      if (current || !filled) {
+        holder = { id: person.id, name: person.name };
+        since = a.startDate;
+        if (current) filled = true;
+      }
+    }
+
+    out.push({
+      positionId: pos.id,
+      title: pos.title,
+      orgUnit: pos.orgUnit,
+      level: pos.level,
+      holder,
+      filled,
+      closed: Boolean(pos.closedAt),
+      since,
+      createdAt: pos.createdAt,
+      closedAt: pos.closedAt,
+    });
+  }
+
+  // Live seats above closed ones, then seniority, then alphabetical — the order
+  // an org chart would put them in if it were flattened to a list.
+  return out.sort(
+    (a, b) =>
+      Number(a.closed) - Number(b.closed) ||
+      (b.level ?? -1) - (a.level ?? -1) ||
+      a.title.localeCompare(b.title),
+  );
 }
 
 /** People currently sitting in a given division, with their job title. */

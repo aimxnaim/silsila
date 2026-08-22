@@ -7,9 +7,14 @@
  *   Overview      what the records contain, and how the
  *                 organisation changed over time         (requirement 4)
  *   Org chart     how a position evolved                 (requirement 2)
- *   People        how a person moved                     (requirement 3)
- *   Departments   the drill-down, by division
+ *   Departments   how a person moved                     (requirement 3)
  *   Load data     accept a structured source             (requirement 1)
+ *
+ * There is no all-people tab. It and the departments index were answering the
+ * same question with the same five columns, and only one of them could say
+ * which department a name belonged to without the reader already knowing. So
+ * the route to a person runs through the department that holds them: pick a
+ * department, and its page lists the roles inside it and everyone in them.
  *
  * Requirement 5 — present it clearly — is not a view. It is the whole design.
  *
@@ -39,7 +44,6 @@ import type { PresetId } from './domain/window.ts';
 import type { AreaId } from './domain/insights.ts';
 import { DepartmentsView } from './components/views/DepartmentsView.tsx';
 import { RolesView } from './components/views/RolesView.tsx';
-import { PeopleView } from './components/views/PeopleView.tsx';
 import { LoadDataView } from './components/views/LoadDataView.tsx';
 import { RoleDetail } from './components/views/RoleDetail.tsx';
 import { PersonDetail } from './components/views/PersonDetail.tsx';
@@ -47,7 +51,7 @@ import { DeptView } from './components/views/DeptView.tsx';
 import { Button, Empty } from './components/ui/primitives.tsx';
 import { registerDivisions } from './components/ui/vocabulary.tsx';
 
-type Tab = 'overview' | 'analysis' | 'orgchart' | 'people' | 'departments' | 'load';
+type Tab = 'overview' | 'analysis' | 'orgchart' | 'departments' | 'load';
 
 /**
  * Rail glyphs.
@@ -76,12 +80,6 @@ const ICONS: Record<Tab, JSX.Element> = {
       <path d="M9 6v3M4 12V9h10v3" strokeLinecap="round" />
     </svg>
   ),
-  people: (
-    <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <circle cx="7" cy="6" r="2.8" /><path d="M2 15.5c0-2.6 2.2-4.2 5-4.2s5 1.6 5 4.2" strokeLinecap="round" />
-      <path d="M12.5 4.2a2.8 2.8 0 0 1 0 5.4M13 11.6c2.1.4 3.5 1.9 3.5 3.9" strokeLinecap="round" />
-    </svg>
-  ),
   departments: (
     <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round">
       <rect x="2" y="6.5" width="6" height="9.5" rx="1.2" />
@@ -106,7 +104,6 @@ const ICONS: Record<Tab, JSX.Element> = {
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'overview', label: 'Overview' },
   { id: 'orgchart', label: 'Org chart' },
-  { id: 'people', label: 'People' },
   { id: 'departments', label: 'Departments' },
   { id: 'load', label: 'Load data' },
 ];
@@ -115,7 +112,6 @@ const CRUMB: Record<Tab, string> = {
   overview: 'Company overview',
   analysis: 'Feature Analysis',
   orgchart: 'Org chart',
-  people: 'All people',
   departments: 'Departments',
   load: 'Load data',
 };
@@ -250,7 +246,7 @@ export function App() {
    * rather than a new page that would only restate the card.
    */
   const openArea = useCallback((id: AreaId) => {
-    if (id === 'progression' || id === 'retention' || id === 'mobility') goTab('people');
+    if (id === 'progression' || id === 'retention' || id === 'mobility') goTab('departments');
     else if (id === 'succession' || id === 'structure') goTab('orgchart');
     else goTab('overview');
   }, [goTab]);
@@ -388,6 +384,7 @@ export function App() {
                   division={page.id}
                   onBack={closePage}
                   onOpenPerson={openPerson}
+                  onOpenPosition={openPosition}
                 />
               ) : tab === 'overview' ? (
                 <OverviewView
@@ -424,8 +421,6 @@ export function App() {
                 />
               ) : tab === 'orgchart' ? (
                 <RolesView model={model} onOpenPosition={openPosition} />
-              ) : tab === 'people' ? (
-                <PeopleView model={model} onOpenPerson={openPerson} />
               ) : (
                 <LoadDataView
                   error={error}

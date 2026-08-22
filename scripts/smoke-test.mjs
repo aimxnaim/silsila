@@ -32,7 +32,6 @@ import { OverviewView } from '${root}src/components/views/OverviewView.tsx';
 import { AnalysisView } from '${root}src/components/views/AnalysisView.tsx';
 import { DepartmentsView } from '${root}src/components/views/DepartmentsView.tsx';
 import { RolesView } from '${root}src/components/views/RolesView.tsx';
-import { PeopleView } from '${root}src/components/views/PeopleView.tsx';
 import { LoadDataView } from '${root}src/components/views/LoadDataView.tsx';
 import { RoleDetail } from '${root}src/components/views/RoleDetail.tsx';
 import { PersonDetail } from '${root}src/components/views/PersonDetail.tsx';
@@ -55,7 +54,6 @@ const cases = [
   ['Analysis',     <AnalysisView {...analysis} scope="general" onScopeChange={noop} personId={null} />],
   ['Departments',  <DepartmentsView model={model} metrics={m} onOpenDept={noop} />],
   ['Roles',        <RolesView model={model} onOpenPosition={noop} />],
-  ['People',       <PeopleView model={model} onOpenPerson={noop} />],
   ['Load data',    <LoadDataView error={null} onLoad={() => true} onLoadDemo={() => true} onClearError={noop} onLoaded={noop} />],
 ];
 
@@ -68,9 +66,15 @@ for (const p of analysablePeople(model)) {
     <AnalysisView {...analysis} scope="person" onScopeChange={noop} personId={p.id} />]);
 }
 
+// Both dresses, for every division. The cards and the table are separate render
+// paths over the same data — a vacant seat or a missing grade breaks exactly one
+// of them, so rendering only the default would miss half the surface.
 for (const division of new Set([...model.positions.values()].map((pos) => pos.division))) {
-  cases.push(['DeptView ' + division,
-    <DeptView model={model} division={division} onBack={noop} onOpenPerson={noop} />]);
+  for (const layout of ['cards', 'table']) {
+    cases.push(['DeptView ' + division + ' (' + layout + ')',
+      <DeptView model={model} division={division} defaultLayout={layout}
+        onBack={noop} onOpenPerson={noop} onOpenPosition={noop} />]);
+  }
 }
 
 // Every position and every person gets its detail panel rendered. If one of

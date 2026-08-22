@@ -24,7 +24,7 @@ import { criticalRoles, successionCoverage } from '../../domain/structure.ts';
 import { analysablePeople } from '../../domain/personAnalysis.ts';
 import { formatDate } from '../../domain/dates.ts';
 import { toneAt } from '../ui/vocabulary.tsx';
-import { InsightCard } from './wi/InsightCard.tsx';
+import { InsightStream } from './wi/InsightStream.tsx';
 import { PersonAnalysisPanel } from './wi/PersonAnalysis.tsx';
 
 export type AnalysisScope = 'general' | 'person';
@@ -60,6 +60,20 @@ export function AnalysisView({
   const mobility = useMemo(() => mobilityRate(model, range), [model, range]);
   const critical = useMemo(() => criticalRoles(model, range.to), [model, range]);
   const coverage = useMemo(() => successionCoverage(model, range.to), [model, range]);
+
+  /**
+   * What the pass is doing, said out loud. Each line counts something the
+   * detectors genuinely read, so the working shown is the working done.
+   */
+  const divisions = useMemo(
+    () => new Set([...model.positions.values()].map((p) => p.division)).size,
+    [model],
+  );
+  const steps = [
+    `Reading ${model.people.size} employee records`,
+    `Comparing ${divisions} divisions across ${range.label}`,
+    `Ranking ${found.length} finding${found.length === 1 ? '' : 's'}`,
+  ];
 
   const openRecord = (r: EvidenceRecord) =>
     r.kind === 'person' ? onOpenPerson(r.id) : onOpenPosition(r.id);
@@ -188,29 +202,21 @@ export function AnalysisView({
           </div>
 
           {/* ---- What should HR know? ---------------------------------- */}
-          <div>
-            <div style={{ marginBottom: 'var(--s4)' }}>
-              <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-.02em' }}>
-                What should HR know?
-              </div>
-              <div className="small muted" style={{ marginTop: 3 }}>
-                Signals surfaced from workforce and organisational history.
-              </div>
-            </div>
-
-            {found.length === 0 ? (
-              <div className="wi-unknown">
+          <InsightStream
+            title="What should HR know?"
+            note="Signals surfaced from workforce and organisational history."
+            steps={steps}
+            signals={found}
+            runKey={`general:${preset}:${model.datasetLabel}`}
+            empty={
+              <>
                 No signals were raised for this period. The records may be too short to
                 show a pattern &mdash; try a longer period.
-              </div>
-            ) : (
-              <div className="wi-signals">
-                {found.slice(0, 4).map((s) => (
-                  <InsightCard key={s.id} signal={s} onOpenRecord={openRecord} onAct={act} />
-                ))}
-              </div>
-            )}
-          </div>
+              </>
+            }
+            onOpenRecord={openRecord}
+            onAct={act}
+          />
         </>
       )}
     </div>

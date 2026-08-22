@@ -1,10 +1,11 @@
 /**
  * Departments — the index.
  *
- * Promoted out of the overview and given a tab of its own, because it was the
- * most-clicked thing on a page that had already grown too long, and because
- * "which department" is a question a reader returns to rather than passes
- * through once.
+ * This now stands where the all-people list used to. The two were answering the
+ * same question with the same five columns, and only one of them could say
+ * which department a name belonged to without the reader already knowing. So
+ * the route to a person runs through the department that holds them: pick a
+ * department here, and its page lists both its roles and its people.
  *
  * Cards first, then the same figures as a table. The cards answer "which one
  * is big" from across the room; the table answers "how do they compare" for a
@@ -12,7 +13,7 @@
  * department page, so neither is a dead end.
  */
 
-import { useMemo } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import type { Metrics, OrgModel } from '../../domain/types.ts';
 import { departments } from '../../domain/overview.ts';
 import { deptAbbr, toneOf } from '../ui/vocabulary.tsx';
@@ -36,8 +37,8 @@ export function DepartmentsView({
       <div>
         <div className="page-title">Departments</div>
         <div className="page-sub" style={{ maxWidth: '64ch' }}>
-          {depts.length} departments holding {metrics.headcountEnd} people. Open one to
-          see everyone in it and how its jobs have changed.
+          {depts.length} departments holding {metrics.headcountEnd} people. Open one for
+          the roles inside it, everyone who has held them, and how its jobs have changed.
         </div>
       </div>
 
@@ -51,7 +52,7 @@ export function DepartmentsView({
               '--tone': toneOf(d.division).ink,
               '--tone-bg': toneOf(d.division).bg,
               '--tone-line': toneOf(d.division).line,
-            } as React.CSSProperties}
+            } as CSSProperties}
           >
             <span className="dept-top">
               <span className="dept-tile" style={{ background: 'var(--tone)' }}>

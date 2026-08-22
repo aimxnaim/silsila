@@ -593,15 +593,118 @@
   margin-top: 10px; font-size: 12.5px; color: var(--ink-3);
 }
 
-/* ---- Roles inside one department -------------------------------------- */
-.rolebox {
+/* ====================================================================== *
+ * Inside one department
+ *
+ * The page carries two lists — roles and people — that a switch redraws as
+ * either cards or a table. The cards below are deliberately the same width and
+ * rhythm as each other: a reader flicking between the two sections should feel
+ * one page, not two components that happen to be stacked.
+ * ====================================================================== */
+
+/* The grade ladder, demoted to a strip beside the layout switch. It used to be
+   the only thing on this page that resembled roles; now that the real roles are
+   listed it is a summary, and summaries do not get a card of their own. */
+.gradepill {
+  display: inline-flex; align-items: baseline; gap: 6px;
   border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  padding: 12px 16px;
-  min-width: 132px;
+  border-radius: var(--r-pill);
+  padding: 5px 12px;
+  font-size: 12.5px; color: var(--ink-3);
+  white-space: nowrap;
 }
-.rolebox b { font-size: 22px; font-weight: 700; display: block; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.rolebox span { font-size: 13px; color: var(--ink-3); display: block; margin-top: 2px; }
+.gradepill b { font-size: 13.5px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ---- Role cards ------------------------------------------------------- */
+.rolecard-grid,
+.personcard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: var(--s4);
+  padding: var(--s5) 22px;
+}
+
+.rolecard,
+.personcard {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  text-align: left;
+  transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+.rolecard:hover,
+.personcard:hover { box-shadow: var(--lift); transform: translateY(-2px); border-color: var(--ink-4); }
+.rolecard:focus-visible,
+.personcard:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* A closed seat is history, not an option. It stays legible and stays clickable
+   — its story is the whole point of the product — but it should not compete
+   with the seats that still exist. */
+.rolecard--closed { background: var(--surface-2); }
+.rolecard--closed .rolecard-name,
+.rolecard--closed .rolecard-title { color: var(--ink-3); }
+
+.rolecard { display: flex; flex-direction: column; gap: 12px; }
+/* The right padding is the status pill's berth. The pill is positioned out of
+   flow so it can sit against the corner, which means the name beside it would
+   otherwise run underneath rather than ellipsing short of it. */
+.rolecard-top { display: flex; align-items: center; gap: 10px; min-width: 0; padding-right: 68px; }
+.rolecard-who { min-width: 0; display: block; }
+
+/* The holder leads, the title sits under it: this page answers "who does what
+   here" far more often than it answers "which seats exist". */
+.rolecard-name {
+  display: block; font-size: 14px; font-weight: 650; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rolecard-title {
+  display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 1px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* The dash where an avatar would be, so a vacant seat keeps the row rhythm
+   rather than shunting its title left of every neighbour's. */
+.rolecard-empty {
+  width: 32px; height: 32px; flex: none;
+  border-radius: 50%;
+  border: 1px dashed var(--line);
+  display: grid; place-items: center;
+  color: var(--ink-4); font-size: 13px;
+}
+
+.rolecard-foot {
+  display: flex; flex-direction: column; gap: 2px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 12px; color: var(--ink-4);
+}
+.rolecard-meta { color: var(--ink-3); }
+.rolecard-since { font-variant-numeric: tabular-nums; }
+.rolecard-badge { position: absolute; top: 14px; right: 14px; }
+
+/* ---- Person cards ----------------------------------------------------- */
+.personcard { display: flex; align-items: center; gap: 12px; }
+.personcard-body { min-width: 0; flex: 1 1 auto; }
+.personcard-name {
+  display: block; font-size: 14px; font-weight: 650; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.personcard-title {
+  display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 1px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.personcard-meta {
+  display: block; font-size: 11.5px; color: var(--ink-4); margin-top: 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Printing a department should give you the tables, not a wall of cards. */
+@media print {
+  .rolecard-grid, .personcard-grid { grid-template-columns: 1fr 1fr; gap: var(--s3); padding: var(--s3) 0; }
+  .rolecard:hover, .personcard:hover { box-shadow: none; transform: none; }
+}
 
 /* ---- Back link -------------------------------------------------------- */
 .backlink {
@@ -1030,21 +1133,96 @@
  * ==================================================================== */
 
 .analyse {
+  position: relative; overflow: hidden;
   display: flex; align-items: center; gap: var(--s4); width: 100%; text-align: left;
   padding: 18px 20px; border: 1px solid var(--brand-line); border-radius: var(--r-lg);
   background: linear-gradient(180deg, var(--brand-tint), var(--surface) 140%);
-  cursor: pointer; transition: box-shadow .14s ease, border-color .14s ease;
+  cursor: pointer;
+  transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
 }
-.analyse:hover { box-shadow: var(--lift); border-color: var(--brand); }
+.analyse:hover { box-shadow: var(--lift); border-color: var(--brand); transform: translateY(-1px); }
+.analyse:active { transform: translateY(0); }
+/* Content rides above the sheen; the sheen is the only thing underneath it. */
+.analyse > * { position: relative; z-index: 1; }
+
+/* The sheen. Slow and wide at rest, quick and tight under the cursor. */
+.analyse::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 45%;
+  z-index: 0; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .92) 50%, transparent);
+  animation: ai-sheen 6.5s cubic-bezier(.5, 0, .5, 1) infinite;
+}
+.analyse:hover::before { animation-duration: 2.6s; }
+
 .analyse-mark {
-  flex: none; display: grid; place-items: center; width: 40px; height: 40px;
-  border-radius: var(--r-sm); background: var(--surface); color: var(--brand);
-  border: 1px solid var(--brand-line);
+  position: relative; flex: none; display: grid; place-items: center;
+  width: 42px; height: 42px; border-radius: var(--r-sm); color: var(--brand);
 }
-.analyse-text { display: block; }
-.analyse-title { display: block; font-size: 16px; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+/* A comet running the border of the mark, and the face it runs around. */
+.analyse-mark::before {
+  content: ''; position: absolute; inset: -1.5px; border-radius: 7px;
+  background: conic-gradient(from 0turn, transparent 0 60%, var(--brand-line) 76%, var(--brand) 90%, transparent 100%);
+  animation: ai-orbit 3.4s linear infinite;
+}
+.analyse-mark::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: var(--surface); box-shadow: inset 0 0 0 1px var(--brand-line);
+}
+.analyse-glyph { position: relative; z-index: 1; display: grid; place-items: center; }
+/* The three bars inside the magnifier keep reading. */
+.analyse-tick {
+  transform-box: fill-box; transform-origin: 50% 100%;
+  animation: ai-tick 1.7s ease-in-out infinite;
+}
+.analyse-tick--2 { animation-delay: .2s; }
+.analyse-tick--3 { animation-delay: .4s; }
+.analyse-spark {
+  position: absolute; top: -4px; right: -5px; z-index: 2;
+  display: grid; place-items: center; color: var(--brand);
+  animation: ai-twinkle 3s ease-in-out infinite;
+}
+
+.analyse-text { display: block; min-width: 0; }
+.analyse-title {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 16px; font-weight: 700; letter-spacing: -.02em; color: var(--ink);
+}
+.analyse-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; }
+.analyse-eq i {
+  width: 2px; border-radius: 1px; background: var(--brand); opacity: .8;
+  animation: ai-eq 1.15s ease-in-out infinite;
+}
+.analyse-eq i:nth-child(2) { animation-delay: .17s; }
+.analyse-eq i:nth-child(3) { animation-delay: .34s; }
 .analyse-sub { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; max-width: 68ch; line-height: 1.5; }
-.analyse-go { flex: none; margin-left: auto; font-size: 18px; color: var(--brand); }
+
+.analyse-pill {
+  flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 15px; border-radius: var(--r-pill);
+  background: var(--brand); color: #fff; font-size: 12.5px; font-weight: 700;
+  white-space: nowrap; transition: background .18s ease, box-shadow .18s ease;
+}
+.analyse:hover .analyse-pill { box-shadow: 0 4px 14px rgba(200, 32, 47, .34); }
+.analyse-go { font-size: 15px; transition: transform .18s ease; }
+.analyse:hover .analyse-go { transform: translateX(3px); }
+
+/* The armed state: everything speeds up and a hairline crosses the foot. */
+.analyse.is-running { border-color: var(--brand); cursor: progress; }
+.analyse.is-running::before { animation-duration: 1.1s; }
+.analyse.is-running .analyse-mark::before { animation-duration: .75s; }
+.analyse.is-running .analyse-eq i { animation-duration: .45s; }
+.analyse.is-running .analyse-pill { background: var(--brand-deep); }
+.analyse.is-running .analyse-go { animation: ai-nudge .8s ease-in-out infinite; }
+.analyse-scan {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2px; z-index: 2;
+  background: var(--brand); transform: scaleX(0); transform-origin: left;
+}
+.analyse.is-running .analyse-scan { animation: ai-scan .46s linear forwards; }
+
+@media (max-width: 720px) {
+  .analyse { flex-wrap: wrap; }
+  .analyse-pill { margin-left: 0; }
+}
 
 /* ---- Scope switch -------------------------------------------------- *
  * General and By person are two readings of one dataset, not two pages,
@@ -1214,3 +1392,199 @@ td .dept-chip { font-size: 11.5px; padding: 2px 8px; }
 /* ---- Progression checks read as status, so they keep status colour -- */
 .pa-checks .is-met b   { color: var(--ok-fg); }
 .pa-checks .is-unmet b { color: var(--wr-fg); }
+
+/* ==================================================================== *
+ * THE ANALYSIS PASS
+ *
+ * The detectors finish in the same tick as the render, so none of the
+ * motion below is waiting on work. It is pacing: a finding that lands,
+ * writes its sentence and draws its own chart is read, where four
+ * finished boxes painted at once are scrolled past. The cost is about a
+ * second and a half between asking and having all four answers, and it
+ * buys the reader's attention on each of them in turn.
+ *
+ * Two rules keep it honest. Nothing here claims work that did not happen
+ * — the status lines count records the detectors genuinely read, and the
+ * rail tracks cards actually revealed. And every piece of it is
+ * decoration over content that is already complete in the DOM, so a
+ * reader who has asked for less motion, or who is printing, gets the
+ * finished page with none of the theatre.
+ * ==================================================================== */
+
+/* ---- The panel head ------------------------------------------------- */
+.ai-head { display: flex; align-items: flex-start; gap: var(--s3); }
+.ai-orb {
+  position: relative; flex: none; display: grid; place-items: center;
+  width: 32px; height: 32px; border-radius: 9px; color: var(--brand);
+  background: var(--brand-tint); border: 1px solid var(--brand-line);
+}
+.ai-orb::after {
+  content: ''; position: absolute; inset: -4px; border-radius: 12px;
+  border: 1.5px solid var(--brand); opacity: 0;
+}
+.ai-orb.is-working::after { animation: ai-halo 1.7s ease-out infinite; }
+.ai-orb.is-working svg { animation: ai-orbit 4.5s linear infinite; }
+
+.ai-head-text { min-width: 0; }
+.ai-title { font-size: 19px; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+.ai-status {
+  display: flex; align-items: center; min-height: 18px; margin-top: 3px;
+  font-size: 12.5px; color: var(--ink-3);
+}
+.ai-status.is-working { color: var(--brand-deep); font-variant-numeric: tabular-nums; }
+.ai-status-line { animation: ai-fade-up .32s ease both; }
+.ai-dots { display: inline-flex; gap: 3px; margin-left: 6px; }
+.ai-dots b {
+  width: 3px; height: 3px; border-radius: 50%; background: currentColor;
+  animation: ai-blink 1.15s ease-in-out infinite;
+}
+.ai-dots b:nth-child(2) { animation-delay: .17s; }
+.ai-dots b:nth-child(3) { animation-delay: .34s; }
+
+/*
+ * The badge names what did the work. It says "analysis engine" and not
+ * anything cleverer because that is what it is: rules over records, each
+ * one printed on the card it produced.
+ */
+.ai-badge {
+  flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 11px; border-radius: var(--r-pill);
+  border: 1px solid var(--line); background: var(--surface);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-3); cursor: help;
+}
+.ai-badge i {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--ok-bar);
+  animation: ai-pulse 2.2s ease-out infinite;
+}
+
+/* ---- The rail. Tracks the pass, then gets out of the way. ----------- */
+.ai-rail {
+  height: 2px; margin-top: 12px; border-radius: 2px;
+  background: var(--surface-3); overflow: hidden;
+  transition: opacity .5s ease .35s;
+}
+.ai-rail i {
+  display: block; height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--brand-deep), var(--brand), #F08893);
+  transition: width .3s cubic-bezier(.3, .8, .3, 1);
+}
+.ai[data-phase='done'] .ai-rail { opacity: 0; }
+.ai-note { font-size: 12.5px; color: var(--ink-4); margin: 10px 0 var(--s4); }
+
+/* ---- Skeletons, holding the shape the findings will take ------------ */
+.ai-skel {
+  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+  padding: 18px 20px; display: grid; gap: 10px; align-content: start;
+  animation: ai-fade-up .4s ease both; animation-delay: var(--d, 0ms);
+}
+.ai-skel-pill, .ai-skel-line, .ai-skel-plot {
+  display: block; border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface-3) 25%, #F8FAFC 45%, var(--surface-3) 65%);
+  background-size: 260% 100%;
+  animation: ai-shimmer 1.5s linear infinite;
+}
+.ai-skel-pill { width: 84px; height: 18px; border-radius: var(--r-pill); }
+.ai-skel-line { height: 11px; }
+.ai-skel-plot { height: 74px; border-radius: 6px; margin: 3px 0; }
+
+/* ---- A finding landing ---------------------------------------------- */
+.wi-signal { transition: box-shadow .18s ease; }
+.wi-signal:hover { box-shadow: var(--lift); }
+.wi-signal.is-landing { animation: ai-land .46s cubic-bezier(.2, .75, .3, 1) both; }
+/* One pass of light across the card as it arrives, then never again. */
+.wi-signal.is-landing::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(100deg, transparent 34%, rgba(255, 255, 255, .78) 50%, transparent 66%);
+  animation: ai-card-sheen .95s ease-out .1s both;
+}
+
+/* The statement, written out. The ghost holds the height so nothing
+   reflows a character at a time; it is dropped once the sentence is whole. */
+.wi-statement.is-writing { position: relative; }
+.wi-statement.is-writing .wi-written-ghost { visibility: hidden; }
+.wi-statement.is-writing .wi-written { position: absolute; inset: 0; }
+.wi-statement:not(.is-writing) .wi-written-ghost { display: none; }
+.wi-caret {
+  display: inline-block; width: 2px; height: .95em; vertical-align: -1px;
+  margin-left: 2px; border-radius: 1px; background: var(--brand);
+  animation: ai-caret .72s steps(1) infinite;
+}
+
+/* The chart is the detector's working, so it is drawn rather than shown. */
+.wi-signal .ch-fill {
+  transform-origin: left center;
+  animation: ai-grow .62s cubic-bezier(.2, .8, .3, 1) .12s both;
+}
+.wi-signal .ch-path:not(.ch-path--compare) {
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: ai-draw .9s ease-out .12s forwards;
+}
+.wi-signal .ch-path--compare { animation: fade .6s ease .45s both; }
+.wi-signal .wi-ev li { animation: ai-fade-up .34s ease both; }
+.wi-signal .wi-ev li:nth-child(1) { animation-delay: .30s; }
+.wi-signal .wi-ev li:nth-child(2) { animation-delay: .38s; }
+.wi-signal .wi-ev li:nth-child(3) { animation-delay: .46s; }
+.wi-signal .wi-ev li:nth-child(4) { animation-delay: .54s; }
+.wi-signal .wi-ev li:nth-child(n + 5) { animation-delay: .62s; }
+
+/* ---- Keyframes ------------------------------------------------------ */
+@keyframes ai-sheen {
+  0%        { transform: translateX(-130%); opacity: 0; }
+  14%       { opacity: 1; }
+  56%       { opacity: 1; }
+  70%, 100% { transform: translateX(330%); opacity: 0; }
+}
+@keyframes ai-orbit   { to { transform: rotate(1turn); } }
+@keyframes ai-tick    { 0%, 100% { transform: scaleY(.5); } 50% { transform: scaleY(1); } }
+@keyframes ai-eq      { 0%, 100% { height: 3px; } 50% { height: 11px; } }
+@keyframes ai-twinkle {
+  0%, 100% { transform: scale(.65) rotate(0deg); opacity: .35; }
+  50%      { transform: scale(1.08) rotate(90deg); opacity: 1; }
+}
+@keyframes ai-nudge   { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+@keyframes ai-scan    { to { transform: scaleX(1); } }
+@keyframes ai-halo    { 0% { opacity: .5; transform: scale(.85); } 100% { opacity: 0; transform: scale(1.28); } }
+@keyframes ai-blink   { 0%, 100% { opacity: .22; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-2px); } }
+@keyframes ai-pulse   {
+  0%   { box-shadow: 0 0 0 0 rgba(31, 138, 112, .5); }
+  70%  { box-shadow: 0 0 0 6px rgba(31, 138, 112, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(31, 138, 112, 0); }
+}
+@keyframes ai-shimmer { from { background-position: 130% 0; } to { background-position: -130% 0; } }
+@keyframes ai-fade-up { from { opacity: 0; transform: translateY(4px); } }
+@keyframes ai-land    { from { opacity: 0; transform: translateY(10px) scale(.986); } }
+@keyframes ai-card-sheen {
+  from { transform: translateX(-100%); opacity: .85; }
+  to   { transform: translateX(100%); opacity: 0; }
+}
+@keyframes ai-grow    { from { transform: scaleX(0); } }
+@keyframes ai-draw    { to { stroke-dashoffset: 0; } }
+@keyframes ai-caret   { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+/*
+ * Asked for less motion, or printing: the looping decoration stops dead.
+ * The base rule in base.css collapses every duration to nothing, which
+ * lands the one-shot animations on their finished state — but a loop
+ * collapsed to nothing is a strobe, so those are switched off by name.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .analyse::before, .analyse-mark::before, .analyse-spark, .analyse-tick,
+  .analyse-eq i, .analyse-go, .ai-orb.is-working::after, .ai-orb.is-working svg,
+  .ai-dots b, .ai-badge i, .ai-skel-pill, .ai-skel-line, .ai-skel-plot, .wi-caret {
+    animation: none !important;
+  }
+  .analyse:hover { transform: none; }
+}
+
+@media print {
+  .ai-rail, .ai-dots, .ai-skel, .analyse-scan { display: none !important; }
+  .ai-badge i { animation: none !important; }
+  .wi-signal.is-landing::after { display: none !important; }
+  .wi-signal, .wi-signal .wi-ev li, .wi-signal .ch-fill, .wi-signal .ch-path {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}
