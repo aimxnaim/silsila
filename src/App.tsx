@@ -4,10 +4,11 @@
  * Five views, mapped to the brief. The mapping is deliberate and is documented
  * in docs/BRIEF-MAPPING.md:
  *
- *   Overview      the dashboard: what the records contain
+ *   Overview      what the records contain, and how the
+ *                 organisation changed over time         (requirement 4)
  *   Org chart     how a position evolved                 (requirement 2)
  *   People        how a person moved                     (requirement 3)
- *   Timeline      the two histories on one axis          (requirement 4)
+ *   Departments   the drill-down, by division
  *   Load data     accept a structured source             (requirement 1)
  *
  * Requirement 5 — present it clearly — is not a view. It is the whole design.
@@ -30,12 +31,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOrgModel } from './hooks/useOrgModel.ts';
+import { latestActiveQuarter } from './domain/metrics.ts';
 import { OverviewView } from './components/views/OverviewView.tsx';
 import { AnalysisView } from './components/views/AnalysisView.tsx';
 import type { AnalysisScope } from './components/views/AnalysisView.tsx';
 import type { PresetId } from './domain/window.ts';
 import type { AreaId } from './domain/insights.ts';
-import { TimeChart } from './components/views/TimeChart.tsx';
+import { DepartmentsView } from './components/views/DepartmentsView.tsx';
 import { RolesView } from './components/views/RolesView.tsx';
 import { PeopleView } from './components/views/PeopleView.tsx';
 import { LoadDataView } from './components/views/LoadDataView.tsx';
@@ -45,7 +47,7 @@ import { DeptView } from './components/views/DeptView.tsx';
 import { Button, Empty } from './components/ui/primitives.tsx';
 import { registerDivisions } from './components/ui/vocabulary.tsx';
 
-type Tab = 'overview' | 'analysis' | 'orgchart' | 'people' | 'timeline' | 'load';
+type Tab = 'overview' | 'analysis' | 'orgchart' | 'people' | 'departments' | 'load';
 
 /**
  * Rail glyphs.
@@ -80,9 +82,11 @@ const ICONS: Record<Tab, JSX.Element> = {
       <path d="M12.5 4.2a2.8 2.8 0 0 1 0 5.4M13 11.6c2.1.4 3.5 1.9 3.5 3.9" strokeLinecap="round" />
     </svg>
   ),
-  timeline: (
-    <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-      <path d="M2 4.5h12" /><path d="M2 9h7" /><path d="M2 13.5h10" />
+  departments: (
+    <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round">
+      <rect x="2" y="6.5" width="6" height="9.5" rx="1.2" />
+      <rect x="10" y="2" width="6" height="14" rx="1.2" />
+      <path d="M4.2 9.4h1.6M4.2 12.4h1.6M12.2 5h1.6M12.2 8h1.6M12.2 11h1.6" strokeLinecap="round" />
     </svg>
   ),
   load: (
@@ -103,7 +107,7 @@ const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'overview', label: 'Overview' },
   { id: 'orgchart', label: 'Org chart' },
   { id: 'people', label: 'People' },
-  { id: 'timeline', label: 'Timeline' },
+  { id: 'departments', label: 'Departments' },
   { id: 'load', label: 'Load data' },
 ];
 
@@ -112,7 +116,7 @@ const CRUMB: Record<Tab, string> = {
   analysis: 'Feature Analysis',
   orgchart: 'Org chart',
   people: 'All people',
-  timeline: 'Timeline',
+  departments: 'Departments',
   load: 'Load data',
 };
 
@@ -132,8 +136,8 @@ export function App() {
 
   /**
    * Where a person or department page was opened FROM, so its back link can
-   * return there. A person reached from the timeline should go back to the
-   * timeline, not to a list they never visited.
+   * return there. A person reached from the overview should go back to the
+   * overview, not to a list they never visited.
    */
   const [page, setPage] = useState<
     { kind: 'person' | 'dept'; id: string; from: Tab; fromDept: string | null } | null
@@ -154,10 +158,11 @@ export function App() {
     loadDemo();
   }, [loadDemo]);
 
-  // Start the scrubber at the end of the window: the most recent quarter is
-  // the one a reader is arriving to ask about.
+  // Start on the most recent quarter that has something in it, not the end of
+  // the window — see latestActiveQuarter. The history is the front page now,
+  // and a front page must not open on an empty ledger.
   useEffect(() => {
-    if (model) setQuarter(model.window.quarterCount - 1);
+    if (model) setQuarter(latestActiveQuarter(model));
   }, [model]);
 
   /**
@@ -171,10 +176,18 @@ export function App() {
     registerDivisions([...model.positions.values()].map((p) => p.division));
   }, [model]);
 
+  /**
+   * Every navigation returns the canvas to the top. Without this a reader who
+   * scrolls to the bottom of the overview — which is now a long page — and
+   * then picks another tab arrives halfway down whatever they picked.
+   */
+  const toTop = () => document.querySelector('.frame-scroll')?.scrollTo({ top: 0 });
+
   const openPosition = useCallback((id: string) => setPosition(id), []);
   const closeDetail = useCallback(() => setPosition(null), []);
 
   const openPerson = useCallback((id: string) => {
+    toTop();
     setPosition(null);
     setPage((prev) => ({
       kind: 'person',
@@ -186,11 +199,13 @@ export function App() {
   }, [tab]);
 
   const openDept = useCallback((division: string) => {
+    toTop();
     setPosition(null);
     setPage({ kind: 'dept', id: division, from: tab, fromDept: null });
   }, [tab]);
 
   const closePage = useCallback(() => {
+    toTop();
     setPage((prev) => {
       // A person opened from a department steps back to the department first.
       if (prev?.kind === 'person' && prev.fromDept) {
@@ -201,18 +216,33 @@ export function App() {
   }, []);
 
   const goTab = useCallback((next: Tab) => {
+    toTop();
     setTab(next);
     setPage(null);
     setPosition(null);
   }, []);
 
-  /** Jump from a detail page back to where the subject sits in time. */
-  const showOnTimeline = useCallback((atQuarter: number) => {
+  /**
+   * Jump from a detail panel back to where the subject sits in time.
+   *
+   * The history is a section of the overview now rather than a tab, so this
+   * has to land the reader on the right part of a long page as well as the
+   * right quarter. The counter exists to make repeat jumps fire the effect
+   * again — the quarter and the tab may both already be what they need to be.
+   */
+  const [timeJump, setTimeJump] = useState(0);
+  const showInTime = useCallback((atQuarter: number) => {
     setQuarter(atQuarter);
-    setTab('timeline');
+    setTab('overview');
     setPage(null);
     setPosition(null);
+    setTimeJump((n) => n + 1);
   }, []);
+
+  useEffect(() => {
+    if (timeJump === 0) return;
+    document.getElementById('how-it-changed')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [timeJump]);
 
   /**
    * Where each intelligence area sends the reader. The areas are questions,
@@ -222,7 +252,7 @@ export function App() {
   const openArea = useCallback((id: AreaId) => {
     if (id === 'progression' || id === 'retention' || id === 'mobility') goTab('people');
     else if (id === 'succession' || id === 'structure') goTab('orgchart');
-    else goTab('timeline');
+    else goTab('overview');
   }, [goTab]);
 
   const tabCrumb = CRUMB[tab];
@@ -350,7 +380,7 @@ export function App() {
                   backLabel={backLabel}
                   onBack={closePage}
                   onOpenPosition={openPosition}
-                  onShowOnTimeline={showOnTimeline}
+                  onShowInTime={showInTime}
                 />
               ) : page?.kind === 'dept' ? (
                 <DeptView
@@ -363,9 +393,12 @@ export function App() {
                 <OverviewView
                   model={model}
                   metrics={metrics!}
-                  onOpenDept={openDept}
-                  onGoToTimeline={() => goTab('timeline')}
+                  quarter={quarter}
+                  onQuarterChange={setQuarter}
+                  onGoToDepartments={() => goTab('departments')}
                   onAnalyse={() => goTab('analysis')}
+                  onOpenPosition={openPosition}
+                  onOpenPerson={openPerson}
                 />
               ) : tab === 'analysis' ? (
                 <AnalysisView
@@ -383,14 +416,11 @@ export function App() {
                   onOpenPosition={openPosition}
                   onOpenArea={openArea}
                 />
-              ) : tab === 'timeline' ? (
-                <TimeChart
+              ) : tab === 'departments' ? (
+                <DepartmentsView
                   model={model}
                   metrics={metrics!}
-                  quarter={quarter}
-                  onQuarterChange={setQuarter}
-                  onOpenPosition={openPosition}
-                  onOpenPerson={openPerson}
+                  onOpenDept={openDept}
                 />
               ) : tab === 'orgchart' ? (
                 <RolesView model={model} onOpenPosition={openPosition} />
@@ -402,7 +432,7 @@ export function App() {
                   onLoad={load}
                   onLoadDemo={loadDemo}
                   onClearError={clearError}
-                  onLoaded={() => goTab('timeline')}
+                  onLoaded={() => goTab('overview')}
                 />
               )}
             </div>
@@ -417,7 +447,7 @@ export function App() {
           onClose={closeDetail}
           onOpenPosition={openPosition}
           onOpenPerson={openPerson}
-          onShowOnTimeline={showOnTimeline}
+          onShowInTime={showInTime}
         />
       ) : null}
     </div>

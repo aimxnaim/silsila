@@ -1,54 +1,47 @@
 /**
- * Company overview — the first screen after the front page.
+ * Company overview — the front door.
  *
- * Figures, then departments, then the year. Every card leads somewhere: the
- * department cards open the people inside them, the year chart opens the
- * timeline. Nothing here is a number you can only look at.
+ * Four figures, then the history itself. The history used to live behind a tab
+ * called "Timeline", which meant the page that claims to say what the records
+ * contain could only gesture at it with a chart of five columns and a link.
+ * The full thing is here now, and the five-column teaser is gone: a summary of
+ * a chart that sits directly underneath it was never worth the room.
+ *
+ * The department cards moved the other way, out to a tab of their own. They
+ * were the most-clicked thing on this page and they are a destination, not a
+ * summary — see DepartmentsView.
  */
 
 import { useMemo } from 'react';
 import type { Metrics, OrgModel } from '../../domain/types.ts';
-import { WINDOW_START_YEAR, toQuarterIndex } from '../../domain/dates.ts';
 import { departments } from '../../domain/overview.ts';
-import { deptAbbr, toneAt, toneOf } from '../ui/vocabulary.tsx';
+import { toneAt } from '../ui/vocabulary.tsx';
+import { ChangeSection } from './ChangeSection.tsx';
 
 export function OverviewView({
-  model, metrics, onOpenDept, onGoToTimeline, onAnalyse,
+  model, metrics, quarter, onQuarterChange, onGoToDepartments, onAnalyse,
+  onOpenPosition, onOpenPerson,
 }: {
   model: OrgModel;
   metrics: Metrics;
-  onOpenDept: (division: string) => void;
-  onGoToTimeline: () => void;
+  quarter: number;
+  onQuarterChange: (q: number) => void;
+  onGoToDepartments: () => void;
   onAnalyse: () => void;
+  onOpenPosition: (id: string) => void;
+  onOpenPerson: (id: string) => void;
 }) {
   const depts = useMemo(() => departments(model), [model]);
   const relabelled = metrics.renameCount + metrics.splitCount + metrics.mergeCount;
-
-  // Scaled against the largest department, not the firm: against the firm every
-  // bar is a stub and the comparison the bar exists for is unreadable.
-  const largest = Math.max(...depts.map((d) => d.headcount), 1);
-
-  /** Jobs created per year — the shape of the period, at a glance. */
-  const years = useMemo(() => {
-    const counts = new Map<number, number>();
-    for (const pos of model.positions.values()) {
-      const q = toQuarterIndex(pos.createdAt);
-      if (q === null) continue;
-      const year = WINDOW_START_YEAR + Math.floor(q / 4);
-      counts.set(year, (counts.get(year) ?? 0) + 1);
-    }
-    const out = [...counts.entries()].sort((a, b) => a[0] - b[0]);
-    const peak = Math.max(...out.map(([, n]) => n), 1);
-    return out.map(([year, n]) => ({ year, n, h: `${Math.round((n / peak) * 100)}%` }));
-  }, [model]);
 
   return (
     <div className="stack gap-6">
       <div>
         <div className="page-title">Company overview</div>
         <div className="page-sub">
-          {metrics.peopleCount} people across {depts.length} departments. Click any
-          department to see who works there.
+          {metrics.peopleCount} people across {depts.length} departments,{' '}
+          {model.window.startYear} onwards. What the records contain, and how the shape
+          of the place moved.
         </div>
       </div>
 
@@ -81,14 +74,21 @@ export function OverviewView({
           <span className="kpi-note">in seats at the end of the period</span>
         </div>
 
-        <div className="kpi" style={{ '--tone': toneAt(2).ink, '--tone-bg': toneAt(2).bg } as React.CSSProperties}>
+        {/* The one KPI that is also a door, because it has somewhere to go. */}
+        <button
+          className="kpi kpi-link"
+          onClick={onGoToDepartments}
+          style={{ '--tone': toneAt(2).ink, '--tone-bg': toneAt(2).bg } as React.CSSProperties}
+        >
           <div className="kpi-top">
             <span className="kpi-label">Departments</span>
             <span className="kpi-tag">D</span>
           </div>
           <span className="kpi-value tnum">{depts.length}</span>
-          <span className="kpi-note">{depts.slice(0, 3).map((d) => d.division).join(', ')}</span>
-        </div>
+          <span className="kpi-note">
+            {depts.slice(0, 3).map((d) => d.division).join(', ')} &mdash; see all &rsaquo;
+          </span>
+        </button>
 
         <div className="kpi" style={{ '--tone': toneAt(1).ink, '--tone-bg': toneAt(1).bg } as React.CSSProperties}>
           <div className="kpi-top">
@@ -109,78 +109,14 @@ export function OverviewView({
         </div>
       </div>
 
-      <div>
-        <div className="row gap-3 wrap" style={{ alignItems: 'baseline', marginBottom: 'var(--s3)' }}>
-          <div style={{ fontSize: 17, fontWeight: 700 }}>Departments</div>
-          <div className="small muted">click a card to open its people</div>
-        </div>
-
-        <div className="dept-grid">
-          {depts.map((d) => (
-            <button
-              key={d.division}
-              className="dept"
-              onClick={() => onOpenDept(d.division)}
-              style={{
-                '--tone': toneOf(d.division).ink,
-                '--tone-bg': toneOf(d.division).bg,
-                '--tone-line': toneOf(d.division).line,
-              } as React.CSSProperties}
-            >
-              <span className="dept-top">
-                <span className="dept-tile" style={{ background: 'var(--tone)' }}>
-                  {deptAbbr(d.division)}
-                </span>
-                <span className="dept-name">{d.division}</span>
-              </span>
-
-              <span className="dept-count">
-                <b className="tnum">{d.headcount}</b>
-                <span>people</span>
-              </span>
-
-              <span className="dept-bar">
-                <span
-                  className="dept-bar-fill"
-                  style={{
-                    display: 'block',
-                    width: `${Math.round((d.headcount / largest) * 100)}%`,
-                    background: 'var(--tone)',
-                  }}
-                />
-              </span>
-
-              <span className="dept-foot">
-                <span>{Math.round((d.headcount / Math.max(metrics.headcountEnd, 1)) * 100)}% of the firm</span>
-                <span>{d.changes} changed</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="row spread gap-4 wrap" style={{ alignItems: 'flex-start' }}>
-          <div>
-            <div style={{ fontSize: 17, fontWeight: 700 }}>Work through the year</div>
-            <div className="small muted" style={{ marginTop: 3 }}>
-              Jobs opened each year, {years[0]?.year} to {years[years.length - 1]?.year}.
-            </div>
-          </div>
-          <button className="backlink no-print" style={{ color: 'var(--brand)' }} onClick={onGoToTimeline}>
-            Open full timeline &rsaquo;
-          </button>
-        </div>
-
-        <div className="minichart">
-          {years.map((y, i) => (
-            <div className="minicol" key={y.year} title={`${y.year} — ${y.n} jobs opened`}>
-              <i style={{ height: y.h, background: toneAt(i).ink }} />
-              <span>{y.year}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <ChangeSection
+        model={model}
+        metrics={metrics}
+        quarter={quarter}
+        onQuarterChange={onQuarterChange}
+        onOpenPosition={onOpenPosition}
+        onOpenPerson={onOpenPerson}
+      />
     </div>
   );
 }
