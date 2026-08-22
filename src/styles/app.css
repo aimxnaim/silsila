@@ -854,6 +854,59 @@
 .minicol i { width: 100%; max-width: 46px; border-radius: 5px 5px 0 0; background: var(--nu-bar); }
 .minicol span { font-size: 12px; color: var(--ink-3); }
 
+/* ---- The glance ---------------------------------------------------------
+ *
+ * The answer, before the evidence. A hero figure, a composition bar and a
+ * footnote, in that order, on the overview and in both drawers.
+ *
+ * The figure carries PROPORTIONAL figures, not tabular ones. Equal-width
+ * digits are right where numbers stack in a column and wrong at this size —
+ * `+20` set in tabular figures reads loose and slightly broken.
+ *
+ * The bar separates its segments with a 2px gap of the card surface rather
+ * than a border. A border adds a line of its own to the design; a gap is the
+ * absence of one, and at this height that is the difference between a bar
+ * that reads as one object and a bar that reads as a fence.
+ */
+.glance { display: flex; flex-direction: column; gap: var(--s4); }
+
+.glance-hero { display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap; }
+.glance-figure {
+  font-family: var(--sans);
+  font-size: 52px; font-weight: 700; line-height: 1;
+  letter-spacing: -0.02em; color: var(--ink);
+  font-variant-numeric: proportional-nums;
+}
+.glance-hero-text { display: flex; flex-direction: column; gap: 2px; }
+.glance-hero-text b { font-size: 15px; font-weight: 600; color: var(--ink); }
+.glance-hero-text span { font-size: 12.5px; color: var(--ink-3); }
+
+.glance-comp { display: flex; flex-direction: column; gap: var(--s3); }
+.glance-bar { display: flex; gap: 2px; height: 16px; }
+.glance-seg {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 3px; overflow: hidden;
+}
+.glance-seg:first-child { border-radius: 4px 0 0 4px; }
+.glance-seg:last-child  { border-radius: 0 4px 4px 0; }
+.glance-seg:only-child  { border-radius: 4px; }
+.glance-seg i {
+  font-style: normal; font-size: 10.5px; font-weight: 700;
+  color: var(--surface); font-variant-numeric: tabular-nums;
+}
+
+.glance-key { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); margin: 0; padding: 0; list-style: none; }
+.glance-key li { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; }
+.glance-key i { display: block; flex: none; width: 9px; height: 9px; border-radius: 2px; }
+.glance-key b { font-weight: 700; color: var(--ink); }
+.glance-key span { color: var(--ink-3); }
+
+.glance-whole { margin: 0; font-size: 11.5px; color: var(--ink-4); }
+.glance-foot {
+  margin: 0; font-size: 12.5px; color: var(--ink-3);
+  padding-left: var(--s3); border-left: 2px solid var(--line);
+}
+
 /* ---- The trend chart ----------------------------------------------------
  *
  * One SVG, uniformly scaled, holding a headcount line above an activity

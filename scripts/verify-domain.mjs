@@ -17,6 +17,7 @@ import { divisionFlows, mobilityRate, moves, netFlow } from '../src/domain/mobil
 import { progressionCandidates, progressionFor, stagnation } from '../src/domain/progression.ts';
 import { signals } from '../src/domain/insights.ts';
 import { analysablePeople, personAnalysis } from '../src/domain/personAnalysis.ts';
+import { glanceTotal, orgGlance, personGlance, positionGlance } from '../src/domain/glance.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '../src/data/demoDataset.ts';
 
 const parsed = parseCSV(DEMO_DATASET_CSV);
@@ -331,6 +332,63 @@ check('a reporting loop terminates instead of hanging', pathTo(loop, 'A').length
 
 console.log(`${chart.roots.length} root(s) · ${chart.orphans.length} outside the tree · ${chart.liveCount} live`);
 console.log(`deepest chain, ${trail.length} levels: ${trail.map((n) => n.position.title).join(' > ')}`);
+
+/* ------------------------------------------------------------------ *
+ * The glance.
+ *
+ * A composition bar asserts part-to-whole, so the only thing worth checking
+ * hard is that its segments really do sum to the whole it names, and that its
+ * buckets agree with the headline metrics rather than telling a second story.
+ * ------------------------------------------------------------------ */
+console.log('\n=== GLANCE ===');
+
+const og = orgGlance(model, m);
+
+check('the org glance hero is the headcount delta',
+  og.hero.value, `+${m.headcountEnd - m.headcountStart}`);
+check('the org glance segments sum to the arrival cohort',
+  glanceTotal(og), [...model.positions.values()]
+    .filter((p) => p.createdAt !== null && p.createdAt >= `${model.window.startYear}-04-01`).length);
+check('the "genuinely new" bucket agrees with metrics.genuinelyNewCount',
+  og.segments.find((s) => s.step === 0)?.value ?? 0, m.genuinelyNewCount);
+check('no segment is empty', og.segments.every((s) => s.value > 0), true);
+check('a bar is only drawn when there is something to compare',
+  og.segments.length >= 2, true);
+check('the pre-existing seats are named, not counted as growth',
+  og.footnote.includes(String(model.positions.size - glanceTotal(og))), true);
+
+// Every position must produce a glance whose parts sum to its stated lineage.
+const badPosition = [...model.positions.keys()].find((id) => {
+  const g = positionGlance(model, id);
+  return g.segments.length > 0 && glanceTotal(g) !== Number(g.hero.value);
+});
+check('every position glance sums to its own version count', badPosition, undefined);
+
+// Same for people: the changes behind the titles must add up.
+const badPerson = [...model.people.keys()].find((id) => {
+  const g = personGlance(model, id);
+  return g.segments.length > 0 && g.whole === null;
+});
+check('every person glance names the whole its segments are parts of', badPerson, undefined);
+
+check('a person who never moved is told so',
+  [...model.people.keys()]
+    .map((id) => personGlance(model, id))
+    .filter((g) => g.segments.length === 0)
+    .every((g) => g.footnote !== null),
+  true);
+
+const featured = [...model.people.keys()]
+  .map((id) => ({ id, g: personGlance(model, id) }))
+  .find(({ g }) => g.footnote === 'Their title changed without them ever moving.');
+console.log(featured
+  ? `the org moved someone who never moved: ${model.people.get(featured.id).name} — ${featured.g.hero.value} titles`
+  : 'nobody in this file had their title changed without moving');
+
+console.log(`org glance: ${og.hero.value} ${og.hero.label} · ${og.hero.detail}`);
+for (const s of og.segments) console.log(`  ${String(s.value).padStart(3)}  ${s.label}`);
+console.log(`  whole: ${og.whole}`);
+console.log(`  foot:  ${og.footnote}`);
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
 if (failures > 0) process.exitCode = 1;

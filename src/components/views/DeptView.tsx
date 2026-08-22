@@ -168,166 +168,166 @@ export function DeptView({
 
       {/* ---- Roles ------------------------------------------------------- */}
       {pane === 'roles' && (
-      <div className="card card-flush">
-        <div className="card-head">
-          <h3>Roles in this department</h3>
-          <span className="micro faint">
-            {roles.length} seat{roles.length === 1 ? '' : 's'} tracked
-            {vacant > 0 ? ` · ${vacant} vacant` : ''} · click one for its full history
-          </span>
-        </div>
-
-        {roles.length === 0 ? (
-          <p className="small faint" style={{ padding: 'var(--s5)' }}>
-            No seats are recorded against this department.
-          </p>
-        ) : layout === 'cards' ? (
-          <div className="rolecard-grid">
-            {roles.map((r) => (
-              <button
-                key={r.positionId}
-                className={`rolecard ${r.closed ? 'rolecard--closed' : ''}`.trim()}
-                onClick={() => onOpenPosition(r.positionId)}
-              >
-                <span className="rolecard-top">
-                  {r.holder ? (
-                    <Avatar name={r.holder.name} />
-                  ) : (
-                    <span className="rolecard-empty" aria-hidden="true">—</span>
-                  )}
-                  <span className="rolecard-who">
-                    <span className="rolecard-name">
-                      {r.holder?.name ?? 'Vacant'}
-                    </span>
-                    <span className="rolecard-title">{r.title}</span>
-                  </span>
-                </span>
-
-                <span className="rolecard-foot">
-                  <span className="rolecard-meta">{roleMeta(r)}</span>
-                  <span className="rolecard-since">
-                    {r.holder && r.since
-                      ? `${r.filled ? 'since' : 'last held'} ${formatMonthYear(r.since)}`
-                      : r.createdAt ? `open since ${formatMonthYear(r.createdAt)}` : ''}
-                  </span>
-                </span>
-
-                <span className="rolecard-badge">{roleStatus(r)}</span>
-              </button>
-            ))}
+        <div className="card card-flush">
+          <div className="card-head">
+            <h3>Roles in this department</h3>
+            <span className="micro faint">
+              {roles.length} seat{roles.length === 1 ? '' : 's'} tracked
+              {vacant > 0 ? ` · ${vacant} vacant` : ''} · click one for its full history
+            </span>
           </div>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Role</th>
-                <th style={{ width: 200 }}>Held by</th>
-                <th style={{ width: 90 }}>Grade</th>
-                <th style={{ width: 170 }}>Team</th>
-                <th style={{ width: 180 }}>Existed from — to</th>
-                <th style={{ width: 100 }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
+
+          {roles.length === 0 ? (
+            <p className="small faint" style={{ padding: 'var(--s5)' }}>
+              No seats are recorded against this department.
+            </p>
+          ) : layout === 'cards' ? (
+            <div className="rolecard-grid">
               {roles.map((r) => (
-                <tr key={r.positionId} className="clickable" onClick={() => onOpenPosition(r.positionId)}>
-                  <td style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.title}</td>
-                  <td>
+                <button
+                  key={r.positionId}
+                  className={`rolecard ${r.closed ? 'rolecard--closed' : ''}`.trim()}
+                  onClick={() => onOpenPosition(r.positionId)}
+                >
+                  <span className="rolecard-top">
                     {r.holder ? (
-                      <span className={r.filled ? '' : 'muted'}>{r.holder.name}</span>
+                      <Avatar name={r.holder.name} />
                     ) : (
-                      <span className="faint">&mdash;</span>
+                      <span className="rolecard-empty" aria-hidden="true">—</span>
                     )}
-                  </td>
-                  <td className="tnum">{r.level === null ? <span className="faint">&mdash;</span> : r.level}</td>
-                  <td className="small muted">{r.orgUnit}</td>
-                  <td className="small muted tnum">
-                    {r.createdAt ? formatMonthYear(r.createdAt) : '—'} —{' '}
-                    {r.closedAt ? formatMonthYear(r.closedAt) : 'now'}
-                  </td>
-                  <td>{roleStatus(r)}</td>
-                </tr>
+                    <span className="rolecard-who">
+                      <span className="rolecard-name">
+                        {r.holder?.name ?? 'Vacant'}
+                      </span>
+                      <span className="rolecard-title">{r.title}</span>
+                    </span>
+                  </span>
+
+                  <span className="rolecard-foot">
+                    <span className="rolecard-meta">{roleMeta(r)}</span>
+                    <span className="rolecard-since">
+                      {r.holder && r.since
+                        ? `${r.filled ? 'since' : 'last held'} ${formatMonthYear(r.since)}`
+                        : r.createdAt ? `open since ${formatMonthYear(r.createdAt)}` : ''}
+                    </span>
+                  </span>
+
+                  <span className="rolecard-badge">{roleStatus(r)}</span>
+                </button>
               ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+            </div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Role</th>
+                  <th style={{ width: 200 }}>Held by</th>
+                  <th style={{ width: 90 }}>Grade</th>
+                  <th style={{ width: 170 }}>Team</th>
+                  <th style={{ width: 180 }}>Existed from — to</th>
+                  <th style={{ width: 100 }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roles.map((r) => (
+                  <tr key={r.positionId} className="clickable" onClick={() => onOpenPosition(r.positionId)}>
+                    <td style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.title}</td>
+                    <td>
+                      {r.holder ? (
+                        <span className={r.filled ? '' : 'muted'}>{r.holder.name}</span>
+                      ) : (
+                        <span className="faint">&mdash;</span>
+                      )}
+                    </td>
+                    <td className="tnum">{r.level === null ? <span className="faint">&mdash;</span> : r.level}</td>
+                    <td className="small muted">{r.orgUnit}</td>
+                    <td className="small muted tnum">
+                      {r.createdAt ? formatMonthYear(r.createdAt) : '—'} —{' '}
+                      {r.closedAt ? formatMonthYear(r.closedAt) : 'now'}
+                    </td>
+                    <td>{roleStatus(r)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
 
       {/* ---- People ------------------------------------------------------ */}
       {pane === 'people' && (
-      <div className="card card-flush">
-        <div className="card-head">
-          <h3>People</h3>
-          <span className="micro faint">
-            {staff.length} {staff.length === 1 ? 'person has' : 'people have'} worked here ·
-            click one for the full record
-          </span>
-        </div>
-
-        {staff.length === 0 ? (
-          <p className="small faint" style={{ padding: 'var(--s5)' }}>
-            Nobody is recorded against this department.
-          </p>
-        ) : layout === 'cards' ? (
-          <div className="personcard-grid">
-            {staff.map((p) => (
-              <button
-                key={p.personId}
-                className="personcard"
-                onClick={() => onOpenPerson(p.personId)}
-              >
-                <Avatar name={p.name} />
-                <span className="personcard-body">
-                  <span className="personcard-name">{p.name}</span>
-                  <span className="personcard-title">{p.title}</span>
-                  <span className="personcard-meta">
-                    {p.orgUnit} · {tenureOf(p.personId)}
-                  </span>
-                </span>
-                {p.current ? <Badge tone="ok">Current</Badge> : <Badge>Moved on</Badge>}
-              </button>
-            ))}
+        <div className="card card-flush">
+          <div className="card-head">
+            <h3>People</h3>
+            <span className="micro faint">
+              {staff.length} {staff.length === 1 ? 'person has' : 'people have'} worked here ·
+              click one for the full record
+            </span>
           </div>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Job</th>
-                <th>Team</th>
-                <th style={{ width: 140 }}>Years of service</th>
-                <th style={{ width: 120 }}>Status</th>
-                <th style={{ width: 150 }}>Job changed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {staff.map((p) => {
-                const structural = structuralChangesFor(model, p.personId).length;
-                return (
-                  <tr key={p.personId} className="clickable" onClick={() => onOpenPerson(p.personId)}>
-                    <td>
-                      <div className="row gap-3" style={{ minWidth: 0 }}>
-                        <Avatar name={p.name} />
-                        <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
-                      </div>
-                    </td>
-                    <td>{p.title}</td>
-                    <td>{p.orgUnit}</td>
-                    <td className="tnum">{tenureOf(p.personId)}</td>
-                    <td>{p.current ? <Badge tone="ok">Current</Badge> : <Badge>Moved on</Badge>}</td>
-                    <td>
-                      {structural > 0
-                        ? <Badge tone="accent">{structural}&times; around them</Badge>
-                        : <span className="faint">&mdash;</span>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+
+          {staff.length === 0 ? (
+            <p className="small faint" style={{ padding: 'var(--s5)' }}>
+              Nobody is recorded against this department.
+            </p>
+          ) : layout === 'cards' ? (
+            <div className="personcard-grid">
+              {staff.map((p) => (
+                <button
+                  key={p.personId}
+                  className="personcard"
+                  onClick={() => onOpenPerson(p.personId)}
+                >
+                  <Avatar name={p.name} />
+                  <span className="personcard-body">
+                    <span className="personcard-name">{p.name}</span>
+                    <span className="personcard-title">{p.title}</span>
+                    <span className="personcard-meta">
+                      {p.orgUnit} · {tenureOf(p.personId)}
+                    </span>
+                  </span>
+                  {p.current ? <Badge tone="ok">Current</Badge> : <Badge>Moved on</Badge>}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Job</th>
+                  <th>Team</th>
+                  <th style={{ width: 140 }}>Years of service</th>
+                  <th style={{ width: 120 }}>Status</th>
+                  <th style={{ width: 150 }}>Job changed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {staff.map((p) => {
+                  const structural = structuralChangesFor(model, p.personId).length;
+                  return (
+                    <tr key={p.personId} className="clickable" onClick={() => onOpenPerson(p.personId)}>
+                      <td>
+                        <div className="row gap-3" style={{ minWidth: 0 }}>
+                          <Avatar name={p.name} />
+                          <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
+                        </div>
+                      </td>
+                      <td>{p.title}</td>
+                      <td>{p.orgUnit}</td>
+                      <td className="tnum">{tenureOf(p.personId)}</td>
+                      <td>{p.current ? <Badge tone="ok">Current</Badge> : <Badge>Moved on</Badge>}</td>
+                      <td>
+                        {structural > 0
+                          ? <Badge tone="accent">{structural}&times; around them</Badge>
+                          : <span className="faint">&mdash;</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
     </div>
   );
