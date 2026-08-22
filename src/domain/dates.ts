@@ -61,3 +61,27 @@ export function daysBetween(a: ISODate | null, b: ISODate | null): number | null
   if (!da || !db) return null;
   return Math.abs(db.getTime() - da.getTime()) / 86_400_000;
 }
+
+/**
+ * Length of service, worded the way an HR record words it.
+ *
+ * Open-ended assignments are measured to the end of the window rather than to
+ * today, so the figure matches the rest of the interface — every other number
+ * on screen is computed inside the same window, and a tenure that kept growing
+ * against the wall clock would silently disagree with them.
+ */
+export function tenure(from: ISODate | null | undefined, to: ISODate | null): string {
+  const start = parseDate(from ?? null);
+  if (!start) return 'unknown';
+  const end = parseDate(to) ?? new Date(Date.UTC(WINDOW_START_YEAR + Math.floor((WINDOW_QUARTERS - 1) / 4), ((WINDOW_QUARTERS - 1) % 4) * 3 + 2, 30));
+
+  const months = Math.max(
+    0,
+    (end.getUTCFullYear() - start.getUTCFullYear()) * 12 + (end.getUTCMonth() - start.getUTCMonth()),
+  );
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  if (years === 0) return `${rest} month${rest === 1 ? '' : 's'}`;
+  if (rest === 0) return `${years} year${years === 1 ? '' : 's'}`;
+  return `${years}y ${rest}m`;
+}

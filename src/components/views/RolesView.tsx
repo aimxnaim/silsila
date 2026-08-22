@@ -19,8 +19,10 @@ import { useMemo, useState } from 'react';
 import type { LineageRelation, OrgModel } from '../../domain/types.ts';
 import { formatMonthYear, quarterLabel } from '../../domain/dates.ts';
 import { buildHierarchy, type TreeNode } from '../../domain/hierarchy.ts';
-import { Badge, Card, CardHead, Eyebrow } from '../ui/primitives.tsx';
+import { Badge, Card, CardHead } from '../ui/primitives.tsx';
 import { RELATION_LABEL, RELATION_MEANING, RelationBadge } from '../ui/vocabulary.tsx';
+import { chains } from '../../domain/chains.ts';
+import { StoryStrip } from './StoryStrip.tsx';
 
 const ORDER: LineageRelation[] = ['rename', 'redesignated', 'split', 'merge', 'succeeded', 'created'];
 
@@ -97,6 +99,7 @@ export function RolesView({
   const [filter, setFilter] = useState<LineageRelation | 'all'>('all');
 
   const hierarchy = useMemo(() => buildHierarchy(model, quarter), [model, quarter]);
+  const allChains = useMemo(() => chains(model), [model]);
 
   // Open the top two levels by default: enough to show the shape of the
   // company without burying the reader in 78 rows.
@@ -135,17 +138,12 @@ export function RolesView({
 
   return (
     <div className="stack gap-5">
-      <div className="page-head">
-        <Eyebrow>Every job in the organisation</Eyebrow>
-        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '22ch' }}>
-          The org chart, <em>at any point in its past</em>
-        </h2>
-        <p className="measure muted" style={{ marginTop: 'var(--s4)', fontSize: 16 }}>
-          Start at the chief executive and open the branches downwards, the same as any
-          org chart. The difference is the date at the top: change it and you are looking
-          at the company as it actually was in that quarter — jobs that had not been
-          created yet disappear, and jobs that were later closed come back.
-        </p>
+      <div>
+        <div className="page-title">Org chart</div>
+        <div className="page-sub">
+          {model.positions.size} jobs across the whole period. Change the date to rebuild
+          the tree as it actually was in that quarter.
+        </div>
       </div>
 
       <div className="row gap-4 wrap spread no-print">
@@ -229,12 +227,6 @@ export function RolesView({
       ) : (
         /* ------------------------------------------------- By what changed */
         <>
-          <p className="measure muted" style={{ marginTop: 'calc(-1 * var(--s2))' }}>
-            Sorting job titles alphabetically tells you nothing. These are grouped by what
-            each job&rsquo;s <strong>arrival actually meant</strong> — whether somebody was
-            hired, or an existing job was simply given a new name.
-          </p>
-
           <div className="chiprow no-print">
             <button className="tab" aria-selected={filter === 'all'} onClick={() => setFilter('all')}>
               Everything ({model.positions.size})
@@ -299,15 +291,25 @@ export function RolesView({
         </>
       )}
 
-      <Card tight>
-        <p className="small muted">
-          <Badge tone="ink">Tip</Badge>{' '}
-          Set the date above to {quarterLabel(0)}, then to {quarterLabel(model.window.quarterCount - 1)},
-          and watch the tree change. Every job that appears in between is either genuine
-          growth or a renamed version of something that was already there — which is
-          exactly what the <strong>By what changed</strong> view separates.
-        </p>
-      </Card>
+      {mode === 'changes' ? (
+        <div>
+          <div className="row gap-3 wrap" style={{ alignItems: 'baseline', marginBottom: 'var(--s3)' }}>
+            <div style={{ fontSize: 17, fontWeight: 700 }}>Every job that changed, start to finish</div>
+            <div className="small muted">read each row left to right</div>
+          </div>
+          {allChains.map((chain) => (
+            <StoryStrip key={chain.id} model={model} chain={chain} onOpenPosition={onOpenPosition} />
+          ))}
+        </div>
+      ) : (
+        <Card tight>
+          <p className="small muted">
+            <Badge tone="ink">Tip</Badge>{' '}
+            Set the date above to {quarterLabel(0)}, then to {quarterLabel(model.window.quarterCount - 1)},
+            and watch the tree change.
+          </p>
+        </Card>
+      )}
     </div>
   );
 }

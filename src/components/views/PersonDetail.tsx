@@ -1,43 +1,19 @@
 /**
- * One person, as a profile page.
+ * One person, as a page.
  *
- * Laid out the way an HR system lays out an employee record — portrait, name,
- * current title, then a grid of fields — because that is the format the reader
- * already knows, and the argument this panel makes only lands if the reader
- * recognises what they are looking at.
- *
- * The section that justifies the whole product is "What moved around them".
- * A conventional HR record shows this person under three different job titles
- * and invites the reader to conclude they are restless. This panel puts the
- * structural events beside the trajectory, so it is visible that the titles
- * changed because the organisation was reorganised — not because the person
- * went anywhere.
+ * Laid out the way an HR portal lays out an employee record — portrait behind
+ * a rule, name and role top-right, then a grid of fields. That format is the
+ * argument's delivery mechanism: this panel claims the titles changed because
+ * the organisation was reorganised, not because the person kept moving, and
+ * that only lands if the reader recognises what they are looking at first.
  */
 
-import type { OrgModel } from '../../domain/types.ts';
-import { formatDate, formatMonthYear, toQuarterIndex } from '../../domain/dates.ts';
+import type { LineageRelation, OrgModel } from '../../domain/types.ts';
+import { formatMonthYear, tenure, toQuarterIndex } from '../../domain/dates.ts';
 import { structuralChangesFor } from '../../domain/metrics.ts';
-import { Badge, Button, Card, Eyebrow } from '../ui/primitives.tsx';
+import { Badge, Button } from '../ui/primitives.tsx';
 import { Avatar } from '../ui/Avatar.tsx';
-import { Drawer } from '../ui/Drawer.tsx';
-import { RELATION_LABEL } from '../ui/vocabulary.tsx';
-import type { LineageRelation } from '../../domain/types.ts';
-
-function tenure(from: string | null | undefined, to: string | null): string {
-  if (!from) return 'unknown';
-  const start = new Date(from);
-  const end = to ? new Date(to) : new Date('2026-06-30');
-  if (Number.isNaN(start.getTime())) return 'unknown';
-  const months = Math.max(
-    0,
-    (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()),
-  );
-  const years = Math.floor(months / 12);
-  const rest = months % 12;
-  if (years === 0) return `${rest} month${rest === 1 ? '' : 's'}`;
-  if (rest === 0) return `${years} year${years === 1 ? '' : 's'}`;
-  return `${years}y ${rest}m`;
-}
+import { RELATION_LABEL, STATE, stateOf } from '../ui/vocabulary.tsx';
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   const empty = value === null || value === undefined || value === '';
@@ -52,11 +28,12 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export function PersonDetail({
-  model, personId, onClose, onOpenPosition, onShowOnTimeline,
+  model, personId, backLabel, onBack, onOpenPosition, onShowOnTimeline,
 }: {
   model: OrgModel;
   personId: string;
-  onClose: () => void;
+  backLabel: string;
+  onBack: () => void;
   onOpenPosition: (id: string) => void;
   onShowOnTimeline: (quarter: number) => void;
 }) {
@@ -75,32 +52,20 @@ export function PersonDetail({
   const distinctTitles = new Set(
     assignments.map((a) => model.positions.get(a.positionId)?.title).filter(Boolean),
   );
-  const stillHere = latest && !latest.endDate;
-
-  // Worth saying out loud, but only when the records actually support it.
-  const sameJobManyTitles =
-    distinctTitles.size > 1 &&
-    structural.some((s) => s.relation === 'rename' || s.relation === 'redesignated');
+  const stillHere = Boolean(latest && !latest.endDate);
 
   return (
-    <Drawer
-      title="Employee record"
-      subtitle={<span className="mono">{person.id}</span>}
-      onClose={onClose}
-    >
-      {/* ---- Profile header ---------------------------------------------
-       *
-       * Portrait left behind a rule, identity and actions top-right, fields
-       * beneath — the layout of the HR portal this sits beside. The red disc
-       * on the portrait is where that system puts its edit affordance; here it
-       * is inert and the caption underneath says why, because Silsilah reads
-       * records and never writes them.
-       */}
-      <Card>
+    <div className="stack gap-5">
+      <button className="backlink no-print" onClick={onBack}>&lsaquo; {backLabel}</button>
+
+      {/* ---- Profile header --------------------------------------------- */}
+      <div className="card">
         <div className="profile-head">
           <div className="profile-photo">
             <span className="profile-photo-wrap">
               <Avatar name={person.name} large />
+              {/* Where the source system puts its edit affordance. Inert here,
+                  and captioned as such: Silsilah reads records, never writes. */}
               <span className="profile-photo-dot" aria-hidden="true" />
             </span>
             <span className="profile-photo-note">no photo on record</span>
@@ -122,123 +87,116 @@ export function PersonDetail({
               </div>
             </div>
 
-            <div className="row gap-2 wrap" style={{ marginTop: 'var(--s3)' }}>
-              {stillHere
-                ? <Badge tone="ok">Currently employed</Badge>
-                : <Badge>Left {formatMonthYear(latest?.endDate ?? null)}</Badge>}
-              {structural.length > 0 ? (
-                <Badge tone="accent">
-                  {structural.length} structural change{structural.length === 1 ? '' : 's'}
-                </Badge>
-              ) : null}
-            </div>
-
             <div className="field-grid">
               <Field label="Employee code" value={<span className="mono">{person.id}</span>} />
               <Field label="Department" value={currentPosition?.division} />
               <Field label="Team" value={currentPosition?.orgUnit} />
-              <Field label="Grade" value={currentPosition?.level !== null && currentPosition?.level !== undefined ? currentPosition.level : null} />
+              <Field
+                label="Grade"
+                value={currentPosition?.level ?? null}
+              />
               <Field label="Employment status" value={latest?.employmentType} />
               <Field label="Location" value={currentPosition?.location} />
-              <Field label="Time on record" value={tenure(first?.startDate, latest?.endDate ?? null)} />
+              <Field label="Years of service" value={tenure(first?.startDate, latest?.endDate ?? null)} />
               <Field label="Joined" value={formatMonthYear(first?.startDate)} />
               <Field label="Reports to" value={manager?.title} />
+              <Field
+                label="Currently employed"
+                value={stillHere ? 'Yes' : `Left ${formatMonthYear(latest?.endDate ?? null)}`}
+              />
               <Field label="Jobs held" value={assignments.length} />
               <Field label="Distinct job titles" value={distinctTitles.size} />
-              <Field label="Record source" value={<span className="small">{latest?.source}</span>} />
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* ---- The argument ------------------------------------------------ */}
-      {sameJobManyTitles ? (
-        <Card tight>
-          <Eyebrow>What the raw record would suggest</Eyebrow>
-          <p style={{ marginTop: 'var(--s3)' }}>
-            An HR export shows {person.name.split(' ')[0]} under{' '}
-            <strong>{distinctTitles.size} different job titles</strong>. On paper that
-            reads as someone who has moved around.
-          </p>
-          <p style={{ marginTop: 'var(--s3)' }} className="accent">
-            The lineage says otherwise: at least one of those changes was the same seat
-            being relabelled. The organisation moved; the person did not.
-          </p>
-        </Card>
-      ) : null}
-
-      {/* ---- Career history ---------------------------------------------- */}
-      <div>
-        <Eyebrow>Career history</Eyebrow>
-        <div className="stack gap-2" style={{ marginTop: 'var(--s3)' }}>
-          {assignments.map((a) => {
-            const pos = model.positions.get(a.positionId);
-            const mgr = a.reportsToPositionId ? model.positions.get(a.reportsToPositionId) : null;
-            return (
-              <button
-                key={a.id}
-                className="card card-tight"
-                style={{ textAlign: 'left', cursor: 'pointer' }}
-                onClick={() => onOpenPosition(a.positionId)}
-              >
-                <div className="row spread gap-3 wrap">
-                  <strong>{pos?.title}</strong>
-                  <span className="micro faint tnum">
-                    {formatDate(a.startDate)} → {a.endDate ? formatDate(a.endDate) : 'present'}
-                  </span>
-                </div>
-                <div className="micro muted" style={{ marginTop: 4 }}>
-                  {pos?.orgUnit}
-                  {pos?.level !== null && pos?.level !== undefined ? ` · grade ${pos.level}` : ''}
-                  {' · reported to '}
-                  {mgr ? mgr.title : <em>not recorded</em>}
-                  {' · '}
-                  {tenure(a.startDate, a.endDate)}
-                </div>
-                {a.changeReason ? (
-                  <div className="micro" style={{ marginTop: 2 }}>{a.changeReason}</div>
-                ) : null}
-                <div className="micro faint" style={{ marginTop: 2 }}>
-                  Source: {a.source} · confidence {a.confidence}
-                  {a.startDateInferred ? ' · start date derived, not recorded' : ''}
-                </div>
-              </button>
-            );
-          })}
+      {/* ---- Career history --------------------------------------------- */}
+      <div className="card card-flush">
+        <div className="card-head">
+          <h3>Jobs held</h3>
+          <span className="micro faint">{assignments.length} on record</span>
         </div>
+        <table>
+          <thead>
+            <tr>
+              <th style={{ width: 130 }}>Position ID</th>
+              <th>Job</th>
+              <th style={{ width: 200 }}>Period</th>
+              <th style={{ width: 190 }}>Reported to</th>
+              <th style={{ width: 130 }}>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            {assignments.map((a) => {
+              const pos = model.positions.get(a.positionId);
+              const mgr = a.reportsToPositionId ? model.positions.get(a.reportsToPositionId) : null;
+              return (
+                <tr key={a.id} className="clickable" onClick={() => onOpenPosition(a.positionId)}>
+                  <td className="mono">{a.positionId}</td>
+                  <td>
+                    <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{pos?.title}</div>
+                    <div className="micro faint">{pos?.orgUnit}</div>
+                  </td>
+                  <td className="tnum">
+                    {formatMonthYear(a.startDate)} — {a.endDate ? formatMonthYear(a.endDate) : 'present'}
+                    {a.startDateInferred ? <div className="micro faint">start derived, not recorded</div> : null}
+                  </td>
+                  <td>{mgr ? mgr.title : <span className="faint" style={{ fontStyle: 'italic' }}>not recorded</span>}</td>
+                  <td className="micro faint">{a.source}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* ---- The connection ---------------------------------------------- */}
-      <div>
-        <Eyebrow>What moved around them</Eyebrow>
-        <p className="small muted" style={{ marginTop: 'var(--s2)' }}>
-          Structural changes to the seats this person occupied. This is where their
-          history and the organisation&rsquo;s history turn out to be the same history.
-        </p>
-        <div className="stack gap-2" style={{ marginTop: 'var(--s3)' }}>
-          {structural.map((event) => (
-            <button
-              key={event.positionId}
-              className="card card-tight"
-              style={{ textAlign: 'left', cursor: 'pointer' }}
-              onClick={() => onOpenPosition(event.positionId)}
-            >
-              <div className="row gap-3 wrap" style={{ alignItems: 'baseline' }}>
-                <Badge tone="ink">{RELATION_LABEL[event.relation as LineageRelation]}</Badge>
-                <strong className="small">{event.positionTitle}</strong>
-                <span className="micro faint tnum">{formatDate(event.date)}</span>
-              </div>
-              <p className="small muted" style={{ marginTop: 'var(--s2)' }}>{event.reasoning}</p>
-            </button>
-          ))}
-          {structural.length === 0 ? (
-            <p className="small faint">
-              None of the seats this person held were renamed, split or merged. Their
-              record can be read at face value.
-            </p>
-          ) : null}
+      <div className="card card-flush">
+        <div className="card-head">
+          <h3>What moved around them</h3>
+          <span className="micro faint">
+            {structural.length === 0 ? 'nothing — read at face value' : `${structural.length} structural changes`}
+          </span>
         </div>
+        {structural.length > 0 ? (
+          <table>
+            <thead>
+              <tr>
+                <th style={{ width: 130 }}>When</th>
+                <th>The seat</th>
+                <th style={{ width: 180 }}>What happened</th>
+                <th style={{ width: 140 }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {structural.map((event) => {
+                const verdict = model.lineage.get(event.positionId);
+                const state = STATE[stateOf(event.relation as LineageRelation, verdict?.needsReview ?? false)];
+                return (
+                  <tr
+                    key={event.positionId}
+                    className="clickable"
+                    onClick={() => onOpenPosition(event.positionId)}
+                  >
+                    <td className="feed-when">{formatMonthYear(event.date)}</td>
+                    <td>
+                      <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{event.positionTitle}</div>
+                      <div className="micro faint">{event.reasoning}</div>
+                    </td>
+                    <td>{RELATION_LABEL[event.relation as LineageRelation]}</td>
+                    <td><Badge tone={state.tone}>{state.label}</Badge></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <p className="small faint" style={{ padding: '18px 22px' }}>
+            None of the seats this person held were renamed, split or merged.
+          </p>
+        )}
       </div>
-    </Drawer>
+    </div>
   );
 }

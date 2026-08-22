@@ -1,122 +1,131 @@
 /**
- * Requirement 3: reconstruct and present the journey of a person over time.
+ * All people.
  *
- * The column that matters here is the last one. "Three titles, one job" is not
- * a curiosity — it is the reason a manager looking at this person's record
- * concludes they have moved around a lot, when in fact the organisation moved
- * around them.
+ * The last column is the one that matters. "Three titles, one job" is not a
+ * curiosity — it is why a manager reading this person's record concludes they
+ * have moved around a lot, when in fact the organisation moved around them.
  */
 
 import { useMemo, useState } from 'react';
 import type { OrgModel } from '../../domain/types.ts';
-import { formatMonthYear } from '../../domain/dates.ts';
+import { tenure } from '../../domain/dates.ts';
 import { structuralChangesFor } from '../../domain/metrics.ts';
-import { Badge, Card, CardHead, Eyebrow } from '../ui/primitives.tsx';
+import { departments } from '../../domain/overview.ts';
 import { Avatar } from '../ui/Avatar.tsx';
+import { Badge } from '../ui/primitives.tsx';
 
 export function PeopleView({
   model, onOpenPerson,
 }: { model: OrgModel; onOpenPerson: (id: string) => void }) {
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
+
+  const depts = useMemo(() => departments(model), [model]);
+
+  const all = useMemo(() => {
+    return [...model.people.values()].map((person) => {
+      const assignments = person.assignmentIds.map((id) => model.assignments.get(id)!);
+      const latest = assignments[assignments.length - 1];
+      const position = latest ? model.positions.get(latest.positionId) : null;
+      const titles = new Set(
+        assignments.map((a) => model.positions.get(a.positionId)?.title).filter(Boolean),
+      );
+      return {
+        id: person.id,
+        name: person.name,
+        role: position?.title ?? '—',
+        division: position?.division ?? '—',
+        years: tenure(assignments[0]?.startDate, latest?.endDate ?? null),
+        current: Boolean(latest && !latest.endDate),
+        titleCount: titles.size,
+        structural: structuralChangesFor(model, person.id).length,
+      };
+    });
+  }, [model]);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return [...model.people.values()]
-      .map((person) => {
-        const assignments = person.assignmentIds.map((id) => model.assignments.get(id)!);
-        const titles = new Set(
-          assignments.map((a) => model.positions.get(a.positionId)?.title).filter(Boolean),
-        );
-        return {
-          person,
-          first: assignments[0],
-          last: assignments[assignments.length - 1],
-          titleCount: titles.size,
-          moves: assignments.length,
-          structural: structuralChangesFor(model, person.id).length,
-        };
-      })
-      .filter((r) => !q || r.person.name.toLowerCase().includes(q))
-      .sort((a, b) => b.structural - a.structural || b.moves - a.moves || a.person.name.localeCompare(b.person.name));
-  }, [model, query]);
+    return all
+      .filter((r) => filter === 'all' || r.division === filter)
+      .filter((r) => !q || r.name.toLowerCase().includes(q) || r.role.toLowerCase().includes(q))
+      .sort((a, b) => b.structural - a.structural || a.name.localeCompare(b.name));
+  }, [all, query, filter]);
+
+  const chips = [{ id: 'all', label: `All (${all.length})` }]
+    .concat(depts.map((d) => ({ id: d.division, label: d.division })));
 
   return (
     <div className="stack gap-5">
-      <div className="page-head">
-        <Eyebrow>Everyone in the records</Eyebrow>
-        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '24ch' }}>
-          Who had their job <em>change around them</em>?
-        </h2>
-        <p className="measure muted" style={{ marginTop: 'var(--s4)', fontSize: 16 }}>
-          The people at the top of this list mostly did not move. Their <em>jobs</em>{' '}
-          moved — renamed, split apart, or merged into something else while they sat
-          there. On a normal HR record that is indistinguishable from someone who keeps
-          switching roles, which is how good employees get misread.
-        </p>
-        <p className="measure muted small" style={{ marginTop: 'var(--s3)' }}>
-          Click anyone to see their full history and exactly what happened around them.
-        </p>
+      <div>
+        <div className="page-title">All people</div>
+        <div className="page-sub">
+          {rows.length} of {all.length} people listed. Click a row for the full record.
+        </div>
       </div>
 
-      <Card flush>
-        <CardHead
-          title="People"
-          meta={`${rows.length} of ${model.people.size}`}
+      <div className="toolbar no-print">
+        <input
+          className="search"
+          placeholder="Search by name or job…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search people"
         />
-        <div style={{ padding: 'var(--s4) var(--s5)', borderBottom: '1px solid var(--line)' }} className="no-print">
-          <input
-            className="select"
-            style={{ width: '100%', maxWidth: 320, cursor: 'text' }}
-            placeholder="Search by name"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search people by name"
-          />
-        </div>
-        <div className="scroll-y" style={{ maxHeight: 620 }}>
+        {chips.map((c) => (
+          <button
+            key={c.id}
+            className="chip"
+            aria-pressed={filter === c.id}
+            onClick={() => setFilter(c.id)}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="card card-flush">
+        <div className="scroll-y" style={{ maxHeight: 660 }}>
           <table>
             <thead>
               <tr>
-                <th>Person</th>
-                <th>In the records</th>
-                <th>Jobs held</th>
-                <th>Different titles</th>
-                <th>Times their job changed around them</th>
+                <th>Name</th>
+                <th style={{ width: 210 }}>Role</th>
+                <th style={{ width: 200 }}>Department</th>
+                <th style={{ width: 140 }}>Years of service</th>
+                <th style={{ width: 120 }}>Status</th>
+                <th style={{ width: 130 }}>Job changed</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ person, first, last, titleCount, moves, structural }) => (
-                <tr key={person.id} className="clickable" onClick={() => onOpenPerson(person.id)}>
+              {rows.map((r) => (
+                <tr key={r.id} className="clickable" onClick={() => onOpenPerson(r.id)}>
                   <td>
                     <div className="row gap-3" style={{ minWidth: 0 }}>
-                      <Avatar name={person.name} />
+                      <Avatar name={r.name} />
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{person.name}</div>
-                        <div className="micro faint mono">{person.id}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.name}</div>
+                        <div className="micro faint mono">{r.id}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="small muted tnum">
-                    {formatMonthYear(first?.startDate)} —{' '}
-                    {last?.endDate ? formatMonthYear(last.endDate) : 'present'}
-                  </td>
-                  <td className="small tnum">{moves}</td>
-                  <td className="small tnum">
-                    {titleCount}
-                    {titleCount > moves - 1 && moves > 1 ? null : null}
-                  </td>
-                  <td className="small">
-                    {structural > 0 ? <Badge tone="accent">{structural}</Badge> : <span className="faint">—</span>}
+                  <td>{r.role}</td>
+                  <td>{r.division}</td>
+                  <td className="tnum">{r.years}</td>
+                  <td>{r.current ? <Badge tone="ok">Current</Badge> : <Badge>Moved on</Badge>}</td>
+                  <td>
+                    {r.structural > 0
+                      ? <Badge tone="accent">{r.structural}&times; around them</Badge>
+                      : <span className="faint">&mdash;</span>}
                   </td>
                 </tr>
               ))}
               {rows.length === 0 ? (
-                <tr><td colSpan={5} className="faint small">No one matches “{query}”.</td></tr>
+                <tr><td colSpan={6} className="faint">Nobody matches that.</td></tr>
               ) : null}
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

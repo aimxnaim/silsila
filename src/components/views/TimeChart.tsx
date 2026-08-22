@@ -1,30 +1,33 @@
 /**
- * The time-axis chart — jobs, people and reporting lines in parallel.
+ * Timeline — every job plotted over the window.
  *
- * Deliberately NOT the first thing anyone sees. A Gantt chart demands that the
- * reader already knows what they are looking for, which a first-time viewer
- * does not. It earns its place as the second look, once the story strips have
- * established what a "job" and a "person" lane mean — and it is the only view
- * that shows what was happening elsewhere at the same moment.
+ * Two modes, because two different questions get asked of this data. "By year"
+ * answers how busy a period was; "By job" answers what is still open right now.
+ * A single chart that tried to do both would answer neither, which is the usual
+ * failure of a Gantt chart shown to a first-time reader.
  */
 
 import { useMemo, useState } from 'react';
-import type { Metrics, OrgModel, Position } from '../../domain/types.ts';
+import type { LineageRelation, Metrics, OrgModel } from '../../domain/types.ts';
 import { WINDOW_START_YEAR, formatMonthYear, quarterLabel, toQuarterIndex } from '../../domain/dates.ts';
-import { snapshotAt } from '../../domain/metrics.ts';
-import { narratePosition } from '../../domain/narrate.ts';
-import { Card, CardHead } from '../ui/primitives.tsx';
-import { RelationBadge } from '../ui/vocabulary.tsx';
+import { Badge } from '../ui/primitives.tsx';
+import { STATE, stateOf, type State } from '../ui/vocabulary.tsx';
 
-function span(fromQ: number, toQ: number, total: number) {
-  return {
-    left: `${(fromQ / total) * 100}%`,
-    width: `${Math.max(((toQ - fromQ + 1) / total) * 100, 2)}%`,
-  };
+interface Row {
+  positionId: string;
+  title: string;
+  division: string;
+  orgUnit: string;
+  holder: string | null;
+  holderId: string | null;
+  relation: LineageRelation;
+  state: State;
+  fromQ: number;
+  toQ: number;
+  openEnded: boolean;
+  createdAt: string | null;
+  closedAt: string | null;
 }
-
-const range = (from: string | null, to: string | null) =>
-  `${formatMonthYear(from)} — ${to ? formatMonthYear(to) : 'now'}`;
 
 export function TimeChart({
   model, metrics, quarter, onQuarterChange, onOpenPosition, onOpenPerson,
@@ -37,277 +40,251 @@ export function TimeChart({
   onOpenPerson: (id: string) => void;
 }) {
   const N = model.window.quarterCount;
+  const [mode, setMode] = useState<'year' | 'job'>('year');
 
-  const divisions = useMemo(
-    () => [...new Set([...model.positions.values()].map((p) => p.division))].sort(),
-    [model],
-  );
+  const rows: Row[] = useMemo(() => {
+    return [...model.positions.values()].map((pos) => {
+      const verdict = model.lineage.get(pos.id);
+      const relation = verdict?.relation ?? 'created';
 
-  const busiest = useMemo(() => {
-    const scores = new Map<string, number>();
-    for (const v of model.lineage.values()) {
-      if (v.relation === 'created') continue;
-      const div = model.positions.get(v.positionId)?.division;
-      if (div) scores.set(div, (scores.get(div) ?? 0) + 1);
-    }
-    return [...scores.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? divisions[0];
-  }, [model, divisions]);
+      // The most recent occupant is the one a reader is asking about.
+      const assignments = pos.assignmentIds.map((id) => model.assignments.get(id)!);
+      const latest = assignments[assignments.length - 1];
+      const person = latest ? model.people.get(latest.personId) : null;
 
-  const [division, setDivision] = useState(busiest);
+      return {
+        positionId: pos.id,
+        title: pos.title,
+        division: pos.division,
+        orgUnit: pos.orgUnit,
+        holder: person?.name ?? null,
+        holderId: person?.id ?? null,
+        relation,
+        state: stateOf(relation, verdict?.needsReview ?? false),
+        fromQ: toQuarterIndex(pos.createdAt) ?? 0,
+        toQ: pos.closedAt ? (toQuarterIndex(pos.closedAt) ?? N - 1) : N - 1,
+        openEnded: !pos.closedAt,
+        createdAt: pos.createdAt,
+        closedAt: pos.closedAt,
+      };
+    }).sort((a, b) => b.fromQ - a.fromQ || a.title.localeCompare(b.title));
+  }, [model, N]);
 
-  const shown = useMemo(
-    () => [...model.positions.values()]
-      .filter((p) => p.division === division)
-      .sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? '') || a.title.localeCompare(b.title)),
-    [model, division],
-  );
-
-  const snapshotForDivision = useMemo(
-    () => snapshotAt(model, quarter).filter((r) => r.division === division),
-    [model, quarter, division],
-  );
-
-  const maxHeadcount = Math.max(...metrics.headcountByQuarter, 1);
-
+  /**
+   * Each year with the number of quarters it actually occupies. The window
+   * ends mid-year, so the last column is narrower than the rest — laying the
+   * scale out in equal columns would put the 2026 label above 2025's bars.
+   */
   const years = useMemo(() => {
-    const out: Array<{ year: number; quarters: number; startQ: number }> = [];
+    const out: Array<{ year: number; quarters: number }> = [];
     for (let q = 0; q < N; q++) {
       const year = WINDOW_START_YEAR + Math.floor(q / 4);
       const last = out[out.length - 1];
       if (last && last.year === year) last.quarters++;
-      else out.push({ year, quarters: 1, startQ: q });
+      else out.push({ year, quarters: 1 });
     }
     return out;
   }, [N]);
 
+  /** One column per year, segmented by state. */
+  const columns = useMemo(() => {
+    const byYear = new Map<number, Record<State, number>>();
+    for (const y of years) byYear.set(y.year, { settled: 0, check: 0, new: 0 });
+    for (const r of rows) {
+      const y = WINDOW_START_YEAR + Math.floor(r.fromQ / 4);
+      const bucket = byYear.get(y);
+      if (bucket) bucket[r.state]++;
+    }
+    const entries = [...byYear.entries()];
+    const peak = Math.max(...entries.map(([, b]) => b.settled + b.check + b.new), 1);
+    return entries.map(([year, b]) => {
+      const total = b.settled + b.check + b.new;
+      const h = (total / peak) * 230;
+      return {
+        year,
+        total,
+        segs: (['new', 'check', 'settled'] as State[]).map((k) => ({
+          state: k,
+          px: total === 0 ? 0 : Math.round((b[k] / total) * h),
+        })),
+      };
+    });
+  }, [rows, years]);
+
+  /**
+   * The scrubber starts at the end of the window, which is a sensible default
+   * everywhere else and a bad one here: the final year is a stub and usually
+   * has nothing in it, so the view would open on an empty chart and an empty
+   * table. Fall back to the last year that actually has rows.
+   */
+  const scrubbedYear = WINDOW_START_YEAR + Math.floor(quarter / 4);
+  const selectedYear = columns.some((c) => c.year === scrubbedYear && c.total > 0)
+    ? scrubbedYear
+    : ([...columns].reverse().find((c) => c.total > 0)?.year ?? scrubbedYear);
+
+  const yearRows = rows.filter((r) => WINDOW_START_YEAR + Math.floor(r.fromQ / 4) === selectedYear);
+
   return (
     <div className="stack gap-5">
-      <Card flush>
-        <CardHead title={`${division}, on a time axis`} meta={`${shown.length} jobs`} />
-
-        <div
-          className="row gap-4 wrap spread no-print"
-          style={{ padding: 'var(--s4) var(--s5)', borderBottom: '1px solid var(--line)' }}
-        >
-          <label className="row gap-2 small muted">
-            Show me
-            <select className="select" value={division} onChange={(e) => setDivision(e.target.value)}>
-              {divisions.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </label>
-
-          <div className="scrubber grow">
-            <span className="small muted">Move through time</span>
-            <input
-              type="range" min={0} max={N - 1} step={1} value={quarter}
-              onChange={(e) => onQuarterChange(Number(e.target.value))}
-              aria-label="Move through time"
-            />
-            <span className="scrub-out">{quarterLabel(quarter)}</span>
+      <div className="row spread gap-4 wrap" style={{ alignItems: 'flex-end' }}>
+        <div>
+          <div className="page-title">Timeline</div>
+          <div className="page-sub" style={{ maxWidth: '64ch' }}>
+            Every job, plotted over {years[0]?.year}–{years[years.length - 1]?.year}. Two questions:
+            how busy was each year, and what is still open right now.
           </div>
         </div>
 
-        <div className="readme-strip">
-          <div className="readme-key">
-            <span className="readme-swatch" style={{ background: 'var(--brand)' }} />
-            <span><b>Red bar = a job</b><span>One seat. Starts when created, ends when closed.</span></span>
-          </div>
-          <div className="readme-key">
-            <span className="readme-swatch" style={{ background: 'var(--ink)' }} />
-            <span><b>Black bar = a person</b><span>The human in that job, for exactly the period they sat in it.</span></span>
-          </div>
-          <div className="readme-key">
-            <span className="readme-swatch" style={{ background: 'var(--nu-bar)' }} />
-            <span><b>Grey bar = their manager</b><span>Which job this one reported into at the time.</span></span>
-          </div>
-          <div className="readme-key">
-            <span className="readme-swatch hatch" />
-            <span><b>Stripes = we don&rsquo;t know</b><span>The records never said. We leave the gap.</span></span>
-          </div>
+        <div className="segmented no-print">
+          <button aria-pressed={mode === 'year'} onClick={() => setMode('year')}>By year</button>
+          <button aria-pressed={mode === 'job'} onClick={() => setMode('job')}>By job</button>
         </div>
+      </div>
 
-        <div className="scroll-x" style={{ padding: 'var(--s4) var(--s5) 0' }}>
-          <div className="tl" style={{ minWidth: 780 }}>
-            <div className="tl-scale">
-              {years.map((y) => (
-                <div className="tl-year" key={y.year} style={{ flex: `${y.quarters} 1 0` }}>{y.year}</div>
+      {/* ---- How to read this -------------------------------------------- */}
+      <div className="readme-strip">
+        <div className="readme-key">
+          <span className="eyebrow">How to read this</span>
+        </div>
+        {(['settled', 'check', 'new'] as State[]).map((k) => (
+          <div className="readme-key" key={k}>
+            <span className="readme-swatch" style={{ background: STATE[k].bar }} />
+            <span><b>{STATE[k].label}</b><span>{STATE[k].meaning}</span></span>
+          </div>
+        ))}
+      </div>
+
+      {mode === 'year' ? (
+        <>
+          <div className="card">
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>Jobs opened per year</div>
+            <div className="small muted">
+              A taller column means a busier year. Click one to see what opened.
+            </div>
+
+            <div className="stack-chart">
+              {columns.map((c) => (
+                <button
+                  key={c.year}
+                  className="stack-col"
+                  aria-pressed={c.year === selectedYear}
+                  onClick={() => onQuarterChange((c.year - WINDOW_START_YEAR) * 4)}
+                  title={`${c.year} — ${c.total} jobs opened`}
+                >
+                  <span className="stack-num">{c.total}</span>
+                  <span className="stack-bars">
+                    {c.segs.map((s) => (
+                      <span key={s.state} style={{ height: s.px, background: STATE[s.state].bar, display: 'block' }} />
+                    ))}
+                  </span>
+                </button>
               ))}
             </div>
-
-            <div className="tl-body">
-              <div className="tl-playhead-wrap">
-                {years.slice(1).map((y) => (
-                  <div className="tl-gridline" key={y.year} style={{ left: `${(y.startQ / N) * 100}%` }} />
-                ))}
-                <div className="tl-playhead" style={{ left: `${((quarter + 0.5) / N) * 100}%` }} />
-              </div>
-
-              {shown.map((pos: Position) => {
-                const from = toQuarterIndex(pos.createdAt) ?? 0;
-                const to = pos.closedAt ? (toQuarterIndex(pos.closedAt) ?? N - 1) : N - 1;
-                const verdict = model.lineage.get(pos.id);
-                const assignments = pos.assignmentIds.map((id) => model.assignments.get(id)!);
-
-                return (
-                  <div className="tl-group" key={pos.id}>
-                    <div className="tl-group-head">
-                      <div className="tl-group-title">
-                        <strong>{pos.title}</strong>
-                        {verdict ? <RelationBadge relation={verdict.relation} /> : null}
-                      </div>
-                      <p className="tl-story">{narratePosition(model, pos)}</p>
-                    </div>
-
-                    <div className="tl-row">
-                      <div className="tl-label">
-                        <span className="tl-dot tl-dot--role" />
-                        <span className="tl-label-text">
-                          <span className="tl-label-kind">The job</span>
-                          <span className="tl-label-title">{pos.title}</span>
-                        </span>
-                      </div>
-                      <div className="tl-track">
-                        <button
-                          className={`tl-bar lane-role ${pos.closedAt ? '' : 'is-open'}`}
-                          style={span(from, to, N)}
-                          onClick={() => onOpenPosition(pos.id)}
-                          title={`${pos.title} — click for the full history`}
-                        >
-                          {range(pos.createdAt, pos.closedAt)}
-                        </button>
-                      </div>
-                    </div>
-
-                    {assignments.map((a) => {
-                      const af = toQuarterIndex(a.startDate) ?? 0;
-                      const at = a.endDate ? (toQuarterIndex(a.endDate) ?? N - 1) : N - 1;
-                      const person = model.people.get(a.personId);
-                      return (
-                        <div className="tl-row" key={a.id}>
-                          <div className="tl-label">
-                            <span className="tl-dot tl-dot--person" />
-                            <span className="tl-label-text">
-                              <span className="tl-label-kind">Sat in it</span>
-                              <span className="tl-label-title">{person?.name}</span>
-                            </span>
-                          </div>
-                          <div className="tl-track">
-                            <button
-                              className={`tl-bar lane-person ${a.endDate ? '' : 'is-open'}`}
-                              style={span(af, at, N)}
-                              onClick={() => onOpenPerson(a.personId)}
-                              title={`${person?.name} — click for their full record`}
-                            >
-                              {range(a.startDate, a.endDate)}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    <div className="tl-row">
-                      <div className="tl-label">
-                        <span className="tl-dot" />
-                        <span className="tl-label-text">
-                          <span className="tl-label-kind">Reported to</span>
-                          <span className="tl-label-title">
-                            {(() => {
-                              const ids = assignments
-                                .map((a) => a.reportsToPositionId)
-                                .filter((id): id is string => Boolean(id));
-                              if (ids.length === 0) return 'never recorded';
-                              const titles = [...new Set(ids.map((id) => model.positions.get(id)?.title ?? id))];
-                              return titles.length === 1 ? titles[0] : `${titles.length} managers`;
-                            })()}
-                          </span>
-                        </span>
-                      </div>
-                      <div className="tl-track">
-                        {assignments.map((a) => {
-                          const af = toQuarterIndex(a.startDate) ?? 0;
-                          const at = a.endDate ? (toQuarterIndex(a.endDate) ?? N - 1) : N - 1;
-                          const mgr = a.reportsToPositionId ? model.positions.get(a.reportsToPositionId) : null;
-                          return (
-                            <span
-                              key={a.id}
-                              className={`tl-bar ${mgr ? 'lane-reporting' : 'lane-unknown'}`}
-                              style={span(af, at, N)}
-                              title={
-                                mgr
-                                  ? `Reported to ${mgr.title}. Source: ${a.source}`
-                                  : 'No reporting line was ever recorded for this period. We will not guess.'
-                              }
-                            >
-                              {mgr ? mgr.title : 'not recorded'}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="stack-axis">
+              {columns.map((c) => (
+                <span key={c.year} data-on={c.year === selectedYear}>{c.year}</span>
+              ))}
             </div>
           </div>
-        </div>
-        <div style={{ height: 'var(--s5)' }} />
-      </Card>
 
-      <div className="grid-2">
-        <Card flush>
-          <CardHead
-            title={`Who was where in ${quarterLabel(quarter)}`}
-            meta={`${snapshotForDivision.length} live jobs`}
-          />
-          <div className="scroll-y" style={{ maxHeight: 320 }}>
-            <table>
-              <thead><tr><th>The job</th><th>Who held it</th><th>Reported to</th></tr></thead>
-              <tbody>
-                {snapshotForDivision.map((r) => (
-                  <tr key={r.positionId} className="clickable" onClick={() => onOpenPosition(r.positionId)}>
-                    <td>
-                      <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.title}</div>
-                      <div className="micro faint">{r.orgUnit}</div>
-                    </td>
-                    <td className="small">{r.holderName ?? <span className="faint">vacant</span>}</td>
-                    <td className="small">
-                      {r.reportsKnown
-                        ? r.reportsToTitle
-                        : <span className="faint" style={{ fontStyle: 'italic' }}>not recorded</span>}
-                    </td>
+          <div className="card card-flush">
+            <div className="card-head">
+              <h3>{selectedYear}</h3>
+              <span className="micro faint">
+                {yearRows.length} jobs opened in this year · scrubber at {quarterLabel(quarter)}
+              </span>
+            </div>
+            <div className="scroll-y" style={{ maxHeight: 460 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ width: 130 }}>Position ID</th>
+                    <th>Job</th>
+                    <th style={{ width: 200 }}>Department</th>
+                    <th style={{ width: 180 }}>Person in the seat</th>
+                    <th style={{ width: 140 }}>Status</th>
                   </tr>
-                ))}
-                {snapshotForDivision.length === 0 ? (
-                  <tr><td colSpan={3} className="faint small">
-                    Nothing in {division} existed yet in {quarterLabel(quarter)}.
-                  </td></tr>
-                ) : null}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {yearRows.map((r) => (
+                    <tr key={r.positionId} className="clickable" onClick={() => onOpenPosition(r.positionId)}>
+                      <td className="mono">{r.positionId}</td>
+                      <td>
+                        <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.title}</div>
+                        <div className="micro faint">{r.orgUnit}</div>
+                      </td>
+                      <td>{r.division}</td>
+                      <td>
+                        {r.holderId ? (
+                          <button
+                            className="backlink"
+                            style={{ color: 'var(--brand)' }}
+                            onClick={(e) => { e.stopPropagation(); onOpenPerson(r.holderId!); }}
+                          >
+                            {r.holder}
+                          </button>
+                        ) : <span className="faint">vacant</span>}
+                      </td>
+                      <td><Badge tone={STATE[r.state].tone}>{STATE[r.state].label}</Badge></td>
+                    </tr>
+                  ))}
+                  {yearRows.length === 0 ? (
+                    <tr><td colSpan={5} className="faint">Nothing opened in {selectedYear}.</td></tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </Card>
+        </>
+      ) : (
+        <div className="card">
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>One row per job</div>
+          <div className="small muted">
+            Each bar starts when the seat was created and ends when it closed. Click a bar
+            to open its full history.
+          </div>
 
-        <Card>
-          <CardHead title="Total people, quarter by quarter" meta={`peak ${maxHeadcount}`} />
-          <p className="small muted" style={{ marginTop: 'var(--s3)' }}>
-            The whole organisation. The red column is the quarter you have selected.
-          </p>
-          <div className="chart" style={{ marginTop: 'var(--s4)' }}>
-            {metrics.headcountByQuarter.map((n, i) => (
-              <div
-                key={i}
-                className={`chart-col ${i === quarter ? 'is-current' : ''}`}
-                style={{ height: `${(n / maxHeadcount) * 100}%` }}
-                title={`${quarterLabel(i)} — ${n} people`}
-              />
+          <div className="lane-head">
+            <div />
+            <div
+              className="lane-head-scale"
+              style={{ gridTemplateColumns: years.map((y) => `${y.quarters}fr`).join(' ') }}
+            >
+              {years.map((y) => <span key={y.year}>{y.year}</span>)}
+            </div>
+          </div>
+
+          <div className="scroll-y" style={{ maxHeight: 620 }}>
+            {rows.map((r) => (
+              <div className="lane-row" key={r.positionId}>
+                <div className="lane-label">
+                  <b>{r.title}</b>
+                  <span>{r.division} · {r.holder ?? 'vacant'}</span>
+                </div>
+                <div className="lane-track">
+                  <button
+                    className="lane-bar"
+                    style={{
+                      left: `${(r.fromQ / N) * 100}%`,
+                      width: `${Math.max(((r.toQ - r.fromQ + 1) / N) * 100, 3)}%`,
+                      background: STATE[r.state].bar,
+                    }}
+                    onClick={() => onOpenPosition(r.positionId)}
+                    title={`${r.title} — ${formatMonthYear(r.createdAt)} to ${r.closedAt ? formatMonthYear(r.closedAt) : 'now'}`}
+                  >
+                    {STATE[r.state].label}
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
-          <div className="row spread micro faint tnum" style={{ marginTop: 'var(--s2)' }}>
-            <span>{years[0]?.year}</span>
-            <span>{years[years.length - 1]?.year}</span>
-          </div>
-        </Card>
-      </div>
+
+          <p className="micro faint" style={{ marginTop: 'var(--s4)' }}>
+            {rows.length} jobs · {rows.filter((r) => r.openEnded).length} still open ·
+            peak headcount {Math.max(...metrics.headcountByQuarter)}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

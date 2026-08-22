@@ -11,7 +11,7 @@
 
 import { useMemo } from 'react';
 import type { DataIssue, IssueKind, OrgModel } from '../../domain/types.ts';
-import { Badge, Button, Card, CardHead, Empty, Eyebrow } from '../ui/primitives.tsx';
+import { Badge, Button, Card, CardHead, Empty } from '../ui/primitives.tsx';
 import { ISSUE_LABEL, ISSUE_MEANING } from '../ui/vocabulary.tsx';
 
 const KINDS: IssueKind[] = ['conflict', 'missing', 'inferred', 'inconsistent'];
@@ -36,38 +36,13 @@ export function QualityView({
 
   return (
     <div className="stack gap-5">
-      <div className="page-head">
-        <Eyebrow>Where the records fall short</Eyebrow>
-        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '24ch' }}>
-          What we <em>refuse to guess</em>
-        </h2>
-        <p className="measure muted" style={{ marginTop: 'var(--s4)', fontSize: 16 }}>
-          We read {model.stats.rowsRead} rows and could use {model.stats.rowsUsed} of
-          them. Everything below is a question the records do not answer — and we have
-          left every one of them blank rather than filling it in with a plausible guess.
-        </p>
-        <p className="measure muted small" style={{ marginTop: 'var(--s3)' }}>
-          This is the opposite of what most software does. A tool that quietly draws a
-          straight line through missing data produces a tidy chart that the people who
-          own the data know is wrong — which is exactly why they stop trusting it. On
-          the timeline these periods appear as diagonal stripes, never as a colour.
-        </p>
+      <div>
+        <div className="page-title">Data quality</div>
+        <div className="page-sub">
+          {model.issues.length} questions the records do not answer. Every one is left
+          blank rather than filled in with a plausible guess.
+        </div>
       </div>
-
-      <Card>
-        <Eyebrow>In one sentence</Eyebrow>
-        <p style={{ marginTop: 'var(--s3)', fontSize: 16 }} className="measure">
-          Real HR records are messy. Dates are missing, two documents disagree, someone
-          is recorded in a job that had already closed. <strong>Every tool has to decide
-          what to do about that.</strong>
-        </p>
-        <p className="measure muted" style={{ marginTop: 'var(--s3)' }}>
-          Most of them quietly fill the gap with a sensible-looking guess, because a
-          chart with holes in it looks broken. We do the opposite: we show you the hole.
-          The four kinds of problem below are everything this file could not settle, and
-          not one of them has been filled in.
-        </p>
-      </Card>
 
       <div className="grid-3">
         {KINDS.map((kind) => (

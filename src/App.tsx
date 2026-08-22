@@ -30,6 +30,7 @@ import { QualityView } from './components/views/QualityView.tsx';
 import { LoadDataView } from './components/views/LoadDataView.tsx';
 import { RoleDetail } from './components/views/RoleDetail.tsx';
 import { PersonDetail } from './components/views/PersonDetail.tsx';
+import { DeptView } from './components/views/DeptView.tsx';
 import { Button, Empty } from './components/ui/primitives.tsx';
 
 type Tab = 'overview' | 'orgchart' | 'people' | 'timeline' | 'quality' | 'load';
@@ -94,10 +95,17 @@ export function App() {
   const [tab, setTab] = useState<Tab>('overview');
   const [quarter, setQuarter] = useState(0);
 
-  // Exactly one thing can be open in the detail panel at a time.
-  const [selection, setSelection] = useState<
-    { kind: 'position' | 'person'; id: string } | null
+  /**
+   * Where a person or department page was opened FROM, so its back link can
+   * return there. A person reached from the timeline should go back to the
+   * timeline, not to a list they never visited.
+   */
+  const [page, setPage] = useState<
+    { kind: 'person' | 'dept'; id: string; from: Tab; fromDept: string | null } | null
   >(null);
+
+  /** The position panel stays a drawer: it is opened from inside other views. */
+  const [position, setPosition] = useState<string | null>(null);
 
   const enter = useCallback(() => {
     if (!model) loadDemo();
@@ -110,20 +118,61 @@ export function App() {
     if (model) setQuarter(model.window.quarterCount - 1);
   }, [model]);
 
-  const openPosition = useCallback((id: string) => setSelection({ kind: 'position', id }), []);
-  const openPerson = useCallback((id: string) => setSelection({ kind: 'person', id }), []);
-  const closeDetail = useCallback(() => setSelection(null), []);
+  const openPosition = useCallback((id: string) => setPosition(id), []);
+  const closeDetail = useCallback(() => setPosition(null), []);
 
-  /** Jump from a detail panel back to where the subject sits in time. */
+  const openPerson = useCallback((id: string) => {
+    setPosition(null);
+    setPage((prev) => ({
+      kind: 'person',
+      id,
+      // Opening a person from a department page must return to that department.
+      from: prev?.kind === 'dept' ? tab : (prev?.from ?? tab),
+      fromDept: prev?.kind === 'dept' ? prev.id : (prev?.fromDept ?? null),
+    }));
+  }, [tab]);
+
+  const openDept = useCallback((division: string) => {
+    setPosition(null);
+    setPage({ kind: 'dept', id: division, from: tab, fromDept: null });
+  }, [tab]);
+
+  const closePage = useCallback(() => {
+    setPage((prev) => {
+      // A person opened from a department steps back to the department first.
+      if (prev?.kind === 'person' && prev.fromDept) {
+        return { kind: 'dept', id: prev.fromDept, from: prev.from, fromDept: null };
+      }
+      return null;
+    });
+  }, []);
+
+  const goTab = useCallback((next: Tab) => {
+    setTab(next);
+    setPage(null);
+    setPosition(null);
+  }, []);
+
+  /** Jump from a detail page back to where the subject sits in time. */
   const showOnTimeline = useCallback((atQuarter: number) => {
     setQuarter(atQuarter);
     setTab('timeline');
-    setSelection(null);
+    setPage(null);
+    setPosition(null);
   }, []);
 
   if (!entered) return <Landing onEnter={enter} />;
 
-  const crumb = TABS.find((t) => t.id === tab)?.crumb ?? 'Overview';
+  const tabCrumb = TABS.find((t) => t.id === tab)?.crumb ?? 'Overview';
+  const crumb =
+    page?.kind === 'person' ? (model?.people.get(page.id)?.name ?? 'Employee record')
+    : page?.kind === 'dept' ? page.id
+    : tabCrumb;
+
+  const backLabel =
+    page?.kind === 'person' && page.fromDept ? `Back to ${page.fromDept}`
+    : page?.kind === 'person' ? `Back to ${TABS.find((t) => t.id === page.from)?.crumb ?? 'Overview'}`
+    : 'All departments';
 
   return (
     <div className="frame">
@@ -146,7 +195,7 @@ export function App() {
             aria-current={tab === t.id}
             aria-label={t.label}
             title={t.label}
-            onClick={() => setTab(t.id)}
+            onClick={() => goTab(t.id)}
           >
             {ICONS[t.id]}
           </button>
@@ -183,7 +232,7 @@ export function App() {
 
           <span className="grow" />
 
-          <button className="btn btn-primary btn-sm" onClick={() => setTab('load')}>
+          <button className="btn btn-primary btn-sm" onClick={() => goTab('load')}>
             Load a spreadsheet
           </button>
         </header>
@@ -197,7 +246,7 @@ export function App() {
                 role="tab"
                 className="tab"
                 aria-selected={tab === t.id}
-                onClick={() => setTab(t.id)}
+                onClick={() => goTab(t.id)}
               >
                 {t.label}
               </button>
@@ -217,16 +266,31 @@ export function App() {
                   </Empty>
                   <div className="row gap-3" style={{ justifyContent: 'center' }}>
                     <Button variant="primary" onClick={loadDemo}>Use demonstration dataset</Button>
-                    <Button onClick={() => setTab('load')}>Load a file</Button>
+                    <Button onClick={() => goTab('load')}>Load a file</Button>
                   </div>
                 </div>
+              ) : page?.kind === 'person' ? (
+                <PersonDetail
+                  model={model}
+                  personId={page.id}
+                  backLabel={backLabel}
+                  onBack={closePage}
+                  onOpenPosition={openPosition}
+                  onShowOnTimeline={showOnTimeline}
+                />
+              ) : page?.kind === 'dept' ? (
+                <DeptView
+                  model={model}
+                  division={page.id}
+                  onBack={closePage}
+                  onOpenPerson={openPerson}
+                />
               ) : tab === 'overview' ? (
                 <OverviewView
                   model={model}
                   metrics={metrics!}
-                  onOpenPosition={openPosition}
-                  onOpenPerson={openPerson}
-                  onGoToOrgChart={() => setTab('orgchart')}
+                  onOpenDept={openDept}
+                  onGoToTimeline={() => goTab('timeline')}
                 />
               ) : tab === 'timeline' ? (
                 <TimeChart
@@ -254,7 +318,7 @@ export function App() {
                   onLoad={load}
                   onLoadDemo={loadDemo}
                   onClearError={clearError}
-                  onLoaded={() => setTab('timeline')}
+                  onLoaded={() => goTab('timeline')}
                 />
               )}
             </div>
@@ -262,23 +326,13 @@ export function App() {
         </div>
       </div>
 
-      {model && selection?.kind === 'position' ? (
+      {model && position ? (
         <RoleDetail
           model={model}
-          positionId={selection.id}
+          positionId={position}
           onClose={closeDetail}
           onOpenPosition={openPosition}
           onOpenPerson={openPerson}
-          onShowOnTimeline={showOnTimeline}
-        />
-      ) : null}
-
-      {model && selection?.kind === 'person' ? (
-        <PersonDetail
-          model={model}
-          personId={selection.id}
-          onClose={closeDetail}
-          onOpenPosition={openPosition}
           onShowOnTimeline={showOnTimeline}
         />
       ) : null}

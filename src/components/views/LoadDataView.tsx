@@ -56,17 +56,12 @@ export function LoadDataView({
 
   return (
     <div className="stack gap-5">
-      <div className="page-head">
-        <Eyebrow>Bring your own data</Eyebrow>
-        <h2 style={{ marginTop: 'var(--s3)', maxWidth: '22ch' }}>
-          Try it on <em>your</em> organisation
-        </h2>
-        <p className="measure muted" style={{ marginTop: 'var(--s4)', fontSize: 16 }}>
-          Export people and jobs from whatever HR system you already use — every one of
-          them can produce a spreadsheet — and drop the file here. Not sure of the
-          format? Download our sample, open it in Excel, replace the rows with your own,
-          and drop it back.
-        </p>
+      <div>
+        <div className="page-title">Load data</div>
+        <div className="page-sub">
+          Drop in a CSV exported from your HR system. Not sure of the format? Download
+          the sample, replace the rows, and drop it back.
+        </div>
       </div>
 
       {error ? (

@@ -634,10 +634,111 @@
 }
 .dept:hover { box-shadow: var(--lift); transform: translateY(-2px); border-color: #D5DBE4; }
 .dept[aria-pressed='true'] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
-.dept-name { font-size: 15px; font-weight: 700; display: block; }
-.dept-nums { display: flex; gap: var(--s5); margin-top: var(--s4); }
-.dept-num b { font-size: 22px; font-weight: 700; display: block; line-height: 1; font-variant-numeric: tabular-nums; }
-.dept-num span { font-size: 10.5px; color: var(--ink-4); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+/* A fixed height so a department whose name wraps to two lines still puts its
+   headcount on the same line as its neighbours'. */
+.dept-top { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.dept-tile {
+  width: 30px; height: 30px; flex: none;
+  border-radius: 7px; display: grid; place-items: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+}
+.dept-name { font-size: 16px; font-weight: 700; display: block; }
+
+.dept-count { display: flex; align-items: baseline; gap: 7px; margin: 14px 0 8px; }
+.dept-count b { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.dept-count span { font-size: 13px; color: var(--ink-3); }
+
+/* The share bar is scaled against the LARGEST department, not the whole firm.
+   Against the firm every bar would be a stub and the comparison — which is the
+   only thing the bar is for — would be unreadable. */
+.dept-bar { height: 6px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.dept-bar-fill { height: 6px; border-radius: 4px; }
+
+.dept-foot {
+  display: flex; justify-content: space-between; gap: var(--s3);
+  margin-top: 10px; font-size: 12.5px; color: var(--ink-3);
+}
+
+/* ---- Roles inside one department -------------------------------------- */
+.rolebox {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  min-width: 132px;
+}
+.rolebox b { font-size: 22px; font-weight: 700; display: block; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.rolebox span { font-size: 13px; color: var(--ink-3); display: block; margin-top: 2px; }
+
+/* ---- Back link -------------------------------------------------------- */
+.backlink {
+  background: none; border: 0; padding: 0;
+  width: fit-content;
+  font-size: 13px; font-weight: 600; color: var(--ink-3);
+  transition: color 140ms ease;
+}
+.backlink:hover { color: var(--brand); }
+
+/* ---- The small "work through the year" chart -------------------------- */
+.minichart { display: flex; align-items: flex-end; gap: 14px; height: 120px; margin-top: 22px; }
+.minicol { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
+.minicol i { width: 100%; max-width: 46px; border-radius: 5px 5px 0 0; background: var(--ok-bar); }
+.minicol span { font-size: 12px; color: var(--ink-3); }
+
+/* ---- The stacked column chart ------------------------------------------
+ *
+ * One column per period, segmented by state. Clicking a column drives the
+ * table underneath, so the chart is a control and not just a picture.
+ */
+.stack-chart {
+  display: flex; align-items: flex-end; gap: 18px;
+  height: 300px; margin-top: 26px;
+  border-bottom: 1px solid var(--line); padding-bottom: 2px;
+}
+.stack-col {
+  flex: 1 1 0; min-width: 0; height: 100%;
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px;
+  background: none; border: 0;
+  border-radius: 8px 8px 0 0; padding: 6px 4px 0;
+  transition: background 140ms ease;
+}
+.stack-col:hover { background: var(--surface-2); }
+.stack-col[aria-pressed='true'] { background: var(--canvas); }
+.stack-num { font-size: 15px; font-weight: 700; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+.stack-col[aria-pressed='true'] .stack-num { color: var(--ink); }
+.stack-bars {
+  width: 100%; max-width: 52px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  border-radius: 6px 6px 0 0; overflow: hidden;
+}
+.stack-col[aria-pressed='true'] .stack-bars { box-shadow: 0 0 0 2px var(--brand); }
+.stack-axis { display: flex; gap: 18px; margin-top: 10px; }
+.stack-axis span { flex: 1 1 0; text-align: center; font-size: 13px; font-weight: 500; color: var(--ink-4); }
+.stack-axis span[data-on='true'] { color: var(--ink); }
+
+/* ---- Lane mode: one row per job ---------------------------------------- */
+.lane-head { display: grid; grid-template-columns: 300px 1fr; gap: 0 16px; margin-top: 22px; }
+.lane-head-scale { display: grid; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.lane-head-scale span { font-size: 12px; font-weight: 600; color: var(--ink-4); padding-left: 6px; border-left: 1px solid var(--line); }
+.lane-head-scale span:first-child { border-left: 0; padding-left: 0; }
+
+.lane-row {
+  display: grid; grid-template-columns: 300px 1fr; gap: 0 16px;
+  align-items: center; padding: 11px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+.lane-label { min-width: 0; }
+.lane-label b { font-size: 14px; font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lane-label span { font-size: 12px; color: var(--ink-3); margin-top: 2px; display: block; }
+.lane-track { position: relative; height: 26px; border-radius: 6px; background: var(--surface-3); }
+.lane-bar {
+  position: absolute; top: 3px; height: 20px;
+  border: 0; border-radius: 5px;
+  display: flex; align-items: center; padding: 0 9px;
+  color: #fff; font-size: 11.5px; font-weight: 600;
+  white-space: nowrap; overflow: hidden;
+  transition: filter 140ms ease;
+}
+.lane-bar:hover { filter: brightness(1.12); }
 
 /* ====================================================================== *
  * Toolbar — search box and filter chips
