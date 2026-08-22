@@ -285,9 +285,15 @@ of them creates a departure, so turnover is unchanged."
 
 Append to the `=== CHECKS ===` section of `scripts/verify-domain.mjs`, above the summary lines:
 
-```js
-const { rangeFor, previousRange, recordsCurrentTo, PRESETS } = await import('../src/domain/window.ts');
+Add this to the **static import block at the top of the file**, beside the existing `import` lines:
 
+```js
+import { PRESETS, previousRange, rangeFor, recordsCurrentTo } from '../src/domain/window.ts';
+```
+
+Then add the checks themselves:
+
+```js
 check('four presets offered', PRESETS.length, 4);
 check('12m range spans 4 quarters', rangeFor(model, '12m').quarters, 4);
 check('all-time starts at zero', rangeFor(model, 'all').from, 0);
@@ -295,7 +301,7 @@ check('previous of 12m sits directly before it', previousRange(model, rangeFor(m
 check('records current to the latest date on file', recordsCurrentTo(model), '2025-04-01');
 ```
 
-Because this uses `await import`, add `export {};` at the very end of the file if Node complains about top-level await, or convert the import to a static `import` at the top of the file alongside the others. Prefer the static import.
+**Every later task adds its imports the same way** — a static `import` at the top of the file, never `await import`. The harness is a plain ES module and top-level await would work, but the file's existing style is static imports and mixing the two makes the check block harder to read.
 
 - [ ] **Step 2: Run to verify it fails**
 
@@ -319,7 +325,7 @@ Create `src/domain/window.ts`:
  */
 
 import type { OrgModel } from './types.ts';
-import { quarterLabel, toQuarterIndex } from './dates.ts';
+import { quarterLabel } from './dates.ts';
 
 export type PresetId = '12m' | '2y' | '3y' | 'all';
 
@@ -391,12 +397,9 @@ export function recordsCurrentTo(model: OrgModel): string | null {
 export function inRange(range: Range, quarter: number | null): boolean {
   return quarter !== null && quarter >= range.from && quarter <= range.to;
 }
-
-/** Convert a date to a quarter and test it against the range in one step. */
-export function dateInRange(range: Range, date: string | null | undefined): boolean {
-  return inRange(range, toQuarterIndex(date ?? null));
-}
 ```
+
+Note the import list: `toQuarterIndex` is not used by this module — import only `quarterLabel` from `dates.ts`.
 
 - [ ] **Step 4: Run the checks**
 
@@ -447,10 +450,15 @@ every figure on the intelligence page can state the period it covers."
 
 Add to the checks section of `scripts/verify-domain.mjs`:
 
-```js
-const { departures, turnover, vacancies, headcountAt, medianTimeInRoleYears } =
-  await import('../src/domain/workforce.ts');
+Static import at the top of the file:
 
+```js
+import { departures, headcountAt, medianTimeInRoleYears, turnover, vacancies } from '../src/domain/workforce.ts';
+```
+
+The checks:
+
+```js
 const all = rangeFor(model, 'all');
 check('three departures on record', departures(model, all).length, 3);
 check('nobody still in a seat counts as departed',
@@ -769,14 +777,24 @@ every promotion as attrition."
 
 Add to the checks section:
 
-```js
-const { spans, meanSpan, criticalRoles, successionCoverage, reportingDepth } =
-  await import('../src/domain/structure.ts');
+Static import at the top of the file:
 
+```js
+import { criticalRoles, meanSpan, reportingDepth, spans, successionCoverage } from '../src/domain/structure.ts';
+```
+
+The checks:
+
+```js
 const lastQ = model.window.quarterCount - 1;
-checkAbove('spans exist', spans(model, lastQ).length, 0);
-check('the widest span is the CTO',
-  spans(model, lastQ)[0].title, 'Group Chief Technology Officer');
+const spanList = spans(model, lastQ);
+
+checkAbove('spans exist', spanList.length, 0);
+// Asserts the ordering rule, not a particular seat: the transfers in Task 2
+// leave two seats tied at the top, separated only by alphabetical tiebreak.
+check('spans come back widest first',
+  spanList.every((s, i) => i === 0 || spanList[i - 1].reports >= s.reports), true);
+checkAbove('the widest span exceeds the mean', spanList[0].reports, meanSpan(model, lastQ));
 checkAbove('mean span is positive', meanSpan(model, lastQ), 0);
 checkAbove('critical roles found', criticalRoles(model, lastQ).length, 0);
 check('coverage totals match the critical roles',
@@ -1062,9 +1080,15 @@ interface prints beside the figure."
 
 - [ ] **Step 1: Write the failing checks**
 
-```js
-const { moves, divisionFlows, mobilityRate } = await import('../src/domain/mobility.ts');
+Static import at the top of the file:
 
+```js
+import { divisionFlows, mobilityRate, moves, netFlow } from '../src/domain/mobility.ts';
+```
+
+The checks:
+
+```js
 check('six cross-division transfers',
   moves(model, all).filter((mv) => mv.kind === 'transfer').length, 6);
 check('flows are drawn from transfers only',
@@ -1072,6 +1096,9 @@ check('flows are drawn from transfers only',
 check('a flow never starts and ends in the same division',
   divisionFlows(model, all).filter((f) => f.from === f.to).length, 0);
 checkAbove('mobility rate is positive', mobilityRate(model, all).rate, 0);
+check('every transfer is counted once as produced and once as received',
+  netFlow(model, all).reduce((n, d) => n + d.produced, 0),
+  netFlow(model, all).reduce((n, d) => n + d.received, 0));
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -1264,17 +1291,26 @@ them together hides whether an organisation actually circulates people."
 
 - [ ] **Step 1: Write the failing checks**
 
-```js
-const { progressionCandidates, progressionFor, stagnation } =
-  await import('../src/domain/progression.ts');
+Static import at the top of the file:
 
-check('every candidate carries its evidence',
+```js
+import { progressionCandidates, progressionFor, stagnation } from '../src/domain/progression.ts';
+```
+
+The checks:
+
+```js
+check('every candidate carries its three checks',
   progressionCandidates(model).every((c) => c.checks.length === 3), true);
 check('a candidate only signals when every check is met',
   progressionCandidates(model).every((c) => c.checks.every((k) => k.met)), true);
 check('an unknown person yields nothing', progressionFor(model, 'NOBODY'), null);
-check('stagnation never includes anyone who moved',
-  stagnation(model).filter((s) => s.years === null).length, 0);
+// Both of these can fail: stagnation is defined as one seat, never left,
+// three years or more, and each clause is asserted against the real records.
+check('everyone flagged as stagnating holds exactly one seat',
+  stagnation(model).every((s) => model.people.get(s.personId).assignmentIds.length === 1), true);
+check('everyone flagged as stagnating has at least three years',
+  stagnation(model).every((s) => s.years >= 3), true);
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -1489,17 +1525,25 @@ disagree with it. Nothing here says anyone should be promoted."
 
 - [ ] **Step 1: Write the failing checks**
 
-```js
-const { signals } = await import('../src/domain/insights.ts');
+Static import at the top of the file:
 
+```js
+import { signals } from '../src/domain/insights.ts';
+```
+
+The checks:
+
+```js
+const RANK_ORDER = { attention: 0, review: 1, positive: 2 };
 const sig = signals(model, all);
+
 checkAbove('signals are produced', sig.length, 0);
 check('every signal carries a basis', sig.every((s) => s.basis.length > 0), true);
 check('every signal carries evidence', sig.every((s) => s.evidence.length > 0), true);
-check('severities are ranked, attention first',
-  sig.map((s) => s.severity).indexOf('attention') <= 0 ||
-  sig.findIndex((s) => s.severity === 'positive') > sig.findIndex((s) => s.severity === 'attention'),
-  true);
+// Genuinely sorted: every neighbour pair is in non-decreasing severity rank,
+// so a positive can never outrank something needing attention.
+check('signals are ordered by severity',
+  sig.every((s, i) => i === 0 || RANK_ORDER[sig[i - 1].severity] <= RANK_ORDER[s.severity]), true);
 check('an empty model yields no signals and does not throw',
   signals({ ...model, people: new Map(), positions: new Map(), assignments: new Map(), lineage: new Map() }, all).length,
   0);
@@ -2136,8 +2180,11 @@ import { criticalRoles, successionCoverage } from '../../domain/structure.ts';
 import { formatDate } from '../../domain/dates.ts';
 import { InsightCard } from './wi/InsightCard.tsx';
 
+// `metrics` is declared here but deliberately NOT destructured yet: Task 11 is
+// the first task that reads it, and `noUnusedLocals` would fail this task's own
+// typecheck gate on an unused binding.
 export function WorkforceView({
-  model, metrics, preset, onPresetChange, onOpenDept, onOpenPerson, onOpenPosition, onOpenArea,
+  model, preset, onPresetChange, onOpenDept, onOpenPerson, onOpenPosition, onOpenArea,
 }: {
   model: OrgModel;
   metrics: Metrics;
@@ -2496,13 +2543,21 @@ export function MobilityFlow({
 
 - [ ] **Step 4: Add the four areas to `WorkforceView`**
 
-In `src/components/views/WorkforceView.tsx`, add these imports:
+In `src/components/views/WorkforceView.tsx`, add `metrics` to the destructuring pattern (Task 10 declared the prop but left it undestructured; this task is the first to read it):
+
+```tsx
+export function WorkforceView({
+  model, metrics, preset, onPresetChange, onOpenDept, onOpenPerson, onOpenPosition, onOpenArea,
+}: {
+```
+
+Add these imports:
 
 ```tsx
 import { AreaCard, Block, Cta, Metric, Unknown } from './wi/AreaCard.tsx';
 import { RoleTrend } from './wi/RoleTrend.tsx';
 import { MobilityFlow } from './wi/MobilityFlow.tsx';
-import { divisionFlows, moves } from '../../domain/mobility.ts';
+import { divisionFlows, moves, netFlow } from '../../domain/mobility.ts';
 import { meanSpan, reportingDepth, spans } from '../../domain/structure.ts';
 import { vacancies } from '../../domain/workforce.ts';
 import { progressionCandidates, stagnation } from '../../domain/progression.ts';
@@ -2519,6 +2574,7 @@ Add these computations beside the existing `useMemo` calls:
   const stuck = useMemo(() => stagnation(model), [model]);
   const depth = useMemo(() => reportingDepth(model, range.to), [model, range]);
   const avgSpan = useMemo(() => meanSpan(model, range.to), [model, range]);
+  const net = useMemo(() => netFlow(model, range), [model, range]);
 ```
 
 Then append this block inside the outer `<div className="stack gap-6">`, after the "What should HR know?" section:
@@ -2596,6 +2652,20 @@ Then append this block inside the outer `<div className="stack gap-6">`, after t
 
           <Block label="Career mobility">
             <MobilityFlow flows={flows} onOpenPerson={onOpenPerson} />
+            {net.length > 0 ? (
+              <div style={{ marginTop: 'var(--s4)' }}>
+                <Metric
+                  label="Produces internal talent"
+                  value={net.filter((d) => d.produced > d.received)
+                    .map((d) => `${d.division} (${d.produced})`).join(', ') || 'none'}
+                />
+                <Metric
+                  label="Receives internal talent"
+                  value={net.filter((d) => d.received > d.produced)
+                    .map((d) => `${d.division} (${d.received})`).join(', ') || 'none'}
+                />
+              </div>
+            ) : null}
             <Cta label="Explore mobility" onClick={() => onOpenArea('mobility')} />
           </Block>
         </AreaCard>
@@ -2731,15 +2801,35 @@ import { ChangeLog } from './wi/ChangeLog.tsx';
 Add the computation:
 
 ```tsx
+  /**
+   * The leader / manager / member split.
+   *
+   * The records carry no such field, so it is read off the two things they do
+   * carry: a seat with people reporting to it is a management seat, and grade
+   * 6 and above is a leadership seat. Stated on the card so nobody mistakes it
+   * for an establishment figure.
+   */
   const depts = useMemo(() => {
     const churnBy = new Map(turnoverByDivision(model, range).map((d) => [d.division, d]));
-    const spanBy = new Map(spanList.map((s) => [s.division, s]));
+    const carriesReports = new Set(spanList.map((s) => s.positionId));
 
     return departments(model).map((d) => {
       const t = churnBy.get(d.division);
       const criticalHere = critical.filter((c) => c.division === d.division);
       const gapsHere = criticalHere.filter((c) => !c.covered).length;
       const openHere = open.filter((v) => v.division === d.division).length;
+
+      let leaders = 0;
+      let managers = 0;
+      let members = 0;
+      for (const pos of model.positions.values()) {
+        if (pos.division !== d.division) continue;
+        const filled = pos.assignmentIds.some((id) => !model.assignments.get(id)?.endDate);
+        if (!filled) continue;
+        if ((pos.level ?? 0) >= 6) leaders++;
+        else if (carriesReports.has(pos.id)) managers++;
+        else members++;
+      }
 
       const status: 'ok' | 'review' | 'attention' =
         (t?.departures.length ?? 0) >= 2 ? 'attention'
@@ -2754,7 +2844,9 @@ Add the computation:
         critical: criticalHere.length,
         gaps: gapsHere,
         open: openHere,
-        leaders: spanBy.has(d.division) ? 1 : 0,
+        leaders,
+        managers,
+        members,
         status,
       };
     });
@@ -2789,6 +2881,11 @@ Append after the four areas:
               </span>
 
               <span className="dept-foot" style={{ display: 'grid', gap: 3 }}>
+                <span>
+                  {d.leaders} leader{d.leaders === 1 ? '' : 's'} ·{' '}
+                  {d.managers} manager{d.managers === 1 ? '' : 's'} ·{' '}
+                  {d.members} member{d.members === 1 ? '' : 's'}
+                </span>
                 <span>
                   {d.departures} departure{d.departures === 1 ? '' : 's'}
                   {d.rate !== null && !d.thin ? ` · ${d.rate.toFixed(1)}%` : ''}
