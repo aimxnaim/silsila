@@ -12,6 +12,7 @@ import { metrics } from '../src/domain/metrics.ts';
 import { PRESETS, previousRange, rangeFor, recordsCurrentTo } from '../src/domain/window.ts';
 import { departures, headcountAt, medianTimeInRoleYears, turnover, vacancies } from '../src/domain/workforce.ts';
 import { criticalRoles, meanSpan, reportingDepth, spans, successionCoverage } from '../src/domain/structure.ts';
+import { divisionFlows, mobilityRate, moves, netFlow } from '../src/domain/mobility.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '../src/data/demoDataset.ts';
 
 const parsed = parseCSV(DEMO_DATASET_CSV);
@@ -112,6 +113,17 @@ checkAbove('critical roles found', criticalRoles(model, lastQ).length, 0);
 check('coverage totals match the critical roles',
   successionCoverage(model, lastQ).total, criticalRoles(model, lastQ).length);
 checkAbove('the org is more than one layer deep', reportingDepth(model, lastQ), 1);
+
+check('six cross-division transfers',
+  moves(model, all).filter((mv) => mv.kind === 'transfer').length, 6);
+check('flows are drawn from transfers only',
+  divisionFlows(model, all).reduce((n, f) => n + f.count, 0), 6);
+check('a flow never starts and ends in the same division',
+  divisionFlows(model, all).filter((f) => f.from === f.to).length, 0);
+checkAbove('mobility rate is positive', mobilityRate(model, all).rate, 0);
+check('every transfer is counted once as produced and once as received',
+  netFlow(model, all).reduce((n, d) => n + d.produced, 0),
+  netFlow(model, all).reduce((n, d) => n + d.received, 0));
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
 if (failures > 0) process.exitCode = 1;
