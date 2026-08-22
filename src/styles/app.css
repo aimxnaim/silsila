@@ -789,3 +789,102 @@
   .drawer-body { padding: var(--s4) var(--s4) 56px; }
   thead th, tbody td { padding: 12px var(--s4); }
 }
+
+/* ==================================================================
+ * WORKFORCE INTELLIGENCE
+ *
+ * The page leans on the tokens the rest of the interface already uses.
+ * The only new idea here is the severity rail down the left edge of an
+ * insight card: it carries the status without colouring the whole card,
+ * which would turn a page of eight findings into a traffic jam.
+ * ================================================================== */
+
+.wi-head { display: flex; align-items: flex-start; gap: var(--s4); flex-wrap: wrap; justify-content: space-between; }
+.wi-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-4); }
+.wi-title { font-size: 27px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-top: 2px; }
+.wi-sub { font-size: 14px; color: var(--ink-3); margin-top: 6px; max-width: 62ch; }
+.wi-range { display: flex; align-items: center; gap: var(--s3); }
+.wi-range select {
+  font: inherit; font-size: 13px; padding: 7px 11px; border: 1px solid var(--line);
+  border-radius: var(--r-sm); background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.wi-updated { font-size: 12px; color: var(--ink-4); }
+
+/* ---- Snapshot ---------------------------------------------------- */
+.wi-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s4); }
+.wi-kpi {
+  text-align: left; border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); padding: 18px 20px; cursor: pointer; transition: box-shadow .15s, border-color .15s;
+}
+.wi-kpi:hover { box-shadow: var(--lift); border-color: var(--ink-4); }
+.wi-kpi-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); }
+.wi-kpi-value { display: block; font-size: 32px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-top: 8px; }
+.wi-kpi-note { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 6px; }
+
+/* ---- Insight cards ----------------------------------------------- */
+.wi-signals { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s4); }
+.wi-signal {
+  position: relative; text-align: left; border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface); padding: 18px 20px 16px 22px; overflow: hidden; cursor: pointer;
+}
+.wi-signal::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--nu-bar); }
+.wi-signal--attention::before { background: var(--brand); }
+.wi-signal--review::before    { background: var(--wr-bar); }
+.wi-signal--positive::before  { background: var(--ok-bar); }
+.wi-sev { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-pill); }
+.wi-signal--attention .wi-sev { color: var(--brand-deep); background: var(--brand-tint); }
+.wi-signal--review .wi-sev    { color: var(--wr-fg);     background: var(--wr-bg); }
+.wi-signal--positive .wi-sev  { color: var(--ok-fg);     background: var(--ok-bg); }
+.wi-signal h4 { font-size: 15px; font-weight: 700; color: var(--ink); margin: 10px 0 0; }
+.wi-statement { font-size: 13px; color: var(--ink-2); margin-top: 6px; line-height: 1.5; }
+.wi-ev { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 5px; }
+.wi-ev li { font-size: 12.5px; color: var(--ink-3); display: flex; gap: 7px; }
+.wi-ev li::before { content: '\2022'; color: var(--ink-4); }
+.wi-basis { font-size: 11.5px; color: var(--ink-4); font-style: italic; margin-top: 11px; padding-top: 9px; border-top: 1px solid var(--line-faint); line-height: 1.45; }
+.wi-records { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--line-faint); display: grid; gap: 4px; }
+.wi-records li { font-size: 12px; }
+.wi-records button { font: inherit; background: none; border: 0; padding: 0; color: var(--brand); cursor: pointer; text-align: left; }
+.wi-records button:hover { text-decoration: underline; }
+.wi-cta { margin-top: 12px; font-size: 12.5px; font-weight: 600; color: var(--brand); background: none; border: 0; padding: 0; cursor: pointer; }
+.wi-thin { font-size: 11px; color: var(--wr-fg); background: var(--wr-bg); padding: 2px 7px; border-radius: var(--r-pill); margin-left: 6px; }
+
+/* ---- Intelligence areas ------------------------------------------ */
+.wi-areas { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s4); }
+.wi-area { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: 20px 22px; }
+.wi-area h3 { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0; letter-spacing: -.02em; }
+.wi-area-block { margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--line-faint); }
+.wi-area-block:first-of-type { border-top: 0; }
+.wi-area-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); }
+.wi-metric { display: flex; justify-content: space-between; gap: var(--s3); font-size: 13px; padding: 5px 0; color: var(--ink-2); }
+.wi-metric b { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* ---- The unknown ------------------------------------------------- */
+.wi-unknown {
+  background: var(--hatch); border: 1px dashed var(--line); border-radius: var(--r-sm);
+  padding: 12px 14px; font-size: 12.5px; color: var(--ink-3); margin-top: var(--s3);
+}
+
+/* ---- Flow and trend ---------------------------------------------- */
+.wi-flow { display: grid; gap: 7px; margin-top: var(--s3); }
+.wi-flow-row { display: grid; grid-template-columns: 1fr auto 1fr auto; align-items: center; gap: var(--s3); font-size: 12.5px; }
+.wi-flow-row span:first-child { text-align: right; color: var(--ink-2); }
+.wi-flow-arrow { color: var(--ink-4); }
+.wi-flow-bar { height: 6px; border-radius: 3px; background: var(--cat-3); }
+.wi-trend { display: flex; align-items: flex-end; gap: 6px; height: 96px; margin-top: var(--s4); }
+.wi-trend-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 5px; }
+.wi-trend-col i { display: block; width: 100%; background: var(--cat-1); border-radius: 2px 2px 0 0; min-height: 2px; }
+.wi-trend-col span { font-size: 10.5px; color: var(--ink-4); }
+
+/* ---- Change log --------------------------------------------------- */
+.wi-log { list-style: none; margin: 0; padding: 0; }
+.wi-log li { display: grid; grid-template-columns: 92px 1fr auto; gap: var(--s4); align-items: baseline; padding: 11px 0; border-top: 1px solid var(--line-faint); }
+.wi-log li:first-child { border-top: 0; }
+.wi-log-when { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-4); }
+.wi-log button { font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; color: var(--ink); font-weight: 600; font-size: 13.5px; }
+.wi-log button:hover { color: var(--brand); }
+.wi-log-what { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+
+@media (max-width: 1100px) {
+  .wi-kpis, .wi-signals { grid-template-columns: repeat(2, 1fr); }
+  .wi-areas { grid-template-columns: 1fr; }
+}
