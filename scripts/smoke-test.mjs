@@ -33,7 +33,6 @@ import { AnalysisView } from '${root}src/components/views/AnalysisView.tsx';
 import { TimeChart } from '${root}src/components/views/TimeChart.tsx';
 import { RolesView } from '${root}src/components/views/RolesView.tsx';
 import { PeopleView } from '${root}src/components/views/PeopleView.tsx';
-import { QualityView } from '${root}src/components/views/QualityView.tsx';
 import { LoadDataView } from '${root}src/components/views/LoadDataView.tsx';
 import { RoleDetail } from '${root}src/components/views/RoleDetail.tsx';
 import { PersonDetail } from '${root}src/components/views/PersonDetail.tsx';
@@ -54,7 +53,6 @@ const cases = [
   ['TimeChart',    <TimeChart model={model} metrics={m} quarter={12} onQuarterChange={noop} onOpenPosition={noop} onOpenPerson={noop} />],
   ['Roles',        <RolesView model={model} onOpenPosition={noop} />],
   ['People',       <PeopleView model={model} onOpenPerson={noop} />],
-  ['Data quality', <QualityView model={model} onResolve={noop} onOpenPosition={noop} onOpenPerson={noop} />],
   ['Load data',    <LoadDataView error={null} onLoad={() => true} onLoadDemo={() => true} onClearError={noop} onLoaded={noop} />],
 ];
 

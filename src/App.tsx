@@ -1,14 +1,13 @@
 /**
  * Application shell.
  *
- * Six views, one per requirement in the brief. The mapping is deliberate and
- * is documented in docs/BRIEF-MAPPING.md:
+ * Five views, mapped to the brief. The mapping is deliberate and is documented
+ * in docs/BRIEF-MAPPING.md:
  *
  *   Overview      the dashboard: what the records contain
  *   Org chart     how a position evolved                 (requirement 2)
  *   People        how a person moved                     (requirement 3)
  *   Timeline      the two histories on one axis          (requirement 4)
- *   Data quality  what the records cannot confirm        (requirement 6)
  *   Load data     accept a structured source             (requirement 1)
  *
  * Requirement 5 — present it clearly — is not a view. It is the whole design.
@@ -39,14 +38,13 @@ import type { AreaId } from './domain/insights.ts';
 import { TimeChart } from './components/views/TimeChart.tsx';
 import { RolesView } from './components/views/RolesView.tsx';
 import { PeopleView } from './components/views/PeopleView.tsx';
-import { QualityView } from './components/views/QualityView.tsx';
 import { LoadDataView } from './components/views/LoadDataView.tsx';
 import { RoleDetail } from './components/views/RoleDetail.tsx';
 import { PersonDetail } from './components/views/PersonDetail.tsx';
 import { DeptView } from './components/views/DeptView.tsx';
 import { Button, Empty } from './components/ui/primitives.tsx';
 
-type Tab = 'overview' | 'analysis' | 'orgchart' | 'people' | 'timeline' | 'quality' | 'load';
+type Tab = 'overview' | 'analysis' | 'orgchart' | 'people' | 'timeline' | 'load';
 
 /**
  * Rail glyphs.
@@ -86,12 +84,6 @@ const ICONS: Record<Tab, JSX.Element> = {
       <path d="M2 4.5h12" /><path d="M2 9h7" /><path d="M2 13.5h10" />
     </svg>
   ),
-  quality: (
-    <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <path d="M9 1.8l6.2 2.6v4.2c0 3.6-2.5 6.3-6.2 7.6-3.7-1.3-6.2-4-6.2-7.6V4.4z" strokeLinejoin="round" />
-      <path d="M9 6.4v3.2" strokeLinecap="round" /><circle cx="9" cy="11.9" r=".95" fill="currentColor" stroke="none" />
-    </svg>
-  ),
   load: (
     <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 11.5V2.5" /><path d="M5.5 6L9 2.5 12.5 6" />
@@ -111,7 +103,6 @@ const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'orgchart', label: 'Org chart' },
   { id: 'people', label: 'People' },
   { id: 'timeline', label: 'Timeline' },
-  { id: 'quality', label: 'Data quality' },
   { id: 'load', label: 'Load data' },
 ];
 
@@ -121,12 +112,11 @@ const CRUMB: Record<Tab, string> = {
   orgchart: 'Org chart',
   people: 'All people',
   timeline: 'Timeline',
-  quality: 'Data quality',
   load: 'Load data',
 };
 
 export function App() {
-  const { model, metrics, error, load, loadDemo, resolveIssue, clearError } = useOrgModel();
+  const { model, metrics, error, load, loadDemo, clearError } = useOrgModel();
   const [tab, setTab] = useState<Tab>('overview');
   const [preset, setPreset] = useState<PresetId>('all');
   const [quarter, setQuarter] = useState(0);
@@ -394,13 +384,6 @@ export function App() {
                 <RolesView model={model} onOpenPosition={openPosition} />
               ) : tab === 'people' ? (
                 <PeopleView model={model} onOpenPerson={openPerson} />
-              ) : tab === 'quality' ? (
-                <QualityView
-                  model={model}
-                  onResolve={resolveIssue}
-                  onOpenPosition={openPosition}
-                  onOpenPerson={openPerson}
-                />
               ) : (
                 <LoadDataView
                   error={error}

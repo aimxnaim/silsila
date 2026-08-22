@@ -6,8 +6,8 @@
  *
  *     CSV text -> parseCSV -> ingest -> classifyLineage -> metrics
  *
- * Resolving a conflict does NOT rewrite the records. It records a decision
- * alongside them, with a timestamp. Silsilah reads; it never writes back.
+ * Nothing here writes back to the source. Silsilah reads records and derives
+ * from them; the CSV a reader loads is never modified.
  */
 
 import { useCallback, useMemo, useState } from 'react';
@@ -58,37 +58,7 @@ export function useOrgModel() {
     [load],
   );
 
-  /**
-   * Record a human's decision about a conflicting record. The competing
-   * records both remain in the model; what changes is that we now know which
-   * one a named person chose to trust, and when.
-   */
-  const resolveIssue = useCallback(
-    (issueId: string, chosenLabel: string, reportsToPositionId: string | null) => {
-      setModel((current) => {
-        if (!current) return current;
-        const next: OrgModel = {
-          ...current,
-          issues: current.issues.map((issue) =>
-            issue.id === issueId
-              ? {
-                  ...issue,
-                  resolution: {
-                    chosenLabel,
-                    reportsToPositionId,
-                    resolvedAt: new Date().toISOString(),
-                  },
-                }
-              : issue,
-          ),
-        };
-        return next;
-      });
-    },
-    [],
-  );
-
   const metrics = useMemo(() => (model ? computeMetrics(model) : null), [model]);
 
-  return { model, metrics, error, loading, load, loadDemo, resolveIssue, clearError: () => setError(null) };
+  return { model, metrics, error, loading, load, loadDemo, clearError: () => setError(null) };
 }
