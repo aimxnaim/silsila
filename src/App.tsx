@@ -13,6 +13,12 @@
  *
  * Requirement 5 — present it clearly — is not a view. It is the whole design.
  *
+ * Feature Analysis sits beside those six rather than among them. The six show
+ * what the records contain; analysis interprets them, and interpretation is a
+ * thing a reader should choose rather than land in. It is entered from a
+ * button on the overview, keeps a rail button so it stays one click away, and
+ * takes no place in the tab strip.
+ *
  * The frame is a rail, a breadcrumb and a tab strip around a scrolling canvas,
  * which is the shape of the HR portal this tool is meant to sit beside. Every
  * destination is reachable in one click from anywhere, and the chrome never
@@ -25,7 +31,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOrgModel } from './hooks/useOrgModel.ts';
-import { WorkforceView } from './components/views/WorkforceView.tsx';
+import { OverviewView } from './components/views/OverviewView.tsx';
+import { AnalysisView } from './components/views/AnalysisView.tsx';
+import type { AnalysisScope } from './components/views/AnalysisView.tsx';
 import type { PresetId } from './domain/window.ts';
 import type { AreaId } from './domain/insights.ts';
 import { TimeChart } from './components/views/TimeChart.tsx';
@@ -38,7 +46,7 @@ import { PersonDetail } from './components/views/PersonDetail.tsx';
 import { DeptView } from './components/views/DeptView.tsx';
 import { Button, Empty } from './components/ui/primitives.tsx';
 
-type Tab = 'workforce' | 'orgchart' | 'people' | 'timeline' | 'quality' | 'load';
+type Tab = 'overview' | 'analysis' | 'orgchart' | 'people' | 'timeline' | 'quality' | 'load';
 
 /**
  * Rail glyphs.
@@ -47,10 +55,17 @@ type Tab = 'workforce' | 'orgchart' | 'people' | 'timeline' | 'quality' | 'load'
  * an icon font would be one more thing to load before the first paint.
  */
 const ICONS: Record<Tab, JSX.Element> = {
-  workforce: (
+  overview: (
     <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7">
       <rect x="2" y="2" width="6" height="6" rx="1.5" /><rect x="10" y="2" width="6" height="6" rx="1.5" />
       <rect x="2" y="10" width="6" height="6" rx="1.5" /><rect x="10" y="10" width="6" height="6" rx="1.5" />
+    </svg>
+  ),
+  analysis: (
+    <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+      <circle cx="7.8" cy="7.8" r="4.9" />
+      <path d="M11.4 11.4L15.6 15.6" />
+      <path d="M5.8 8.7v1.6M7.8 6.5v3.8M9.8 7.9v2.4" />
     </svg>
   ),
   orgchart: (
@@ -85,20 +100,44 @@ const ICONS: Record<Tab, JSX.Element> = {
   ),
 };
 
-const TABS: Array<{ id: Tab; label: string; crumb: string }> = [
-  { id: 'workforce', label: 'Workforce', crumb: 'Workforce Intelligence' },
-  { id: 'orgchart', label: 'Org chart', crumb: 'Org chart' },
-  { id: 'people', label: 'People', crumb: 'All people' },
-  { id: 'timeline', label: 'Timeline', crumb: 'Timeline' },
-  { id: 'quality', label: 'Data quality', crumb: 'Data quality' },
-  { id: 'load', label: 'Load data', crumb: 'Load data' },
+/**
+ * The tab strip. Feature Analysis is deliberately absent from it: it is an act
+ * the reader chooses from the overview, not a peer destination sitting beside
+ * the raw views. It keeps a rail button so it stays one click away once they
+ * know it is there.
+ */
+const TABS: Array<{ id: Tab; label: string }> = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'orgchart', label: 'Org chart' },
+  { id: 'people', label: 'People' },
+  { id: 'timeline', label: 'Timeline' },
+  { id: 'quality', label: 'Data quality' },
+  { id: 'load', label: 'Load data' },
 ];
+
+const CRUMB: Record<Tab, string> = {
+  overview: 'Company overview',
+  analysis: 'Feature Analysis',
+  orgchart: 'Org chart',
+  people: 'All people',
+  timeline: 'Timeline',
+  quality: 'Data quality',
+  load: 'Load data',
+};
 
 export function App() {
   const { model, metrics, error, load, loadDemo, resolveIssue, clearError } = useOrgModel();
-  const [tab, setTab] = useState<Tab>('workforce');
+  const [tab, setTab] = useState<Tab>('overview');
   const [preset, setPreset] = useState<PresetId>('all');
   const [quarter, setQuarter] = useState(0);
+
+  /**
+   * Feature Analysis state, held here rather than inside the view so that
+   * leaving for a person's record and coming back does not silently reset the
+   * question the reader was asking.
+   */
+  const [scope, setScope] = useState<AnalysisScope>('general');
+  const [subject, setSubject] = useState<string | null>(null);
 
   /**
    * Where a person or department page was opened FROM, so its back link can
@@ -113,7 +152,7 @@ export function App() {
   const [position, setPosition] = useState<string | null>(null);
 
   /**
-   * The dashboard IS the front door, so there is no click that decides what to
+   * The overview IS the front door, so there is no click that decides what to
    * read. The demonstration dataset loads once on mount and the reader lands on
    * a populated Overview; loading a file of their own replaces it in place.
    */
@@ -184,7 +223,7 @@ export function App() {
     else goTab('timeline');
   }, [goTab]);
 
-  const tabCrumb = TABS.find((t) => t.id === tab)?.crumb ?? 'Overview';
+  const tabCrumb = CRUMB[tab];
   const crumb =
     page?.kind === 'person' ? (model?.people.get(page.id)?.name ?? 'Employee record')
     : page?.kind === 'dept' ? page.id
@@ -192,7 +231,7 @@ export function App() {
 
   const backLabel =
     page?.kind === 'person' && page.fromDept ? `Back to ${page.fromDept}`
-    : page?.kind === 'person' ? `Back to ${TABS.find((t) => t.id === page.from)?.crumb ?? 'Overview'}`
+    : page?.kind === 'person' ? `Back to ${CRUMB[page.from]}`
     : 'All departments';
 
   return (
@@ -201,7 +240,7 @@ export function App() {
       <nav className="rail no-print" aria-label="Sections">
         <button
           className="rail-logo"
-          onClick={() => goTab('workforce')}
+          onClick={() => goTab('overview')}
           title="Back to the overview"
           aria-label="Back to the overview"
         >
@@ -222,6 +261,18 @@ export function App() {
           </button>
         ))}
 
+        {/* Not a tab, but reachable from anywhere once the reader knows it exists. */}
+        <span className="rail-sep" aria-hidden="true" />
+        <button
+          className="rail-btn"
+          aria-current={tab === 'analysis'}
+          aria-label="Feature Analysis"
+          title="Feature Analysis"
+          onClick={() => goTab('analysis')}
+        >
+          {ICONS.analysis}
+        </button>
+
         <span className="rail-spacer" />
 
         <button
@@ -241,7 +292,7 @@ export function App() {
       <div className="frame-main">
         {/* ---- Breadcrumb ---------------------------------------------- */}
         <header className="topbar no-print">
-          <button className="crumb" onClick={() => goTab('workforce')}>Silsilah</button>
+          <button className="crumb" onClick={() => goTab('overview')}>Silsilah</button>
           <span className="crumb-sep" aria-hidden="true">/</span>
           <span className="crumb-now">{crumb}</span>
 
@@ -306,12 +357,25 @@ export function App() {
                   onBack={closePage}
                   onOpenPerson={openPerson}
                 />
-              ) : tab === 'workforce' ? (
-                <WorkforceView
+              ) : tab === 'overview' ? (
+                <OverviewView
+                  model={model}
+                  metrics={metrics!}
+                  onOpenDept={openDept}
+                  onGoToTimeline={() => goTab('timeline')}
+                  onAnalyse={() => goTab('analysis')}
+                />
+              ) : tab === 'analysis' ? (
+                <AnalysisView
                   model={model}
                   metrics={metrics!}
                   preset={preset}
                   onPresetChange={setPreset}
+                  scope={scope}
+                  onScopeChange={setScope}
+                  personId={subject}
+                  onSelectPerson={setSubject}
+                  onBack={() => goTab('overview')}
                   onOpenDept={openDept}
                   onOpenPerson={openPerson}
                   onOpenPosition={openPosition}

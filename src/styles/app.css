@@ -888,3 +888,97 @@
   .wi-kpis, .wi-signals { grid-template-columns: repeat(2, 1fr); }
   .wi-areas { grid-template-columns: 1fr; }
 }
+
+/* ==================================================================== *
+ * FEATURE ANALYSIS
+ *
+ * The overview stays factual and the analysis is a thing the reader asks
+ * for, so the ask has to be visible from across the room without becoming
+ * an advertisement. One card, brand-tinted, full width, sitting between
+ * the page title and the figures — the first thing below the sentence
+ * that describes the data, and the only element on the overview that is
+ * not itself a number.
+ * ==================================================================== */
+
+.analyse {
+  display: flex; align-items: center; gap: var(--s4); width: 100%; text-align: left;
+  padding: 18px 20px; border: 1px solid var(--brand-line); border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--brand-tint), var(--surface) 140%);
+  cursor: pointer; transition: box-shadow .14s ease, border-color .14s ease;
+}
+.analyse:hover { box-shadow: var(--lift); border-color: var(--brand); }
+.analyse-mark {
+  flex: none; display: grid; place-items: center; width: 40px; height: 40px;
+  border-radius: var(--r-sm); background: var(--surface); color: var(--brand);
+  border: 1px solid var(--brand-line);
+}
+.analyse-text { display: block; }
+.analyse-title { display: block; font-size: 16px; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+.analyse-sub { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 4px; max-width: 68ch; line-height: 1.5; }
+.analyse-go { flex: none; margin-left: auto; font-size: 18px; color: var(--brand); }
+
+/* ---- Scope switch -------------------------------------------------- *
+ * General and By person are two readings of one dataset, not two pages,
+ * so they get a segmented control rather than tabs. Tabs would imply the
+ * page changed; it does not — only the question does.
+ */
+.seg { display: inline-flex; padding: 3px; gap: 3px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface-3); }
+.seg button {
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-3);
+  padding: 6px 16px; border: 0; border-radius: var(--r-pill); background: none; cursor: pointer;
+}
+.seg button:hover { color: var(--ink); }
+.seg button[aria-selected='true'] { background: var(--surface); color: var(--ink); box-shadow: var(--lift); }
+
+/* ---- One person ---------------------------------------------------- */
+.pa-picker { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.pa-picker label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); }
+.pa-picker select {
+  font: inherit; font-size: 13.5px; color: var(--ink); padding: 8px 12px; min-width: 320px;
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface);
+}
+
+.pa-head {
+  display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap;
+  padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+}
+.pa-id { flex: 1 1 auto; min-width: 0; }
+.pa-name { font-size: 20px; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+.pa-role { font-size: 13.5px; color: var(--ink-2); margin-top: 2px; }
+.pa-status { font-size: 12px; color: var(--ink-4); margin-top: 4px; }
+.pa-head .wi-cta { margin-top: 0; }
+
+.pa-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s4); }
+.pa-stat { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: 16px 18px; }
+.pa-stat-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); }
+.pa-stat-value { display: block; font-size: 26px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-top: 7px; }
+.pa-stat-note { display: block; font-size: 12px; color: var(--ink-3); margin-top: 5px; }
+
+/* The unmet check is the point of this list, so it is drawn as clearly as
+ * the met one — amber, not greyed out. A faded failure reads as absence. */
+.pa-checks { list-style: none; margin: var(--s4) 0 0; padding: 0; display: grid; gap: 10px; }
+.pa-checks li { display: flex; gap: 11px; align-items: flex-start; font-size: 13px; color: var(--ink-2); }
+.pa-check-mark {
+  flex: none; display: grid; place-items: center; width: 20px; height: 20px; margin-top: 1px;
+  border-radius: 50%; font-size: 12px; font-weight: 700;
+}
+.pa-checks .is-met .pa-check-mark    { color: var(--ok-fg); background: var(--ok-bg); }
+.pa-checks .is-unmet .pa-check-mark  { color: var(--wr-fg); background: var(--wr-bg); }
+.pa-check-detail { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+.pa-verdict { font-size: 13px; font-weight: 600; color: var(--ink); margin-top: var(--s4); }
+
+.pa-moves { list-style: none; margin: var(--s4) 0 0; padding: 0; }
+.pa-moves li { display: grid; grid-template-columns: 96px 1fr auto; gap: var(--s4); align-items: baseline; padding: 10px 0; border-top: 1px solid var(--line-faint); }
+.pa-moves li:first-child { border-top: 0; }
+.pa-move-kind { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-pill); text-align: center; }
+.pa-move-kind--transfer    { color: var(--nu-fg); background: var(--nu-bg); }
+.pa-move-kind--progression { color: var(--ok-fg); background: var(--ok-bg); }
+.pa-move-kind--lateral     { color: var(--ink-3); background: var(--surface-3); }
+.pa-moves button { font: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.pa-moves button:hover { color: var(--brand); }
+.pa-move-date { font-size: 12px; color: var(--ink-4); }
+
+@media (max-width: 1100px) {
+  .pa-stats { grid-template-columns: repeat(2, 1fr); }
+  .pa-picker select { min-width: 0; width: 100%; }
+}

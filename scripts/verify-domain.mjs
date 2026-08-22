@@ -15,6 +15,7 @@ import { criticalRoles, meanSpan, reportingDepth, spans, successionCoverage } fr
 import { divisionFlows, mobilityRate, moves, netFlow } from '../src/domain/mobility.ts';
 import { progressionCandidates, progressionFor, stagnation } from '../src/domain/progression.ts';
 import { signals } from '../src/domain/insights.ts';
+import { analysablePeople, personAnalysis } from '../src/domain/personAnalysis.ts';
 import { DEMO_DATASET_CSV, DEMO_DATASET_LABEL } from '../src/data/demoDataset.ts';
 
 const parsed = parseCSV(DEMO_DATASET_CSV);
@@ -175,6 +176,55 @@ for (const s of sig) {
   for (const e of s.evidence) console.log(`   • ${e.label}: ${e.value}`);
   console.log(`   basis: ${s.basis}`);
   console.log(`   → ${s.action.label}\n`);
+}
+
+
+console.log('\n=== PERSON ANALYSIS ===');
+
+const roster = analysablePeople(model);
+check('every person in the records is analysable', roster.length, model.people.size);
+// The picker puts people currently in a seat first. Asserted as a partition
+// rather than by index, so it holds whatever the dataset's mix happens to be.
+check('the roster lists seated people before departed ones',
+  roster.every((p, i) => i === 0 || Number(roster[i - 1].inSeat) >= Number(p.inSeat)), true);
+check('an unknown person yields nothing', personAnalysis(model, 'NOBODY', all), null);
+
+const everyone = [...model.people.keys()].map((id) => personAnalysis(model, id, all));
+check('every record produces an analysis', everyone.every(Boolean), true);
+check('every person-level signal carries a basis and evidence',
+  everyone.every((a) => a.signals.every((s) => s.basis.length > 0 && s.evidence.length > 0)), true);
+check('person-level signals are ordered by severity',
+  everyone.every((a) => a.signals.every(
+    (s, i) => i === 0 || RANK_ORDER[a.signals[i - 1].severity] <= RANK_ORDER[s.severity])), true);
+
+// The rule that matters most: a person is raised for progression review only
+// when all three checks hold. Asserted in both directions against the same
+// source of truth the general page uses, so the two scopes cannot drift.
+check('a progression signal appears exactly when all three checks are met',
+  everyone.every((a) => {
+    const raised = a.signals.some((s) => s.id === 'person-progression');
+    return raised === Boolean(progressionFor(model, a.personId)?.signal);
+  }), true);
+
+check('the moves shown for a person are all theirs',
+  everyone.every((a) => a.moves.every((mv) => mv.personId === a.personId)), true);
+check('a person flagged as not moving has no moves on record',
+  everyone.every((a) => !a.signals.some((s) => s.id === 'person-stagnation') || a.moves.length === 0), true);
+
+// A closed record has no progression checks: the rule is about time left in a
+// seat, and there is none. It must still analyse rather than throw.
+const departed = roster.find((p) => !p.inSeat);
+const closed = personAnalysis(model, departed.id, all);
+check('a departed record still analyses', Boolean(closed), true);
+check('a departed record carries no progression checks', closed.progression, null);
+check('a departed record is not raised for progression',
+  closed.signals.some((s) => s.id === 'person-progression'), false);
+
+const withSignals = everyone.filter((a) => a.signals.length > 0)
+  .sort((a, b) => b.signals.length - a.signals.length);
+for (const a of withSignals.slice(0, 3)) {
+  console.log(`${a.name} — ${a.title}, ${a.division}`);
+  for (const s of a.signals) console.log(`   [${s.severity.toUpperCase()}] ${s.title}`);
 }
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
