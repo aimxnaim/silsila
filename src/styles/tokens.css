@@ -5,7 +5,7 @@
  * palette of eight identity hues over three status colours.
  *
  * The reference is the system this tool is meant to sit beside: a professional
- * services HR portal — left icon rail, breadcrumb, tab strip, white cards
+ * services HR portal — breadcrumb, tab strip, white cards
  * floating on a cool grey page. A reader who uses that system every day should
  * be able to enter this one without being taught where anything is.
  *
@@ -113,7 +113,6 @@
   --pop:  0 12px 34px rgba(22, 32, 46, 0.16);
 
   /* --- Frame ----------------------------------------------------------- */
-  --rail:   68px;  /* the left icon rail */
   --topbar: 52px;  /* the breadcrumb strip */
   --maxw: 1180px;  /* the content column inside the frame */
 

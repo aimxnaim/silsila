@@ -43,10 +43,10 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
 /**
  * The application content column.
  *
- * It is centred inside the frame rather than filling it. The rail already
- * pushes everything right, so a full-bleed column would leave the page
- * lopsided — heavy on the left, ragged on the right. A capped, centred column
- * keeps the reading edge stable no matter how wide the window gets.
+ * It is centred inside the frame rather than filling it. A capped, centred
+ * column keeps the reading edge stable no matter how wide the window gets;
+ * full bleed on a wide monitor would strand a table's last column a foot away
+ * from its first.
  */
 .shell-app { max-width: var(--maxw); margin: 0 auto; width: 100%; }
 
@@ -212,8 +212,8 @@ tbody tr.clickable:hover { background: var(--surface-2); }
   .shell { max-width: none; padding: 0; }
   .frame { display: block !important; height: auto !important; overflow: visible !important; }
   .frame-scroll { overflow: visible !important; }
-  .rail, .topbar, .tabstrip { display: none !important; }
-  .frame-main, .page { padding: 0 !important; overflow: visible !important; }
+  .topbar, .tabstrip { display: none !important; }
+  .page { padding: 0 !important; overflow: visible !important; }
   thead th { background: #fff; }
   a { color: #000; text-decoration: none; }
   .kpi { border: 1px solid #ccc !important; break-inside: avoid; }

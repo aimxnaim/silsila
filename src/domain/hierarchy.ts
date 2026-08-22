@@ -23,7 +23,36 @@ export interface Hierarchy {
   roots: TreeNode[];
   /** Positions live at this moment that no reporting line connects. */
   orphans: TreeNode[];
+  /** Every live node by id, roots and orphans alike. */
+  index: Map<string, TreeNode>;
   liveCount: number;
+}
+
+/**
+ * The chain of command above a position, root first, the position itself last.
+ *
+ * This is what the chart's trail is drawn from: the reader is always shown one
+ * job and its direct reports, so the route they took to arrive has to be
+ * recoverable from the id alone rather than remembered as they click.
+ *
+ * A spreadsheet can describe a reporting loop — A reports to B, B reports to
+ * A — and no amount of validation upstream makes that impossible. Walking such
+ * a chain naively never returns, so the walk records where it has been and
+ * stops the moment it arrives somewhere twice. A malformed export costs the
+ * reader a short trail, not a frozen tab.
+ */
+export function pathTo(index: Map<string, TreeNode>, id: string): TreeNode[] {
+  const path: TreeNode[] = [];
+  const seen = new Set<string>();
+
+  let current = index.get(id) ?? null;
+  while (current && !seen.has(current.position.id)) {
+    seen.add(current.position.id);
+    path.push(current);
+    current = current.reportsToPositionId ? index.get(current.reportsToPositionId) ?? null : null;
+  }
+
+  return path.reverse();
 }
 
 function isLive(pos: Position, quarter: number): boolean {
@@ -87,7 +116,13 @@ export function buildHierarchy(model: OrgModel, quarter: number): Hierarchy {
     return node.descendantCount;
   };
 
+  // Everything that heads a subtree gets sorted and counted, the positions
+  // outside the tree included: the chart lets a reader open one of those and
+  // it has to report its own reports honestly when they do.
   realRoots.forEach(sortTree);
+  orphans.forEach(sortTree);
+  unattached.forEach(sortTree);
+
   realRoots.sort((a, b) => b.descendantCount - a.descendantCount);
 
   return {
@@ -95,6 +130,7 @@ export function buildHierarchy(model: OrgModel, quarter: number): Hierarchy {
     orphans: [...orphans, ...unattached].sort((a, b) =>
       a.position.title.localeCompare(b.position.title),
     ),
+    index: nodes,
     liveCount: live.length,
   };
 }

@@ -21,13 +21,12 @@
  * Feature Analysis sits beside those six rather than among them. The six show
  * what the records contain; analysis interprets them, and interpretation is a
  * thing a reader should choose rather than land in. It is entered from a
- * button on the overview, keeps a rail button so it stays one click away, and
- * takes no place in the tab strip.
+ * button on the overview, keeps a standing button in the top bar so it stays
+ * one click away, and takes no place in the tab strip.
  *
- * The frame is a rail, a breadcrumb and a tab strip around a scrolling canvas,
- * which is the shape of the HR portal this tool is meant to sit beside. Every
- * destination is reachable in one click from anywhere, and the chrome never
- * scrolls away from under the reader.
+ * The frame is a breadcrumb bar and a tab strip stacked above a scrolling
+ * canvas. Navigation lives entirely along the top: the full width belongs to
+ * the records, and the chrome never scrolls away from under the reader.
  *
  * There is no splash screen in front of it. The Overview opens on load with
  * records already in it, because a tool that reconstructs a history should
@@ -54,7 +53,7 @@ import { registerDivisions } from './components/ui/vocabulary.tsx';
 type Tab = 'overview' | 'analysis' | 'orgchart' | 'departments' | 'load';
 
 /**
- * Rail glyphs.
+ * Tab glyphs.
  *
  * Drawn rather than imported: six 18px marks do not justify a dependency, and
  * an icon font would be one more thing to load before the first paint.
@@ -98,8 +97,8 @@ const ICONS: Record<Tab, JSX.Element> = {
 /**
  * The tab strip. Feature Analysis is deliberately absent from it: it is an act
  * the reader chooses from the overview, not a peer destination sitting beside
- * the raw views. It keeps a rail button so it stays one click away once they
- * know it is there.
+ * the raw views. It keeps a button in the top bar so it stays one click away
+ * once they know it is there.
  */
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'overview', label: 'Overview' },
@@ -264,47 +263,45 @@ export function App() {
 
   return (
     <div className="frame">
-      {/* ---- Left rail ------------------------------------------------- */}
-      <nav className="rail no-print" aria-label="Sections">
+      {/* ---- Brand, breadcrumb, standing actions ----------------------- */}
+      <header className="topbar no-print">
         <button
-          className="rail-logo"
+          className="topbar-logo"
           onClick={() => goTab('overview')}
           title="Back to the overview"
           aria-label="Back to the overview"
         >
           SL
         </button>
-        <span className="rail-sep" aria-hidden="true" />
 
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            className="rail-btn"
-            aria-current={tab === t.id}
-            aria-label={t.label}
-            title={t.label}
-            onClick={() => goTab(t.id)}
-          >
-            {ICONS[t.id]}
-          </button>
-        ))}
+        <button className="crumb" onClick={() => goTab('overview')}>Silsilah</button>
+        <span className="crumb-sep" aria-hidden="true">/</span>
+        <span className="crumb-now">{crumb}</span>
+
+        {model ? (
+          <span className="badge" title="Where the currently loaded records came from">
+            {model.datasetLabel}
+          </span>
+        ) : null}
+
+        <span className="grow" />
 
         {/* Not a tab, but reachable from anywhere once the reader knows it exists. */}
-        <span className="rail-sep" aria-hidden="true" />
         <button
-          className="rail-btn"
+          className="btn btn-sm topbar-analyse"
           aria-current={tab === 'analysis'}
+          /* The word beside the glyph drops out on narrow windows, so the name
+             is spelled here rather than left to the label that may not be there. */
           aria-label="Feature Analysis"
           title="Feature Analysis"
           onClick={() => goTab('analysis')}
         >
           {ICONS.analysis}
+          <span className="topbar-btn-label">Analysis</span>
         </button>
 
-        <span className="rail-spacer" />
-
         <button
-          className="rail-btn"
+          className="btn btn-sm btn-icon"
           title="Print this view"
           aria-label="Print this view"
           onClick={() => window.print()}
@@ -315,124 +312,108 @@ export function App() {
             <rect x="5" y="10.5" width="8" height="5.3" rx="1" />
           </svg>
         </button>
-      </nav>
 
-      <div className="frame-main">
-        {/* ---- Breadcrumb ---------------------------------------------- */}
-        <header className="topbar no-print">
-          <button className="crumb" onClick={() => goTab('overview')}>Silsilah</button>
-          <span className="crumb-sep" aria-hidden="true">/</span>
-          <span className="crumb-now">{crumb}</span>
+        <button className="btn btn-primary btn-sm" onClick={() => goTab('load')}>
+          Load a spreadsheet
+        </button>
+      </header>
 
-          {model ? (
-            <span className="badge" title="Where the currently loaded records came from">
-              {model.datasetLabel}
-            </span>
-          ) : null}
+      {/* ---- Tab strip --------------------------------------------------- */}
+      <div className="tabstrip no-print">
+        <nav className="tabs" role="tablist" aria-label="Views">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              className="tab"
+              aria-selected={tab === t.id}
+              onClick={() => goTab(t.id)}
+            >
+              <span className="tab-icon" aria-hidden="true">{ICONS[t.id]}</span>
+              {t.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-          <span className="grow" />
-
-          <button className="btn btn-primary btn-sm" onClick={() => goTab('load')}>
-            Load a spreadsheet
-          </button>
-        </header>
-
-        {/* ---- Tab strip ------------------------------------------------ */}
-        <div className="tabstrip no-print">
-          <nav className="tabs" role="tablist" aria-label="Views">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                role="tab"
-                className="tab"
-                aria-selected={tab === t.id}
-                onClick={() => goTab(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* ---- The canvas ----------------------------------------------- */}
-        <div className="frame-scroll">
-          <main className="page">
-            <div className="shell-app">
-              {!model ? (
-                <div className="card">
-                  <Empty title="No records loaded">
-                    Load the demonstration dataset, or drop in a CSV of your own, to
-                    reconstruct a history.
-                  </Empty>
-                  <div className="row gap-3" style={{ justifyContent: 'center' }}>
-                    <Button variant="primary" onClick={loadDemo}>Use demonstration dataset</Button>
-                    <Button onClick={() => goTab('load')}>Load a file</Button>
-                  </div>
+      {/* ---- The canvas -------------------------------------------------- */}
+      <div className="frame-scroll">
+        <main className="page">
+          <div className="shell-app">
+            {!model ? (
+              <div className="card">
+                <Empty title="No records loaded">
+                  Load the demonstration dataset, or drop in a CSV of your own, to
+                  reconstruct a history.
+                </Empty>
+                <div className="row gap-3" style={{ justifyContent: 'center' }}>
+                  <Button variant="primary" onClick={loadDemo}>Use demonstration dataset</Button>
+                  <Button onClick={() => goTab('load')}>Load a file</Button>
                 </div>
-              ) : page?.kind === 'person' ? (
-                <PersonDetail
-                  model={model}
-                  personId={page.id}
-                  backLabel={backLabel}
-                  onBack={closePage}
-                  onOpenPosition={openPosition}
-                  onShowInTime={showInTime}
-                />
-              ) : page?.kind === 'dept' ? (
-                <DeptView
-                  model={model}
-                  division={page.id}
-                  onBack={closePage}
-                  onOpenPerson={openPerson}
-                  onOpenPosition={openPosition}
-                />
-              ) : tab === 'overview' ? (
-                <OverviewView
-                  model={model}
-                  metrics={metrics!}
-                  quarter={quarter}
-                  onQuarterChange={setQuarter}
-                  onGoToDepartments={() => goTab('departments')}
-                  onAnalyse={() => goTab('analysis')}
-                  onOpenPosition={openPosition}
-                  onOpenPerson={openPerson}
-                />
-              ) : tab === 'analysis' ? (
-                <AnalysisView
-                  model={model}
-                  metrics={metrics!}
-                  preset={preset}
-                  onPresetChange={setPreset}
-                  scope={scope}
-                  onScopeChange={setScope}
-                  personId={subject}
-                  onSelectPerson={setSubject}
-                  onBack={() => goTab('overview')}
-                  onOpenDept={openDept}
-                  onOpenPerson={openPerson}
-                  onOpenPosition={openPosition}
-                  onOpenArea={openArea}
-                />
-              ) : tab === 'departments' ? (
-                <DepartmentsView
-                  model={model}
-                  metrics={metrics!}
-                  onOpenDept={openDept}
-                />
-              ) : tab === 'orgchart' ? (
-                <RolesView model={model} onOpenPosition={openPosition} />
-              ) : (
-                <LoadDataView
-                  error={error}
-                  onLoad={load}
-                  onLoadDemo={loadDemo}
-                  onClearError={clearError}
-                  onLoaded={() => goTab('overview')}
-                />
-              )}
-            </div>
-          </main>
-        </div>
+              </div>
+            ) : page?.kind === 'person' ? (
+              <PersonDetail
+                model={model}
+                personId={page.id}
+                backLabel={backLabel}
+                onBack={closePage}
+                onOpenPosition={openPosition}
+                onShowInTime={showInTime}
+              />
+            ) : page?.kind === 'dept' ? (
+              <DeptView
+                model={model}
+                division={page.id}
+                onBack={closePage}
+                onOpenPerson={openPerson}
+                onOpenPosition={openPosition}
+              />
+            ) : tab === 'overview' ? (
+              <OverviewView
+                model={model}
+                metrics={metrics!}
+                quarter={quarter}
+                onQuarterChange={setQuarter}
+                onGoToDepartments={() => goTab('departments')}
+                onAnalyse={() => goTab('analysis')}
+                onOpenPosition={openPosition}
+                onOpenPerson={openPerson}
+              />
+            ) : tab === 'analysis' ? (
+              <AnalysisView
+                model={model}
+                metrics={metrics!}
+                preset={preset}
+                onPresetChange={setPreset}
+                scope={scope}
+                onScopeChange={setScope}
+                personId={subject}
+                onSelectPerson={setSubject}
+                onBack={() => goTab('overview')}
+                onOpenDept={openDept}
+                onOpenPerson={openPerson}
+                onOpenPosition={openPosition}
+                onOpenArea={openArea}
+              />
+            ) : tab === 'departments' ? (
+              <DepartmentsView
+                model={model}
+                metrics={metrics!}
+                onOpenDept={openDept}
+              />
+            ) : tab === 'orgchart' ? (
+              <RolesView model={model} onOpenPosition={openPosition} />
+            ) : (
+              <LoadDataView
+                error={error}
+                onLoad={load}
+                onLoadDemo={loadDemo}
+                onClearError={clearError}
+                onLoaded={() => goTab('overview')}
+              />
+            )}
+          </div>
+        </main>
       </div>
 
       {model && position ? (

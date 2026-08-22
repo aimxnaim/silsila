@@ -12,6 +12,7 @@ import { metrics } from '../src/domain/metrics.ts';
 import { PRESETS, previousRange, rangeFor, recordsCurrentTo } from '../src/domain/window.ts';
 import { departures, headcountAt, medianTimeInRoleYears, turnover, vacancies } from '../src/domain/workforce.ts';
 import { criticalRoles, meanSpan, reportingDepth, spans, successionCoverage } from '../src/domain/structure.ts';
+import { buildHierarchy, pathTo } from '../src/domain/hierarchy.ts';
 import { divisionFlows, mobilityRate, moves, netFlow } from '../src/domain/mobility.ts';
 import { progressionCandidates, progressionFor, stagnation } from '../src/domain/progression.ts';
 import { signals } from '../src/domain/insights.ts';
@@ -287,6 +288,49 @@ for (const s of charted) {
   const peak = Math.max(...s.chart.series.flatMap((se) => se.points.map((pt) => pt.value)));
   console.log(`${s.chart.kind.padEnd(4)} ${String(pts.length).padStart(2)} pts, peak ${String(peak).padStart(3)} ${s.chart.unit.padEnd(15)} ${s.title}`);
 }
+
+/* ---------------------------------------------------------------- ORG CHART
+ *
+ * The chart drills one level at a time rather than expanding in place, so two
+ * things must hold that a collapsible tree never needed: every live position
+ * has to be reachable by id, and walking upwards from any of them has to
+ * terminate at a position with no manager above it.
+ *
+ * The second is the one worth testing. A spreadsheet can perfectly well
+ * describe a reporting loop — A reports to B, B reports to A — and a naive
+ * walk up that chain never returns. This is the check that says the interface
+ * refuses to hang on bad data.
+ */
+console.log('\n=== ORG CHART ===');
+
+const chart = buildHierarchy(model, model.window.quarterCount - 1);
+
+const deepest = [...chart.index.values()].reduce(
+  (best, node) =>
+    pathTo(chart.index, node.position.id).length > pathTo(chart.index, best.position.id).length
+      ? node : best,
+  [...chart.index.values()][0],
+);
+const trail = pathTo(chart.index, deepest.position.id);
+
+check('every live position is reachable by id', chart.index.size, chart.liveCount);
+check('a path ends at the position it was asked for',
+  trail[trail.length - 1].position.id, deepest.position.id);
+check('a path begins at a position with nobody above it', trail[0].reportsToPositionId, null);
+check('every step of a path reports to the step before it',
+  trail.every((node, i) => i === 0 || node.reportsToPositionId === trail[i - 1].position.id), true);
+check('a position outside the tree stands alone in its own path',
+  chart.orphans.every((o) => pathTo(chart.index, o.position.id).length === 1), true);
+check('an id nobody holds has no path', pathTo(chart.index, 'NOT-A-POSITION').length, 0);
+
+const loop = new Map([
+  ['A', { position: { id: 'A', title: 'A' }, reportsToPositionId: 'B' }],
+  ['B', { position: { id: 'B', title: 'B' }, reportsToPositionId: 'A' }],
+]);
+check('a reporting loop terminates instead of hanging', pathTo(loop, 'A').length, 2);
+
+console.log(`${chart.roots.length} root(s) · ${chart.orphans.length} outside the tree · ${chart.liveCount} live`);
+console.log(`deepest chain, ${trail.length} levels: ${trail.map((n) => n.position.title).join(' > ')}`);
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}\n`);
 if (failures > 0) process.exitCode = 1;

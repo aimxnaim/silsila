@@ -3,8 +3,7 @@
 ## The direction
 
 An enterprise HR console. Cool grey canvas, white cards, one red accent, dense
-type. Left icon rail, breadcrumb, tab strip, tables that scroll under fixed
-chrome.
+type. Breadcrumb, tab strip, tables that scroll under fixed chrome.
 
 This replaces an earlier Swiss-editorial build — warm paper, vermillion and
 saffron, 76px headlines — and the swap is worth explaining, because the old
@@ -20,7 +19,7 @@ status system — settled, unsettled, unknown — had nowhere to live.
 
 The reference now is the HR portal itself. A reader who uses that system daily
 should be able to enter this one without being taught where anything is: the
-rail is where their rail is, the breadcrumb reads the same way, a status pill
+tabs are where their tabs are, the breadcrumb reads the same way, a status pill
 looks like a status pill. **Familiarity is the feature.** The argument this
 product makes is contrarian enough on its own; the chrome around it should not
 also be asking for attention.
@@ -162,19 +161,25 @@ Inconsistent spacing is the most reliable tell of an interface built in a hurry.
 
 ## The frame
 
-Four fixed pieces around one scrolling one, defined in `App.tsx` and the
+Two fixed pieces stacked above one scrolling one, defined in `App.tsx` and the
 `.frame*` rules in `app.css`:
 
 | Piece | Why |
 | --- | --- |
-| Rail, 68px | Six views is too many for a tab strip alone at small widths, and a hamburger hides the shape of the product from a first-time reader. A permanent rail costs nothing horizontally and keeps every destination on screen |
-| Breadcrumb, 52px | Says where you are and which records are loaded |
-| Tab strip | The same six destinations, named, for readers who want words |
+| Breadcrumb, 52px | Says where you are and which records are loaded. Carries the brand mark, and the two controls that are not destinations: Analysis and print |
+| Tab strip | Every destination, named and glyphed. Icon for recognition at a glance, word so nothing depends on decoding a 17px mark |
 | Canvas | The only thing that scrolls. Chrome never moves out from under the reader |
 
-Below 860px the rail is the first thing removed: the tab strip already lists
-every destination, so on a phone the rail is pure duplication in 68px the table
-badly needs.
+Navigation is entirely horizontal. An earlier build carried a permanent 68px
+icon rail down the left as well, on the argument that a first-time reader should
+see every destination at once — but with four tabs the strip already does that,
+and the org chart and the wider tables want the horizontal room more than the
+product wants a second copy of its own menu. The rail's glyphs moved into the
+tabs rather than being thrown away; the rail's two non-destinations moved into
+the breadcrumb bar.
+
+Below 860px the top bar sheds in order of redundancy: the dataset chip first,
+then the word beside the Analysis glyph. Every destination survives.
 
 ## The three lanes
 
@@ -210,18 +215,20 @@ consumer-application signal that would work against the whole direction, so the
 interface commits to light and declares `color-scheme: light` rather than
 half-supporting a mode it was not designed for.
 
-A print stylesheet is included: `Ctrl/Cmd+P` — or the printer button at the foot
-of the rail — produces a clean review pack with the rail, breadcrumb and tabs
-removed and the cards flattened to outlines. That is the artefact an HR lead
-actually has to hand upward.
+A print stylesheet is included: `Ctrl/Cmd+P` — or the printer button in the top
+bar — produces a clean review pack with the breadcrumb and tabs removed and the
+cards flattened to outlines. That is the artefact an HR lead actually has to
+hand upward.
 
 ## Accessibility
 
 - Keyboard: the scrubber takes arrow keys, `Escape` closes the detail panel,
   focus order follows the document.
 - `:focus-visible` is styled explicitly in brand red rather than suppressed.
-- Every rail button carries both `title` and `aria-label`, because an icon with
-  no text label is unreadable to a screen reader and to a first-time user alike.
+- Every icon-only button carries both `title` and `aria-label`, because an icon
+  with no text label is unreadable to a screen reader and to a first-time user
+  alike. Analysis names itself that way too, since its word drops out below
+  860px.
 - `prefers-reduced-motion` collapses every transition.
 - Uncertainty is encoded as **pattern, not hue**, so no meaning is carried by
   colour alone.

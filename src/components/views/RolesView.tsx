@@ -5,123 +5,40 @@
  *
  * "Org chart" is the default, because who-reports-to-whom is the one
  * organisational picture everybody already knows how to read. A list of 78
- * job titles is not navigable; a tree from the chief executive downwards is.
- * The thing that makes it more than an ordinary org chart is the date picker:
- * this tree can be rebuilt for ANY past quarter, which is the entire point of
- * the product. Set it to 2021 and then to 2026 and the shape of the company
- * visibly changes.
+ * job titles is not navigable; a chain of command from the chief executive
+ * downwards is. The thing that makes it more than an ordinary org chart is the
+ * date picker: it can be rebuilt for ANY past quarter, which is the entire
+ * point of the product. Set it to 2021 and then to 2026 and the shape of the
+ * company visibly changes.
  *
  * "By what changed" is the analytical view — every job grouped by whether its
  * arrival meant somebody was hired, or an existing job was renamed.
+ *
+ * This file owns the switch between those two and the date; how the chart
+ * itself is navigated lives in OrgChart.
  */
 
 import { useMemo, useState } from 'react';
 import type { LineageRelation, OrgModel } from '../../domain/types.ts';
 import { formatMonthYear, quarterLabel } from '../../domain/dates.ts';
-import { buildHierarchy, type TreeNode } from '../../domain/hierarchy.ts';
 import { Badge, Card, CardHead } from '../ui/primitives.tsx';
 import { RELATION_LABEL, RELATION_MEANING, RelationBadge } from '../ui/vocabulary.tsx';
 import { chains } from '../../domain/chains.ts';
 import { StoryStrip } from './StoryStrip.tsx';
+import { OrgChart } from './OrgChart.tsx';
 
 const ORDER: LineageRelation[] = ['rename', 'redesignated', 'split', 'merge', 'succeeded', 'created'];
-
-/* -------------------------------------------------------------- The tree */
-
-function TreeRow({
-  node, depth, expanded, onToggle, onOpenPosition, model,
-}: {
-  node: TreeNode;
-  depth: number;
-  expanded: Set<string>;
-  onToggle: (id: string) => void;
-  onOpenPosition: (id: string) => void;
-  model: OrgModel;
-}) {
-  const hasChildren = node.children.length > 0;
-  const isOpen = expanded.has(node.position.id);
-  const verdict = model.lineage.get(node.position.id);
-
-  return (
-    <div className="tree-node">
-      <button
-        className="tree-row"
-        onClick={() => (hasChildren ? onToggle(node.position.id) : onOpenPosition(node.position.id))}
-      >
-        <span className={`tree-twist ${hasChildren ? '' : 'tree-twist--leaf'}`} aria-hidden="true">
-          {hasChildren ? (isOpen ? '−' : '+') : '·'}
-        </span>
-
-        <span className="tree-main">
-          <span className="tree-title">{node.position.title}</span>
-          <span className="tree-who">
-            {node.holderName ?? <em>vacant</em>}
-            {node.position.level !== null ? ` · grade ${node.position.level}` : ''}
-          </span>
-        </span>
-
-        <span className="tree-meta">
-          {hasChildren ? (
-            <span className="tree-count">{node.descendantCount} below</span>
-          ) : null}
-          {verdict && verdict.relation !== 'created' ? (
-            <RelationBadge relation={verdict.relation} />
-          ) : null}
-        </span>
-      </button>
-
-      {hasChildren && isOpen ? (
-        <div className="tree-children">
-          {node.children.map((child) => (
-            <TreeRow
-              key={child.position.id}
-              node={child}
-              depth={depth + 1}
-              expanded={expanded}
-              onToggle={onToggle}
-              onOpenPosition={onOpenPosition}
-              model={model}
-            />
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 /* ------------------------------------------------------------- The view */
 
 export function RolesView({
   model, onOpenPosition,
 }: { model: OrgModel; onOpenPosition: (id: string) => void }) {
-  const [mode, setMode] = useState<'tree' | 'changes'>('tree');
+  const [mode, setMode] = useState<'chart' | 'changes'>('chart');
   const [quarter, setQuarter] = useState(model.window.quarterCount - 1);
   const [filter, setFilter] = useState<LineageRelation | 'all'>('all');
 
-  const hierarchy = useMemo(() => buildHierarchy(model, quarter), [model, quarter]);
   const allChains = useMemo(() => chains(model), [model]);
-
-  // Open the top two levels by default: enough to show the shape of the
-  // company without burying the reader in 78 rows.
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const defaultExpanded = useMemo(() => {
-    const ids = new Set<string>();
-    for (const root of hierarchy.roots) {
-      ids.add(root.position.id);
-      for (const child of root.children) ids.add(child.position.id);
-    }
-    return ids;
-  }, [hierarchy]);
-
-  const effective = expanded.size === 0 ? defaultExpanded : expanded;
-
-  const toggle = (id: string) => {
-    const next = new Set(effective);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    // Guard against the set emptying, which would silently re-apply defaults.
-    setExpanded(next.size === 0 ? new Set(['__none__']) : next);
-  };
 
   const grouped = useMemo(() => {
     const out = new Map<LineageRelation, string[]>();
@@ -142,17 +59,17 @@ export function RolesView({
         <div className="page-title">Org chart</div>
         <div className="page-sub">
           {model.positions.size} jobs across the whole period. Change the date to rebuild
-          the tree as it actually was in that quarter.
+          the chart as it actually was in that quarter.
         </div>
       </div>
 
       <div className="row gap-4 wrap spread no-print">
         <div className="segmented">
-          <button aria-pressed={mode === 'tree'} onClick={() => setMode('tree')}>Org chart</button>
+          <button aria-pressed={mode === 'chart'} onClick={() => setMode('chart')}>Org chart</button>
           <button aria-pressed={mode === 'changes'} onClick={() => setMode('changes')}>By what changed</button>
         </div>
 
-        {mode === 'tree' ? (
+        {mode === 'chart' ? (
           <label className="row gap-2 small muted">
             Showing the company as it was in
             <select
@@ -168,62 +85,9 @@ export function RolesView({
         ) : null}
       </div>
 
-      {/* ---------------------------------------------------------- Tree */}
-      {mode === 'tree' ? (
-        <>
-          <Card flush>
-            <CardHead
-              title={`${hierarchy.liveCount} jobs existed in ${quarterLabel(quarter)}`}
-              meta="click a row with + to open it · click a job with no reports to see its history"
-            />
-            <div className="tree" style={{ border: 0, borderRadius: 0 }}>
-              {hierarchy.roots.map((root) => (
-                <TreeRow
-                  key={root.position.id}
-                  node={root}
-                  depth={0}
-                  expanded={effective}
-                  onToggle={toggle}
-                  onOpenPosition={onOpenPosition}
-                  model={model}
-                />
-              ))}
-              {hierarchy.roots.length === 0 ? (
-                <p className="small faint" style={{ padding: 'var(--s5)' }}>
-                  No reporting lines were recorded for this quarter, so there is no tree
-                  to draw. Every job for this period is listed below.
-                </p>
-              ) : null}
-            </div>
-          </Card>
-
-          {hierarchy.orphans.length > 0 ? (
-            <Card flush>
-              <CardHead
-                title={`${hierarchy.orphans.length} jobs sit outside the tree`}
-                meta="no reporting line was ever recorded for these"
-              />
-              <p className="small muted" style={{ padding: 'var(--s4) var(--s5) 0' }}>
-                These jobs existed in {quarterLabel(quarter)}, but nothing in the records
-                says who they reported to. We will not guess a manager, so they cannot be
-                placed in the chart above.
-              </p>
-              <div className="tree" style={{ border: 0, borderRadius: 0, marginTop: 'var(--s4)' }}>
-                {hierarchy.orphans.map((node) => (
-                  <TreeRow
-                    key={node.position.id}
-                    node={node}
-                    depth={0}
-                    expanded={effective}
-                    onToggle={toggle}
-                    onOpenPosition={onOpenPosition}
-                    model={model}
-                  />
-                ))}
-              </div>
-            </Card>
-          ) : null}
-        </>
+      {/* --------------------------------------------------------- Chart */}
+      {mode === 'chart' ? (
+        <OrgChart model={model} quarter={quarter} onOpenPosition={onOpenPosition} />
       ) : (
         /* ------------------------------------------------- By what changed */
         <>
@@ -305,8 +169,9 @@ export function RolesView({
         <Card tight>
           <p className="small muted">
             <Badge tone="ink">Tip</Badge>{' '}
-            Set the date above to {quarterLabel(0)}, then to {quarterLabel(model.window.quarterCount - 1)},
-            and watch the tree change.
+            Click a card to move the chart to that job. Click <strong>History</strong> to read
+            what happened to it. Then set the date above to {quarterLabel(0)}, and to{' '}
+            {quarterLabel(model.window.quarterCount - 1)}, and watch the shape change around you.
           </p>
         </Card>
       )}
