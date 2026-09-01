@@ -34,6 +34,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { useOrgModel } from './hooks/useOrgModel.ts';
 import { latestActiveQuarter } from './domain/metrics.ts';
 import { OverviewView } from './components/views/OverviewView.tsx';
@@ -426,6 +427,7 @@ export function App() {
           onShowInTime={showInTime}
         />
       ) : null}
+      <Analytics />
     </div>
   );
 }
